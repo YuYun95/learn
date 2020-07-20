@@ -1,0 +1,26 @@
+{
+  "name": "fed-e-task-01-01",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/mengshang/javascript-learning.git",
+  "author": "mengshang <2219946651@qq.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/preset-flow": "^7.9.0",
+    "@types/lodash": "^4.14.152",
+    "flow-bin": "^0.125.1",
+    "flow-remove-types": "^2.125.1",
+    "html-webpack-plugin": "^4.3.0",
+    "nodemon": "^2.0.4",
+    "typescript": "^3.9.3",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "query-string": "^6.12.1"
+  }
+}

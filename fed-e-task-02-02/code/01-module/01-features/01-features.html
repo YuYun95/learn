@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>ES Module - 模块的特性</title>
+  </head>
+  <body>
+
+    <!-- 通过给 script 添加 type = module 的属性，就可以以 ES Module 的标准执行其中的 js 代码了-->
+    <script type="module">
+      console.log('this is es module')
+    </script>
+
+    <!-- 1. ES Module 自动采用严格模式，忽略 'use strict' -->
+    <script type="module">
+      console.log(this) // undefined
+    </script>
+
+    <!-- 2. 每个 ES Module 都是运行在单独的私有作用域中 -->
+    <script type="module">
+      var foo = 100
+      console.log(foo)
+    </script>
+    <script type="module">
+      console.log(foo) // foo is not defined
+    </script>
+
+    <!-- 3. ES Module 是通过 CORS 的方式请求外部 js 模块的，服务器要支持 CORS 否则报跨域问题 -->
+    <script type="module" src="https://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+    <!-- 4. ES Module 的 script 标签会延迟执行脚本（网页渲染完在执行脚本） -->
+    <script type="module">
+      alert('hello')
+    </script>
+    <p>需要显示的内容</p>
+  </body>
+</html>

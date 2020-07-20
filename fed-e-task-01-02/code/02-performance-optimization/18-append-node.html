@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>文档碎片优化节点添加</title>
+  </head>
+  <body>
+    <script>
+      for (let i = 0; i < 10; i++) {
+        let oP = document.createElement('p')
+        oP.innerHTML = i
+        document.body.appendChild(oP)
+      }
+
+      const fragEle = document.createDocumentFragment() // 文档碎片
+      for (let i = 0; i < 10; i++) {
+        let oP = document.createElement('p')
+        oP.innerHTML = i
+        fragEle.appendChild(oP)
+      }
+      document.body.appendChild(fragEle)
+    </script>
+  </body>
+</html>

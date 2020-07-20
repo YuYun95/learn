@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>mini vue</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>差值表达式</h1>
+      <h3>{{ msg }}</h3>
+      <h1>v-text</h1>
+      <div v-text="msg"></div>
+      <h1>v-model</h1>
+      <input type="text" v-model="msg" />
+      <input type="text" v-model="count" />
+      <h1>v-html</h1>
+      <div v-html="html"></div>
+      <h1>v-on</h1>
+      <div @:click="clickHandler">点击触发</div>
+      <div v-on:mouseover="mouseOver">鼠标进入触发</div>
+    </div>
+
+    <script src="./js/dep.js"></script>
+    <script src="./js/watcher.js"></script>
+    <script src="./js/compiler.js"></script>
+    <script src="./js/observer.js"></script>
+    <script src="./js/vue.js"></script>
+    <script>
+    let vm = new Vue({
+      el: '#app',
+      data: {
+        msg: 'Hello Vue',
+        count: 100,
+        html: '<p style="color: skyblue">这是一个p标签</p>'
+      },
+      methods: {
+        clickHandler() {
+          console.log('点击事件')
+          alert('点击了')
+        },
+        mouseOver(){
+          alert('鼠标进入')
+          console.log('mouseOver')
+        }
+      }
+    })
+    // console.log(vm)
+    // console.log(vm.msg)
+    </script>
+  </body>
+</html>

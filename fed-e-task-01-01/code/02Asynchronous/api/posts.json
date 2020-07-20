@@ -1,0 +1,10 @@
+[
+  {
+    "title": "Hello world",
+    "body": "箭头函数的this看外层的是否有函数，如果有，外层函数的this就是内部箭头函数的this，如果没有，则this是window"
+  },
+  {
+    "title": "Hello world",
+    "body": "箭头函数的this看外层的是否有函数，如果有，外层函数的this就是内部箭头函数的this，如果没有，则this是window"
+  }
+]

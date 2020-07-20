@@ -1,0 +1,17 @@
+{
+  "name": "fed-e-task-02-02",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/YuYun95/fed-e-task-02-02.git",
+  "author": "hua <2219946651@qq.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "css-loader": "^3.6.0",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  }
+}

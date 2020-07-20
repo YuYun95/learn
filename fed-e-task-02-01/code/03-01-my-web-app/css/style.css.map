@@ -1,0 +1,5 @@
+<<<<<<< HEAD
+{"version":3,"sourceRoot":"","sources":["../scss/main.scss"],"names":[],"mappings":"AAGA;EACE;EACA;EACA;EACA,kBAPQ;EAQR,OAPW","file":"style.css"}
+=======
+{"version":3,"sourceRoot":"","sources":["../scss/main.scss"],"names":[],"mappings":"AAEA;EACI;EACA;EACA;EACA,kBANM;EAON,OANS","file":"style.css"}
+>>>>>>> cfa7322463096ec627ee265f231a2743215faed0
