@@ -103,3 +103,41 @@ const vm = new Vue({
     * 与平台无关
     * 定义了构造函数，调用了 this._init(options)方法
     * 给 Vue 中混入了常用的实例成员
+
+### 首次渲染过程
+* Vue 初始化，实例成员，静态成员
+* new Vue()
+* this._init()
+* vm.$mount()
+    * src/platforms/web/entry-runtime-with-compiler.js 核心作用：把模板编译为 render 函数
+    * 如果没有传递 render，获取 template，如果没有 template 获取 el 属性作为模板，把模板编译成 render 函数
+    * compileToFunctions() 生产 render() 渲染函数
+    * options.render = render
+* vm.$mount()
+    * src/platforms/web/runtime/index.js
+    * mountComponent() 会重新获取 el 
+* mountComponent(this,el)
+    * src/core/instance/lifecycle.js
+    * 判断是否有render选项，如果没有但是传入了模板，并且当前是开发环境的话会发出警告
+    * 触发 beforeMount
+    * 定义 updateComponent(此处仅仅定义改函数)
+        * vm._update(vm._render(),...)
+        * vm._render渲染，渲染虚拟DOM
+        * vm._update()更新，将虚拟DOM转换成真实DOM
+    * 创建 Watcher 实例
+        * updateComponent传递
+        * 调用 get() 方法
+    * 触发 mounted
+    * return vm
+* watcher.get()
+    * 创建完watcher会调用一次get
+    * 调用updateComponent()
+    * 调用vm._render()创建VNode
+        * 调用render.call(vm._renderProxy,vm.$createElement)
+        * 调用实例化时Vue传入的render()
+        * 或者编译template生产render()
+        * 返回VNode
+    * 调用vm._update(vnode,...)
+        * 调用vm.__patch__(vm.$el,vnode)挂载真实DOM
+        * 记录vm.$el
+
