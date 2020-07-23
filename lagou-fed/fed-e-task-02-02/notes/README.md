@@ -1126,6 +1126,7 @@ module.exports = {
 ```
 ### Git提交规范
 * 安装插件 `yarn add husky @commitlint/cli @commitlint/config-conventional --dev`
+* husky 是一个 Git Hook 工具
 * 项目根目录创建配置文件 commitlint.config.js
 ```javascript
 module.exports = {
