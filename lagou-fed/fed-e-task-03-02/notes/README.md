@@ -141,3 +141,9 @@ const vm = new Vue({
         * 调用vm.__patch__(vm.$el,vnode)挂载真实DOM
         * 记录vm.$el
 
+### 三种类型的 Watcher
+* 没有静态方法，因为 $watch 方法中要使用 Vue 的实例
+* Watcher 分三种：计算属性Watcher、用户Watcher(侦听器)、渲染Watcher
+    * 创建顺序：计算属性Watcher、用户Watcher(侦听器)、渲染Watcher
+* vm.$watch()
+    * 位置：src/core/instance/state.js
