@@ -147,3 +147,61 @@ const vm = new Vue({
     * 创建顺序：计算属性Watcher、用户Watcher(侦听器)、渲染Watcher
 * vm.$watch()
     * 位置：src/core/instance/state.js
+
+# 二、虚拟 DOM
+### h 函数
+* vm.$createElement(tag, data, children, normalizeChildren)
+    * tag
+        * 标签名称或者组件对象
+    * data
+        * 描述 tag，可以设置 DOM 的属性或者标签的属性
+    * children
+        * tag 中的文本内容或者子节点
+* h 函数返回值是一个虚拟 DOM
+    * tag：、data、children、text
+    * elm：记录真实 dom，当前vnode转换为真实 dom 后记录在该属性
+    * key：作用是用来复用元素
+
+### 总结
+* vm._init()
+* vm.$mount()
+* mountComponent()
+* 创建 Watcher 对象
+* updateComponent()
+* vm._render()：调用了用户传递的render函数，或者是模板编译生成的render函数，返回vnode
+    * vnode = render.call(vm._renderProxy, vm.$createElement)
+    * vm.$createElement()：用户传递
+        * h 函数，用户设置的render函数中调用
+        * createElement(vm, a, b, c, d, true)
+    * vm._c()：模板编译生成
+        * h 函数，模板编译的render函数中调用
+        * createElement(vm, a, b, c, d, true)
+    * _createElement()：无论是编译生成，还是用户传递，都调用_createElement()
+        * vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context)
+        * vm._render()结束，返回vnode
+* vm._update()：处理vnode
+    * 负责把虚拟DOM，渲染成真实DOM
+    * 首次执行：vm.__path__(vm.$el, vnode, hydrating, false)
+    * 数据更新：vm.__path__(prevVnode, vnode)
+* vm.__patch__()
+    * 位置：runtime/index.js 中挂载 Vue.prototype.__patch__
+    * 位置：runtime/patch.js的patch函数
+    * 设置 modules 和 nodeOps(nodeOps作用是操作dom)
+    * 调用 createPatchFunction() 函数返回 patch 函数
+* patch()
+    * 位置：vdom/patch.js 中的 createPatchFunction返回patch函数
+    * 挂载 cbs 节点的属性/事件/样式 操作的钩子函数
+    * 判断第一个参数是真实DOM还是虚拟DOM；首次加载，第一个参数就是真实DOM，转换成VNode，调用createElm
+    * 如果是数据更新的时候，新旧节点是sameVnode 执行 patchVnode，也就是diff
+    * 删除旧节点
+* createElm(vnode, insertedVnodeQueue)
+    * 把虚拟节点，转换为真实DOM，并插入到DOM树
+    * 把虚拟节点的children，转为真实DOM，并插入到DOM树
+* patchVnode
+    * 对比新旧VNode，以及新旧VNode的子节点更新差异
+    * 如果新旧VNode都有子节点并且子节点不同的话，会调用updateChildren对比子节点的差异
+* updateChildren
+    * 从头和尾开始一次找到相同的子节点进行比较patchVnode，总共有四种比较方式
+    * 在老节点的子节点中查找newStartVnode，并进行处理
+    * 如果新节点比老节点多，把新节点插入到DOM中
+    * 如果老节点比新节点多，把多余的老节点删除
