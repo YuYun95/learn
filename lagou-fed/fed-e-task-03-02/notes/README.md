@@ -205,3 +205,15 @@ const vm = new Vue({
     * 在老节点的子节点中查找newStartVnode，并进行处理
     * 如果新节点比老节点多，把新节点插入到DOM中
     * 如果老节点比新节点多，把多余的老节点删除
+
+# 三、模板编译
+* compileToFunctions(template, {}, this)，返回 { render, staticRenderFns } ----把模板编译成render函数，由 createCompiler 函数生产
+* createCompiler(baseOptions) ----由 createCompilerCreator 函数生成
+    * 定义compile(template, options) 函数
+    * 生产 compileToFunctions  createCompileToFunctionFn(compile)
+    * 返回 { compile, compileToFunctions }
+    * compileToFunctions 函数是模板编译的入口
+* createCompilerCreator(function baseCompile(){})
+    * 传入了 baseCompile(template, finalOptions)函数
+    * baseCompile 解析parse、优化optimize 生产generate
+    * 返回 createCompiler 函数
