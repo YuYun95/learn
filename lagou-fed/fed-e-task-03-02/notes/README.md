@@ -217,3 +217,28 @@ const vm = new Vue({
     * 传入了 baseCompile(template, finalOptions)函数
     * baseCompile 解析parse、优化optimize 生产generate
     * 返回 createCompiler 函数
+
+### 抽象语法树
+* 抽象语法树简称AST(Abstract Syntax Tree)
+* 使用对象的形式描述树形的代码结构
+* 此处的抽象语法树是用来描述树形结构的 HTML 字符串
+
+### 为什么要使用抽象语法树
+* 模板字符串转换成AST后，可以通过AST对模板做优化处理
+* 标记模板中的静态内容，在patch的时候直接跳过静态内容
+* 在patch的过程中静态内容不需要对比和重新渲染
+
+### 模板编译过程总结
+* compileToFunctions(template,...)：先从缓存中加载编译好的render函数；缓存中没有，调用complie(template, options)
+* complie(template, options)：合并options，baseCompile(template.trim(), finalOptions)
+* baseCompile(template.trim(), finalOptions)
+    * parse(): 把template转换成 AST tree
+    * optimize()：标记 AST tree中的静态sub trees；检测到静态子树，设置为静态，不需要在每次重新渲染的时候重新生成节点；patch 阶段跳过静态子树
+    * generate()：AST tree 生成js的创建代码
+* compileToFunctions(template,...)
+    * 继续把上一步中生成的字符串形式js代码转为函数
+    * createFunction()
+    * render和staticRenderFns初始化完毕，挂载到Vue实例的options对应的属性中
+
+# 四、组件化
+### 
