@@ -21,12 +21,20 @@
 * 触发`actived`的钩子函数
 * 触发`updated`钩子函数
 
-*[响应式处理过程](http://naotu.baidu.com/file/88f290b66057aa8647fc1664e85134cc?token=322e530a5e0dcaca)
+* [响应式处理过程](http://naotu.baidu.com/file/88f290b66057aa8647fc1664e85134cc?token=322e530a5e0dcaca)
 
 ### 3、请简述虚拟 DOM 中 Key 的作用和好处
 在v-for的过程中，可以给每一个节点设置key属性，以便它能够跟踪每个节点的身份，从而重用和重新排序现有元素，设置key比不设置key的DOM操作要少很多，会优化DOM操作
 
 ### 4、请简述 Vue 中模板编译的过程
-* 编译过程的入口函数`compileToFunctions`是先从缓存中加载编译好的`render`函数，如果缓存中没有的话，就去调用`compile`函数，在`compile`函数中，首先去合并选项，然后调用`baseCompile`函数编译模板
+* 模板编译函数在`entry-runtime-with-compiler.js`文件中调用，函数名为`compileToFunction`，把`template`编译为`render
+`函数，在`compileToFunction`方法中调用了`createCompiler`方法，该方法又调用了`createCompilerCreator
+`方法，传递`baseCompile`方法作为参数
+* `baseCompile`方法做了三件事情，第一，调用`parse`方法把模板编译成`AST(抽象语法树)`；第二，调用`optimize`方法优化`AST`，标记模板中的静态内容，在`patch
+`的时候直接跳过静态内容，在`patch`的过程中静态内容不需要对比和重新渲染；第三，调用`generate
+`方法把`AST`转换为`js`形式的代码；最后返回一个包含`AST`、`render`(此时的render是字符串形式的)、`staticRenderFns`属性的对象
+* 在`createCompilerCreator`方法中返回了`createCompileToFunctionFn`方法(会缓存编译之后的结果)，该方法先从缓存中加载编译好的`render
+`函数(这是拿空间换时间)，如果缓存中没有的话，就去调用`compile`函数，在`compile`函数中，首先去合并选项，然后调用`baseCompile`函数编译模板，把编译后字符串形式的代码转换为js代码
+* 所以入口文件中调用`compileToFunction`方法返回`render`方法和`staticRenderFns`并且调用这两个方法，最后调用`$mount`方法，渲染`DOM`
 
 [模板编译过程](http://naotu.baidu.com/file/b1152b57f8b3d3a5d501c1464e81f2f2?token=82b8bb5bdd4d7776)

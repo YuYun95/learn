@@ -239,6 +239,3 @@ const vm = new Vue({
     * 继续把上一步中生成的字符串形式js代码转为函数
     * createFunction()
     * render和staticRenderFns初始化完毕，挂载到Vue实例的options对应的属性中
-
-# 四、组件化
-### 
