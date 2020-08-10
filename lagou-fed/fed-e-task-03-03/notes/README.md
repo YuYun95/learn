@@ -999,3 +999,211 @@ index.html
 ### 三、客户端渲染（CSR）
 * 服务端渲染的缺点，随着Ajax技术的普及得到了有效的解决，Ajax使用客户端动态获取数据成为可能，因此服务端渲染工作来到了客户端
 ![](./img/08.jpg)
+
+以Vue.js项目为例系统了解客户端渲染流程
+* 后端负责处理数据接口
+* 前端负责将接口数据渲染到页面中
+
+前端更为独立，不再受限制于后端
+
+但客户端也存在一些明显的不足：
+* 首屏渲染慢：客户端渲染至少发起三次HTTP请求，第一次是请求页面，第二次是请求JS脚本，第三次是动态数据请求
+* 不利于SEO：客户端渲染的内容都是由JS生产的，而搜索引擎只会请求网络路径的html，不会去将html里的脚本再去请求做解析处理，因此搜索引擎获取到的首屏是空的，单页应用SEO几乎为0
+
+```javascript
+// 搜索引擎是怎么获取网页内容的？
+const http = require('http')
+
+// 通过程序获取指定网页的内容
+http.get('http://localhost:8080/', res => {
+  let data = ''
+  res.on('data', chunk => {
+    data += chunk
+  })
+
+  res.on('end', () => {
+    console.log(data)
+  })
+})
+
+/*
+打印结果：
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico">
+    <title>vuex-cart-demo-template</title>
+  <link href="/js/about.js" rel="prefetch"><link href="/js/app.js" rel="preload" as="script"><link href="/js/chunk-vendors.js" rel="preload" as="script"></head>
+  <body>
+    <noscript>
+      <strong>We're sorry but vuex-cart-demo-template doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  <script type="text/javascript" src="/js/chunk-vendors.js"></script><script type="text/javascript" src="/js/app.js"></script></body>
+</html>
+*/
+
+```
+
+### 四、现代化的服务端渲染
+1. 同构渲染 = 后端渲染 + 前端渲染
+    * 基于React、Vue等框架，客户端渲染和服务端渲染的结合
+        * 在服务器端执行一次，用于实现服务器端渲染（首屏直出）
+        * 在客户端再执行一次，用于接管页面交互
+    * 核心解决SEO和首屏渲染慢的问题
+    * 拥有传统服务端渲染的优点，也有客户端渲染的优点
+![](./img/09.jpg)
+
+2. 如何实现同构渲染？
+    * 使用Vue、React等框架的官方解决方案
+        * 优点：有助于理解原理
+        * 缺点：需要搭建环境，比较麻烦
+    * 使用第三方解决方案
+        * React生态的 Next.js
+        * Vue生态的 Nuxt.js
+3. 以Vue生态的Nuxt.js为例演示同构渲染应用
+* 创建一个文件夹，执行`yarn init`生产包管理器
+* 执行 `yarn add nuxt`按照Nuxt
+* 在package.json 增加scripts脚本命令`"dev":"nuxt"`
+* 创建pages文件夹，在这个文件夹中创建index.vue文件和about.vue文件，nuxt会根据pages路径自动生成路由
+```base
+// index.vue
+<template>
+  <div>
+    <h1>首页</h1>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style scoped>
+
+</style>
+```
+
+```base
+// about.vue
+<template>
+  <div>
+    <h1>About</h1>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style scoped>
+
+</style>
+```
+* 执行`yarn dev`运行这个Nuxt项目，打开localhost:3000端口，默认是pages/index.vue页面，然后访问localhost:3000/about访问的是pages/about.vue页面
+* 在pages/index.vue页面中通过`asyncData`方法获取json数据，静态的json数据文件是放在static目录下的。Nuxt中提供的钩子函数`asyncData()`，专门用于获取服务端渲染的数据。axios不要忘了安装：`yarn add axios`
+
+```base
+// pages/index.vue
+<template>
+  <div id="app">
+    <h2>{{ title }}</h2>
+    <ul>
+      <li
+        v-for="item in data"
+        :key="item.id"
+      >{{ item.name }}</li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  name: 'Home',
+  components: {},
+  // Nuxt中提供一个钩子函数`asyncData()`，专门用于获取服务端渲染的数据。
+  async asyncData () {
+    const { data } = await axios({
+      method: 'GET',
+      // 注意此处的URL要指定当前端口，否则默认会去服务端的80端口去查找。
+      url: 'http://localhost:3000/data.json'
+    })
+    // 这里返回的数据会和data () {} 中的数据合并到一起给页面使用
+    return data
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+```
+static/data.json
+```json
+{
+  "posts": [
+    {
+      "id": 1,
+      "title": "标题1"
+    },
+    {
+      "id": 2,
+      "title": "标题2"
+    }
+  ],
+  "title": "客服端渲染"
+}
+
+```
+一次请求就拿到了完整页面，Nuxt的服务端渲染方案解决了首屏渲染慢的问题和SEO的问题
+
+* Nuxt生成的是SPA单页应用，可以通过增加路由导航看出来，Home和About两个组件切换时页面没有刷新。创建一个文件夹layouts，然后在这个文件夹中创建一个default.vue文件，这个文件名是固定要求的，不能随意取
+```base
+<template>
+  <div>
+    <!-- 路由出口 -->
+    <ul>
+      <li>
+        <!-- 类似于 router-link，用于单页面应用导航 -->
+        <nuxt-link to="/">Home</nuxt-link>
+      </li>
+      <li>
+        <nuxt-link to="/about">About</nuxt-link>
+      </li>
+    </ul>
+    <!--  子页面出口  -->
+    <nuxt/>
+  </div>
+</template>
+
+```
+
+### 五、同构渲染的问题
+* 开发条件所限
+    * 浏览器特定的代码只能在某些生命周期钩子函数中使用
+    * 一些外部扩展库可能需要特殊处理才能在服务端渲染应用中运行
+    * 不能再服务端渲染期间操作DOM
+    * 某些代码操作需要区分运行环境
+* 涉及构建设置和部署的更多要求
+
+| | 客户端渲染 | 同构渲染 |
+| :---- | :---- | :---- |
+| 构建 | 仅构建客户端应用即可 | 需要构建两个端 |
+| 部署 | 可以部署在任意 Web 服务器中 | 只能部署在 Node.js Server |
+* 更多的服务器端负载
+    * 在 Node 中渲染完整的应用程序，相比仅仅提供静态文件的服务器需要大量占用 CPU 资源
+    * 如果应用在高流量环境下使用，需要准备相应的服务器负载
+    * 需要更多的服务端渲染优化工作处理
+
+服务端渲染使用建议
+* 首屏渲染速度是否真的重要？
+* **是否真的需求SEO？**

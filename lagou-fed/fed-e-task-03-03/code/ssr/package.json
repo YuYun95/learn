@@ -1,0 +1,13 @@
+{
+  "name": "ssr",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nuxt"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "nuxt": "^2.14.1"
+  }
+}
