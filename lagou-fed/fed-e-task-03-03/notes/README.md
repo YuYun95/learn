@@ -1,12 +1,12 @@
-## 一、Vuex状态管理
-### 组件内的状态管理流程
+## Vuex状态管理
+### 一、组件内的状态管理流程
 * 状态管理
     * state，驱动应用的数据源
     * view，以声明方式将 state 映射到视图
     * actions，响应在 view 上的用户输入导致的状态变化
     ![](./img/state.jpg)
 
-### 组件间通信方式
+### 二、组件间通信方式
 1. 父组件给子组件传值
     * 子组件通过props接收数据
     ```base
@@ -232,7 +232,7 @@ export default {
 ```
 > ref这种方式不到万不得已不要使用，会导致数据的混乱。
 
-### 简易的状态管理方案
+### 三、简易的状态管理方案
 1. 父子组件传值的问题
     * 多个视图依赖同一状态
     * 来自不同视图的行为需要变更同一状态
@@ -311,7 +311,7 @@ export default {
    </script>
    ```
    
-### Vuex 回顾
+### 四、Vuex 回顾
 1. 什么是Vuex
     * Vuex是专门为Vue.js设计的状态管理库
     * Vuex采用集中式的方式存储需要共享的状态
@@ -322,7 +322,7 @@ export default {
     * 大型的单页应用程序
         * 多个视图依赖同一状态
         * 来自不同视图的行为需要变更同一状态
-### Vuex核心概念
+### 五、Vuex核心概念
 * Store：是一个容器，包含着应用中的大部分状态，不能直接改变Store中的状态，要通过mutation的方式改变状态
 * State：是状态，保存在Store中，因为Store是唯一的，所以State也是唯一的，也成为单一状态树，这里的状态是响应式的
 * Getter：是Vuex中的计算属性，方便从一个属性派生出其他的值。它内部会对计算的属性进行缓存，只有依赖改变的时候，才会重新进行计算
@@ -332,7 +332,7 @@ export default {
 
 ![](./img/2.jpg)
 
-### Vuex基本结构
+### 六、Vuex基本结构
 定义store：store/index.js
 ```javascript
 import Vue from 'vue'
@@ -358,7 +358,7 @@ new Vue({
 }).$mount('#app')
 ```
 
-### State
+### 七、State
 store/index.js
 ```javascript
 import Vue from 'vue'
@@ -418,7 +418,7 @@ export default {
 ...mapState({ num: 'count', message: 'msg' })
 ```
 
-### Getter
+### 八、Getter
 Vuex中的Getter相当于Vue中的计算属性
 store/index.js
 ```javascript
@@ -475,7 +475,7 @@ export default {
 ```
 `mapGetters`负责把`Vuex`中的`getter`映射到`Vue`的计算属性，`mapGetters`返回的是对象，`mapGetters`的使用和`mapState`类似
 
-### Mutation
+### 九、Mutation
 Mutation中修改state，只能支持同步操作
 
 store/index.js
@@ -536,7 +536,7 @@ export default {
 打开Vue调试工具，可以看到vuex中的mutation变化，每个mutation上面的三个按钮，分别是提交本次mutation、恢复到本次的mutation、时光旅行
 ![](./img/03.png)
 
-### Action
+### 十、Action
 * Action中可以进行异步操作，不过Action如果需要修改state，得提交Mutation(在Action中调用提交Mutation[])，所有状态的更改都要通过Mutation
 * Action中的方法第一个参数是上下文对象，包含了commit、dispatch、getters、state等属性
 * Action的调用要通过dispatch
@@ -621,7 +621,7 @@ export default {
 
 ```
 
-### Module
+### 十一、Module
 * Module可以让我们把单一状态树拆分成多个模块，每个模块都可以拥有自己的state、mutation、action、getter甚至可以嵌套子模块
 * 子模块通过modules注册到Store中
 * 在使用模块里的数据时，可以通过`$store.模块名.state`状态属性名的方式访问
@@ -764,7 +764,7 @@ export default {
 
 ```
 
-### 严格模式
+### 十二、严格模式
 * Vuex中的状态的更新要通过提交mutation来修改，但其实在组件中还可以通过$store.state.msg进行修改，从语法从面来说这是没有问题的，但是这破坏了Vuex的约定，如果在组件中直接修改state，devtools无法跟踪到这次状态的修改
 * 开启严格模式之后，如果在组件中直接修改state会抛出错误，但数据仍被成功修改
 * 如何开启：在store中增加一个属性strict为true
@@ -788,7 +788,7 @@ App.vue
 ```
 ![](./img/04.png)
 
-### 购物车案例
+### 十三、购物车案例
 1. 模板
     地址：https://github.com/goddlts/vuex-cart-demo-template
     
@@ -839,7 +839,7 @@ App.vue
     })
     ```
 
-### 模拟实现Vuex
+### 十四、模拟实现Vuex
 myVuex/index.js
 ```javascript
 // eslint-disable-next-line no-unused-vars
@@ -888,3 +888,114 @@ store/index.js
 ```javascript
 import Vuex from '../myVuex'
 ```
+
+## 服务端渲染
+
+### 一、概述
+* 基于客户端渲染的前端框架
+    * Angular
+    * React
+    * Vue
+* 优点
+    * 用户体验好
+    * 开发效率高
+    * 渲染性能好
+    * 可维护性好
+* 缺点
+    * 首屏渲染时间长
+    * 不利于SEO
+* 借鉴传统的服务端渲染
+![](./img/05.jpg)
+
+* 客户端激活为SPA
+![](./img/06.jpg)
+
+* 同构应用
+    * 通过服务端渲染首屏直出，解决SPA应用首屏渲染慢以及不利于SEO问题
+    * 通过客户端渲染接管页面内容交互得到更好的用户体验
+    * 这种方式通常称之为现代化的服务端渲染，也叫同构渲染
+    * 这种方式构建的应用称之为服务端渲染应用或者是同构应用
+* 相关概念
+    * 什么是渲染：把数据和模板拼接到一起。渲染的本质就是字符串的解析替换
+    * 传统的服务端渲染： 早期的 web 页面渲染都是在服务端进行的
+    * 客户端渲染
+    * 现代化的服务端渲染（同构渲染）
+### 二、传统的服务端渲染
+* 案例
+![](./img/07.jpg)
+
+index.js
+```javascript
+const express = require('express')
+const fs = require('fs')
+const template = require('art-template')
+
+const app = express()
+
+app.get('/', (req, res) => {
+  // 1. 获取页面模板
+  const templateStr =fs.readFileSync('./index.html', 'utf-8')
+
+  // 2. 获取数据
+  const data = JSON.parse(fs.readFileSync('./data.json', 'utf-8'))
+
+  // 3. 渲染：数据 + 模板 = 渲染结果
+  const html = template.render(templateStr, data)
+
+  // 4. 把渲染结果发送给客户端
+  res.send(html)
+})
+
+app.listen(3000, () => console.log('running...'))
+
+```
+
+data.json
+```json
+{
+  "posts": [
+    {
+      "id": 1,
+      "title": "标题1",
+      "body": "文章内容1"
+    },
+    {
+      "id": 2,
+      "title": "标题2",
+      "body": "文章内容2"
+    }
+  ],
+  "title": "服务端渲染（ssr）"
+}
+
+```
+
+index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>传统的服务端渲染</title>
+  </head>
+  <body>
+    <h1>传统的服务端渲染示例</h1>
+    <h2>{{ title }}</h2>
+    <ul>
+      {{ each posts }}
+      <li>{{ $value.title }}</li>
+      {{ /each }}
+    </ul>
+  </body>
+</html>
+
+```
+* 缺点
+    * 前后端代码完全耦合在一起，不利于开发和维护
+    * 前端没有足够发挥空间
+    * 服务端压力大
+    * 用户体验一般
+
+### 三、客户端渲染（CSR）
+* 服务端渲染的缺点，随着Ajax技术的普及得到了有效的解决，Ajax使用客户端动态获取数据成为可能，因此服务端渲染工作来到了客户端
+![](./img/08.jpg)
