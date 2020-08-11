@@ -1207,3 +1207,47 @@ static/data.json
 服务端渲染使用建议
 * 首屏渲染速度是否真的重要？
 * **是否真的需求SEO？**
+
+
+## Nuxt.js
+### 一、Nuxt.js介绍
+* 一个基于Vue.js生态的第三方开源服务端渲染应用框架
+* 它可以帮我们轻松的使用Vue.js技术栈构建同构应用
+* 官网：https://zh.nuxtjs.org/
+* Github：https://github.com/nuxt/nuxt.js
+
+### 二、Nuxt.js的使用方式
+* 初始化项目
+* 已有的Node.js服务端项目
+    * 直接报 Nuxt 当作一个中间件集成到 Node Web Server 中
+* 现有的Vue.js项目
+    * 非常熟悉Nuxt.js
+    * 至少百分之10的代码改动
+
+### 三、初始化Nuxt.js应用的方式
+* 官方文档：https://zh.nuxtjs.org/guide/installation
+    * 方式一：使用create-nuxt-app
+    * 方式二：手动创建
+
+### 四、Nuxt.js路由
+
+1. 基本路由：pages文件夹下的文件会自动生成路由
+
+Nuxt.js 会依据pages目录结构自动生成vue-router模块的路由配置
+
+2. 路由导航
+* a 标签
+    * 它会刷新整个页面，不要使用
+* nuxt-link 组件
+    * https://router.vuejs.org/zh/api/#router-link-props
+    * `<router-link to="/">首页</router-link>`
+* 编程式导航
+    * https://router.vuejs.org/zh/guide/essentials/navigation.html
+    * <button @click="onClick">首页</button>
+    ```base
+    methods: {
+      onClick () {
+        this.$router.push('/')
+      }
+    }
+    ```
