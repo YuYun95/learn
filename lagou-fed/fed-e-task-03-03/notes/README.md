@@ -1251,3 +1251,296 @@ Nuxt.js 会依据pages目录结构自动生成vue-router模块的路由配置
       }
     }
     ```
+3. 动态路由
+* Vue Router动态路由匹配
+    * https://router.vuejs.org/zh/guide/essentials/dynamic-matching.html
+* Nuxt
+    * https://zh.nuxtjs.org/guide/routing/#%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1
+
+pages/user/_id.vue，动态路由参数文件名有下划线开头
+```base
+<template>
+  <div>
+    <h1>User page</h1>
+    <p>{{$route.params.id}}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'UserPage'
+}
+</script>
+
+```
+
+4. 嵌套路由
+* Vue Router 嵌套路由
+    * https://router.vuejs.org/zh/guide/essentials/nested-routes.html
+* Nuxt.js嵌套路由
+    * https://zh.nuxtjs.org/guide/routing#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1
+创建内嵌子路由，你需要添加一个 Vue 文件，同时添加一个与该文件**同名的目录**用来存放子视图组件
+
+Warning: 别忘了在父组件(.vue文件) 内增加 <nuxt-child/> 用于显示子视图内容。
+![](./img/10.jpg)
+
+5. 路由配置
+* 参考文档：https://zh.nuxtjs.org/api/configuration-router
+* 在项目根目录创建nuxt.config.js
+```javascript
+/**
+ * Nuxt.js 配置文件
+ */
+
+module.exports = {
+  router: {
+    base: '/abc',
+    // routes：就是路由配置表，是个数组
+    // resolve：是解析路由路径的
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name: 'hello',
+        path: '/hello',
+        component: resolve(__dirname, 'pages/about.vue')
+      })
+      routes.push({
+        name: 'custom',
+        path: '*',
+        component: resolve(__dirname, 'pages/404.vue')
+      })
+    }
+  }
+}
+
+```
+### 五、视图-模板
+Nuxt.js视图-结构
+![](./img/11.jpg)
+
+1. 模板
+    你可以定制化Nuxt.js默认的应用模板
+    
+    定制化默认的 html 模板，只需要在 src 文件夹下（默认是应用根目录）创建一个 app.html 的文件
+    
+    默认模板为：
+    ```html
+    <!DOCTYPE html>
+    <html {{ HTML_ATTRS }}>
+      <head {{ HEAD_ATTRS }}>
+        {{ HEAD }}
+      </head>
+      <body {{ BODY_ATTRS }}>
+    <!--  渲染的内容最终会注入到这里  -->
+        {{ APP }}
+      </body>
+    </html>
+    ```
+
+2. 布局
+Nuxt.js 允许你扩展默认的布局，或在 layout 目录下创建自定义的布局
+
+可通过添加 layouts/default.vue 文件来扩展应用的默认布局
+
+提示: 别忘了在布局文件中添加 <nuxt/> 组件用于显示页面的主体内容
+
+默认布局的源码如下：
+```html
+<template>
+  <nuxt />
+</template>
+```
+可以给所有的页面设置公共布局
+
+![](./img/13.jpg)
+
+可以在组件中通过layout属性修改默认布局组件：
+
+![](./img/14.jpg)
+
+Index页面的布局组件变成了foo，但是about页面还是default，因为about页面没有修改其layout属性，所以默认的布局文件还是default
+
+### 六、异步数据
+* asyncData方法
+Nuxt.js 扩展了 Vue.js，增加了一个叫 asyncData 的方法，使得我们可以在设置组件的数据之前能异步获取或处理数据
+    * https://zh.nuxtjs.org/guide/async-data
+    * 基本用法
+        * 它会将 asyncData 返回的数据融合组件的 data 方法返回数据一并给组件
+        * 调用时机：服务端渲染期间和客户端路由更新之前
+    * 注意事项
+        * 只能在页面组件中使用；只能页面父组件请求数据后传递给子组件
+        * 没有 this，因为他是组件初始化之前被调用的
+当你想用的动态页面内容有利于SEO或者是提升首屏渲染速度的时候，就在asyncData中发送请求数据。如果是非异步数据或者普通数据，则正常的初始化到data中即可
+
+pages/index.vue
+```base
+<template>
+  <div>
+    <h1>Hello ----{{title}}</h1>
+    <nuxt-link to="/about">About</nuxt-link>
+    <br/>
+    <foo />
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import Foo from '@/components/Foo'
+import Foo from "../components/Foo";
+
+export default {
+  name: 'Home',
+  components: {Foo},
+  comments: {
+    Foo
+  },
+
+  async asyncData() {
+    // 如何验证asyncData是在服务端执行？
+    // 通过log输出在了服务端控制台，得出这个方法是在服务端执行的。
+    // Nuxt.js为了方便调试，把服务端控制台输出数据也打印在了客户端控制台
+    // 但是为了区分，在客户端控制台用“Nuxt SSR”包裹起来了
+    console.log('asyncData')
+    const res = await axios({
+      method: 'get',
+      // 这里的请求地址要写完整，因为在服务端渲染期间，也要来请求数据
+      // 不写完整的话服务端渲染就会走到80端口
+      // 如果只是客户端渲染，就会以3000端口为基准来请求根目录下的data.json，服务端渲染就默认走到80了
+      url: 'http://localhost:3000/data.json'
+    })
+    // 返回的数据会与data中的数据混合
+    return res.data
+  }
+}
+</script>
+
+```
+
+components/Foo.vue
+```base
+<template>
+  <div>
+    <h1>Foo</h1>
+    此处会报错，因为这是非页面组件，asyncData方法不会执行，所以foo是未定义
+    <p>{{foo}}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "Foo",
+
+  async asyncData() {
+    return {
+      foo: 'bar'
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+
+```
+static这个文件夹可以直接作为根路径访问
+
+* 上下文对象
+https://zh.nuxtjs.org/guide/async-data#%E4%B8%8A%E4%B8%8B%E6%96%87%E5%AF%B9%E8%B1%A1
+
+pages/article/_id.vue
+```base
+<template>
+  <div>
+    <h1>article Page</h1>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+
+export default {
+  name: 'ArticlePage',
+  async asyncData(context){
+    // asyncData的参数为上下文对象，我们无法在这个方法里使用this
+    // 所以无法通过this.$router.params.id拿到路由参数
+    // 但是可以通过context.params.id获取参数
+    const {data} = axios({
+      method: 'get',
+      url: 'http://localhost:3000/data.json'
+    })
+    const id = Number.parseInt(context.params.id)
+    return {
+      article: data.posts.find(item => item.id === id)
+    }
+  }
+}
+</script>
+
+```
+
+components/Foo.vue
+```base
+<template>
+  <div>
+    <h1>FooPage</h1>
+    <ul>
+      <li v-for="item in posts">
+        <nuxt-link :to="'/article/'+item.id">{{item.title}}</nuxt-link>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "Foo",
+  props: ['posts']
+}
+</script>
+
+<style scoped>
+
+</style>
+
+```
+pages/index.vue
+```base
+<template>
+  <div>
+    <h1>Hello {{ title }}!</h1>
+    <Foo :posts="posts" />
+    <nuxt-link to="/about">about</nuxt-link>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import Foo from '@/components/Foo'
+
+export default {
+  name: 'HomePage',
+  components: {
+    Foo
+  },
+  async asyncData () {
+    // 如果验证asyncData是在服务端执行的？可以通过log输出在了服务端控制台，得出这个方法是在服务端执行的。Nuxtjs为了方便调试，把服务端控制台输出数据也打印在了客户端控制台，但是为了区分，在客户端控制台用“Nuxt SSR”包裹起来了
+    console.log('asyncData')
+    const res = await axios({
+      method: 'GET',
+      url: 'http://localhost:3000/data.json'// 这里的请求地址要写完整，因为在服务端渲染期间，也要来请求数据，不写完整的话服务端渲染就会走到80端口，如果只是客户端渲染，就会以3000端口为基准来请求根目录下的data.json，服务端渲染就默认走到80了
+    })
+    // 返回的数据会与data中的数据混合
+    return res.data
+  },
+  data () {
+    return {
+      foo: 'bar'
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+```
