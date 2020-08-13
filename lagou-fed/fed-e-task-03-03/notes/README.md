@@ -1544,3 +1544,143 @@ export default {
 
 </style>
 ```
+
+## NuxtJS综合案例
+### 一、案例介绍
+1. 案例介绍
+    * 案例名称：RealWorld
+    * 一个开源的学习项目，目的就是帮助开发者快速学习新技能
+    * GitHub仓库：https://github.com/gothinkster/realworld
+    * 在线示例：https://demo.realworld.io/
+2. 案例相关资源
+    * 页面模板：https://github.com/gothinkster/realworld-starter-kit/blob/master/FRONTEND_INSTRUCTIONS.md
+    * 接口文档：https://github.com/gothinkster/realworld/tree/master/api
+3. 学习前提
+    * Vue.js使用经验
+    * Nuxt.js基础
+    * Node.js、webpack相关使用经验
+4. 学习收获
+    * 掌握使用Nuxt.js开发同构渲染应用
+    * 增强Vue.js实践能力
+    * 掌握同构渲染应用中常见的功能处理
+        * 用户状态管理
+        * 页面访问权限处理
+        * SEO优化
+    * 掌握同构渲染应用的发布与部署
+
+### 二、项目初始化
+1. 创建项目
+    * `mkdir realworld-nuxtjs`
+    * `npm init -y`
+    * 配置启动脚本
+    * 创建 pages 目录，配置初始化页面
+2. 导入样式文件
+    Real world 的仓库提供了样式文件：https://github.com/gothinkster/realworld-starter-kit/blob/master/FRONTEND_INSTRUCTIONS.md
+    ```base
+   <!-- Import Ionicon icons & Google Fonts our Bootstrap theme relies on -->
+     <link href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
+     <link href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic" rel="stylesheet" type="text/css">
+     <!-- Import the custom Bootstrap 4 theme from our hosted CDN -->
+     <link rel="stylesheet" href="//demo.productionready.io/main.css"> 
+   ```
+   将这三个link放到我们项目中的app.html模板文件中，这个app.html要新建，默认模板就是Nuxt官网上的导航里的视图中的代码：
+   ```base
+   <!DOCTYPE html>
+   <html {{ HTML_ATTRS }}>
+     <head {{ HEAD_ATTRS }}>
+       {{ HEAD }}
+     </head>
+     <body {{ BODY_ATTRS }}>
+       {{ APP }}
+     </body>
+   </html>
+   ```
+    把三个link放到head标签里，由于ionicons的CDN地址在国外，打开速度较慢，又包含字体文件，无法直接下载到本地，所以我们去一个国内CDN网站上找到它来使用
+    
+    国内CDN网站：https://www.jsdelivr.com/，搜索ionicons，选择我们需要的版本的css的min版本，复制CDN链接，替换到link中
+    
+    ![](./img/15.png)
+    第二个link的CDN国内支持访问，就不用本地化了
+    
+    第三个link的CDN也是在国外，需要本地化，然而它不含字体文件，所以可以直接另存到本地，我们另存到了static/index.css
+    
+    最终app.html就是这样：
+    ```base
+   <!DOCTYPE html>
+   <html {{ HTML_ATTRS }}>
+     <head {{ HEAD_ATTRS }}>
+       {{ HEAD }}
+       <!-- Import Ionicon icons & Google Fonts our Bootstrap theme relies on -->
+       <link href="https://cdn.jsdelivr.net/npm/ionicons@2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
+       <link href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic" rel="stylesheet" type="text/css">
+       <!-- Import the custom Bootstrap 4 theme from our hosted CDN -->
+       <link rel="stylesheet" href="/index.css">
+     </head>
+     <body {{ BODY_ATTRS }}>
+       {{ APP }}
+     </body>
+   </html> 
+   ```
+3. 布局组件
+    * 重写路由表
+    ```javascript
+    module.exports = {
+      router: {
+        // 自定义路由表规则
+        extendRoutes(routes, resolve) {
+          // 清除 Nuxt.js 基于 pages 目录默认生成的路由表规则
+          routes.splice(0)
+          routes.push(...[
+            {
+              path: '/',
+              component: resolve(__dirname, 'pages/layout'),
+              children: [
+                {
+                  path: '', // 默认子路由
+                  name: 'home',
+                  component: resolve(__dirname, 'pages/home')
+                }
+              ]
+            }
+          ])
+        }
+      }
+    }
+    ```
+    layout/index.vue
+    
+    ![](./img/15.jpg)
+    
+    将模板代码中的导航和底部代码放到layout/index.vue里面，导航和底部之间放子路由组件`<nuxt-child/>`
+    
+    路由表中的layout组件的默认子组件是homePage，html部分的代码来自于模板代码中的home部分。代码如下
+    
+    home/index.vue
+    
+    ![](./img/16.jpg)
+    
+    然后重启项目，访问项目的根路径，就是Layout组件
+    
+4. 导入登录注册页面
+    将仓库中的登录/注册模板代码拷贝到pages/login/index.vue中，登录和注册共用一个页面，通过计算属性来判断当前是登录还是注册页面，进而进行不同的文字渲染。
+    
+    但是配置两个不同的路由，在nuxt.config.js中的layout路由的children数组中再添加两个子路由：
+    ```base
+    {
+      path: '/login',
+      name: 'login',
+      component: resolve(__dirname, 'pages/login')
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: resolve(__dirname, 'pages/login')
+    }
+    ```
+5. 导入剩余页面
+    个人简介profile、设置settings、文章新增修改页editor、文章详情页article
+    
+    ![](./img/17.jpg)
+
+6. 处理顶部导航链接
+    将`a`标签替换成`nuxt-link`标签，`href`属性替换成`to`属性
