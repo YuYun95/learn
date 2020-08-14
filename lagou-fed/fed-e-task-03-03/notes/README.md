@@ -420,6 +420,7 @@ export default {
 
 ### 八、Getter
 Vuex中的Getter相当于Vue中的计算属性
+
 store/index.js
 ```javascript
 import Vue from 'vue'
@@ -534,6 +535,7 @@ export default {
 </script>
 ```
 打开Vue调试工具，可以看到vuex中的mutation变化，每个mutation上面的三个按钮，分别是提交本次mutation、恢复到本次的mutation、时光旅行
+
 ![](./img/03.png)
 
 ### 十、Action
@@ -790,6 +792,7 @@ App.vue
 
 ### 十三、购物车案例
 1. 模板
+
     地址：https://github.com/goddlts/vuex-cart-demo-template
     
     用到了ElementUI、Vuex、Vue-Router
@@ -1233,86 +1236,87 @@ static/data.json
 
 1. 基本路由：pages文件夹下的文件会自动生成路由
 
-Nuxt.js 会依据pages目录结构自动生成vue-router模块的路由配置
+    Nuxt.js 会依据pages目录结构自动生成vue-router模块的路由配置
 
 2. 路由导航
-* a 标签
-    * 它会刷新整个页面，不要使用
-* nuxt-link 组件
-    * https://router.vuejs.org/zh/api/#router-link-props
-    * `<router-link to="/">首页</router-link>`
-* 编程式导航
-    * https://router.vuejs.org/zh/guide/essentials/navigation.html
-    * <button @click="onClick">首页</button>
-    ```base
-    methods: {
-      onClick () {
-        this.$router.push('/')
-      }
-    }
-    ```
+    * a 标签
+        * 它会刷新整个页面，不要使用
+    * nuxt-link 组件
+        * https://router.vuejs.org/zh/api/#router-link-props
+        * `<router-link to="/">首页</router-link>`
+    * 编程式导航
+        * https://router.vuejs.org/zh/guide/essentials/navigation.html
+        * <button @click="onClick">首页</button>
+        ```base
+        methods: {
+          onClick () {
+            this.$router.push('/')
+          }
+        }
+        ```
 3. 动态路由
-* Vue Router动态路由匹配
-    * https://router.vuejs.org/zh/guide/essentials/dynamic-matching.html
-* Nuxt
-    * https://zh.nuxtjs.org/guide/routing/#%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1
-
-pages/user/_id.vue，动态路由参数文件名有下划线开头
-```base
-<template>
-  <div>
-    <h1>User page</h1>
-    <p>{{$route.params.id}}</p>
-  </div>
-</template>
-
-<script>
-export default {
-  name: 'UserPage'
-}
-</script>
-
-```
+    * Vue Router动态路由匹配
+        * https://router.vuejs.org/zh/guide/essentials/dynamic-matching.html
+    * Nuxt
+        * https://zh.nuxtjs.org/guide/routing/#%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1
+    
+    pages/user/_id.vue，动态路由参数文件名有下划线开头
+    ```base
+    <template>
+      <div>
+        <h1>User page</h1>
+        <p>{{$route.params.id}}</p>
+      </div>
+    </template>
+    
+    <script>
+    export default {
+      name: 'UserPage'
+    }
+    </script>
+    
+    ```
 
 4. 嵌套路由
-* Vue Router 嵌套路由
-    * https://router.vuejs.org/zh/guide/essentials/nested-routes.html
-* Nuxt.js嵌套路由
-    * https://zh.nuxtjs.org/guide/routing#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1
-创建内嵌子路由，你需要添加一个 Vue 文件，同时添加一个与该文件**同名的目录**用来存放子视图组件
+    * Vue Router 嵌套路由
+        * https://router.vuejs.org/zh/guide/essentials/nested-routes.html
+    * Nuxt.js嵌套路由
+        * https://zh.nuxtjs.org/guide/routing#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1
+        
+    创建内嵌子路由，你需要添加一个 Vue 文件，同时添加一个与该文件**同名的目录**用来存放子视图组件
 
-Warning: 别忘了在父组件(.vue文件) 内增加 <nuxt-child/> 用于显示子视图内容。
-![](./img/10.jpg)
+    Warning: 别忘了在父组件(.vue文件) 内增加 <nuxt-child/> 用于显示子视图内容。
+    ![](./img/10.jpg)
 
 5. 路由配置
-* 参考文档：https://zh.nuxtjs.org/api/configuration-router
-* 在项目根目录创建nuxt.config.js
-```javascript
-/**
- * Nuxt.js 配置文件
- */
-
-module.exports = {
-  router: {
-    base: '/abc',
-    // routes：就是路由配置表，是个数组
-    // resolve：是解析路由路径的
-    extendRoutes(routes, resolve) {
-      routes.push({
-        name: 'hello',
-        path: '/hello',
-        component: resolve(__dirname, 'pages/about.vue')
-      })
-      routes.push({
-        name: 'custom',
-        path: '*',
-        component: resolve(__dirname, 'pages/404.vue')
-      })
+    * 参考文档：https://zh.nuxtjs.org/api/configuration-router
+    * 在项目根目录创建nuxt.config.js
+    ```javascript
+    /**
+     * Nuxt.js 配置文件
+     */
+    
+    module.exports = {
+      router: {
+        base: '/abc',
+        // routes：就是路由配置表，是个数组
+        // resolve：是解析路由路径的
+        extendRoutes(routes, resolve) {
+          routes.push({
+            name: 'hello',
+            path: '/hello',
+            component: resolve(__dirname, 'pages/about.vue')
+          })
+          routes.push({
+            name: 'custom',
+            path: '*',
+            component: resolve(__dirname, 'pages/404.vue')
+          })
+        }
+      }
     }
-  }
-}
-
-```
+    
+    ```
 ### 五、视图-模板
 Nuxt.js视图-结构
 ![](./img/11.jpg)
@@ -1337,27 +1341,27 @@ Nuxt.js视图-结构
     ```
 
 2. 布局
-Nuxt.js 允许你扩展默认的布局，或在 layout 目录下创建自定义的布局
-
-可通过添加 layouts/default.vue 文件来扩展应用的默认布局
-
-提示: 别忘了在布局文件中添加 <nuxt/> 组件用于显示页面的主体内容
-
-默认布局的源码如下：
-```html
-<template>
-  <nuxt />
-</template>
-```
-可以给所有的页面设置公共布局
-
-![](./img/13.jpg)
-
-可以在组件中通过layout属性修改默认布局组件：
-
-![](./img/14.jpg)
-
-Index页面的布局组件变成了foo，但是about页面还是default，因为about页面没有修改其layout属性，所以默认的布局文件还是default
+    Nuxt.js 允许你扩展默认的布局，或在 layout 目录下创建自定义的布局
+    
+    可通过添加 layouts/default.vue 文件来扩展应用的默认布局
+    
+    提示: 别忘了在布局文件中添加 <nuxt/> 组件用于显示页面的主体内容
+    
+    默认布局的源码如下：
+    ```html
+    <template>
+      <nuxt />
+    </template>
+    ```
+    可以给所有的页面设置公共布局
+    
+    ![](./img/13.jpg)
+    
+    可以在组件中通过layout属性修改默认布局组件：
+    
+    ![](./img/14.jpg)
+    
+    Index页面的布局组件变成了foo，但是about页面还是default，因为about页面没有修改其layout属性，所以默认的布局文件还是default
 
 ### 六、异步数据
 * asyncData方法
@@ -1574,7 +1578,9 @@ export default {
     * `npm init -y`
     * 配置启动脚本
     * 创建 pages 目录，配置初始化页面
+    
 2. 导入样式文件
+
     Real world 的仓库提供了样式文件：https://github.com/gothinkster/realworld-starter-kit/blob/master/FRONTEND_INSTRUCTIONS.md
     ```base
    <!-- Import Ionicon icons & Google Fonts our Bootstrap theme relies on -->
@@ -1662,6 +1668,7 @@ export default {
     然后重启项目，访问项目的根路径，就是Layout组件
     
 4. 导入登录注册页面
+
     将仓库中的登录/注册模板代码拷贝到pages/login/index.vue中，登录和注册共用一个页面，通过计算属性来判断当前是登录还是注册页面，进而进行不同的文字渲染。
     
     但是配置两个不同的路由，在nuxt.config.js中的layout路由的children数组中再添加两个子路由：
@@ -1678,9 +1685,440 @@ export default {
     }
     ```
 5. 导入剩余页面
+
     个人简介profile、设置settings、文章新增修改页editor、文章详情页article
     
     ![](./img/17.jpg)
 
 6. 处理顶部导航链接
+
     将`a`标签替换成`nuxt-link`标签，`href`属性替换成`to`属性
+
+7. 处理导航链接高亮
+
+    在nuxt.config.js配置文件中重新配置导航激活的类名
+    ```base
+   router: {
+       linkActiveClass: 'active'
+   }
+    ```
+   如果路由是包含关系，如：`/editor`路由是`'/'`的子路由，如果此时的页面是editor，那么导航栏中的根路由也会高亮；可以开启精确匹配，在页面链接中添加`exact`属性：`<nuxt-link to='/' exact>Home</nuxt-link>`
+
+8. 封装请求模块
+    * 安装axios，`yarn add axios`
+    * 根目录创建utils/request.js
+    ```javascript
+    /**
+     * 基于 axios 封装的请求模块
+     */
+    
+    import axios from 'axios'
+    
+    const request = axios.create({
+      baseURL: 'https://conduit.productionready.io'
+    })
+    
+    // 请求拦截器
+    
+    // 响应拦截器
+    
+    export default request
+   ```
+
+三、登录注册
+1. 封装登录方法
+
+   api/user.js
+    ```javascript
+    import request from '@/utils/request'
+    
+    // 用户登录
+    export const login = data => {
+      return request({
+        url: '/api/users/login',
+        method: 'POST',
+        data
+      })
+    }
+    
+    // 用户注册
+    export const register = data => {
+      return request({
+        url: '/api/users',
+        method: 'POST',
+        data
+      })
+    }
+
+   ```
+    pages/login/index.vue
+    ```base
+     import { login } from '@/api/user'
+     
+     export default {
+       name: 'LoginIndex',
+     
+       data() {
+         return {
+           user: {
+             email: 'jake@jake.jake',
+             password: 'jakejake'
+           }
+         }
+       },
+     
+       computed: {
+         isLogin() {
+           return this.$route.name === 'login'
+         }
+       },
+     
+       methods: {
+     
+         /**
+          * 提交表单请求登录
+          */
+         async onSubmit() {
+           const { data } = await login({
+             user: this.user
+           })
+           console.log('data', data)
+           // TODO 保存用户的登录状态
+     
+           // 跳转到首页
+           this.$router.push('/')
+         }
+       }
+     }
+    ```
+2. 错误处理
+    * data中存放`errors:{} // 错误信息`
+    * 改写onSubmit方法(try-catch捕获错误)
+    ```base
+     async onSubmit() {
+       try {
+         const { data } = await login({
+           user: this.user
+         })
+         console.log('data', data)
+         // TODO 保存用户的登录状态
+     
+         // 跳转到首页
+         this.$router.push('/')
+       } catch (err) {
+         this.errors = err.response.data.errors
+       }
+     }
+    ```
+    * 遍历输出错误信息
+    ```base
+     <ul class="error-messages">
+       <template v-for="(message, field) in errors">
+         <li v-for="(message, index) in message" :key="index">
+           {{field}} {{message}}
+         </li>
+       </template>
+     </ul>
+    ```
+
+3. 用户注册
+    ```base
+   data () {
+     return {
+       user: {
+         username: '',
+         email: '',
+         password: ''
+       },
+       errors: {} // 错误信息
+     }
+   },
+   methods: {
+       async onSubmit () {
+         try {
+           // 提交表单，请求登录
+           const { data } = this.isLogin ? await login({
+             user: this.user
+           }): await register({
+             user: this.user
+           })
+           console.log('data', data)
+           // TODO 保存用户的登录状态
+   
+           // 跳转到首页
+           this.$router.push('/')
+         }
+         catch (err) {
+           console.log('请求失败', err)
+           console.dir(err)
+           this.errors = err.response.data.errors
+         }
+       }
+   } 
+   ```
+
+4. 解析存储登录状态实现流程
+
+    https://zh.nuxtjs.org/examples/auth-external-jwt
+    
+    https://codesandbox.io/s/github/nuxt/nuxt.js/tree/dev/examples/auth-jwt?from-embed=&file=/store/index.js
+
+5. 将登录状态存储到容器中
+    
+    Nuxt.js已经集成Vuex，只需在根目录创建store目录，Nuxt.js会自动注册处理
+    
+    state：在服务端渲染期间运行都是同一个实例，为了防止数据冲突，务必要把 state 定义成一个函数，返回数据对象
+    
+    store/index.js
+    ```javascript
+      // 在服务端渲染期间运行都是同一个实例
+      // 为了防止数据冲突，务必要把 state 定义成一个函数，返回数据对象
+      export const state = () => {
+        return {
+          user: null
+        }
+      }
+      
+      export const mutations = {
+        setUser (state, data) {
+          state.user = data
+        }
+      }
+      
+      export const actions = {}
+    ```
+   pages/login/index.vue，登录成功后保存用户状态到容器中
+   ```base
+    this.$store.commit('setUser', data.user)
+   ```
+   创建store相关的目录文件后，如果获取不到$store,重新启动项目
+
+6. 登录状态持久化
+    
+    将数据存到store中，只是在内存中，目的是数据共享，页面刷新后数据丢失，所以应该将数据持久化。以前的做法是存到本地存储里（localStorage
+    ），而现在在服务端也要渲染，所以不可以存在本地存储，否则服务端获取不到。正确的做法是存在cookie中，cookie可以随着http请求发送到服务端
+    
+    所以在pages/login/index.vue页面中容器保存完登录状态后，还要将数据存储到Cookie中
+    
+    安装 js-cookie 依赖
+    
+    ```base
+    // 仅在客户端加载js-cookie
+    const Cookie = process.client ? require('js-cookie'): undefined
+    
+    // ...
+    
+    // 保存用户的登录状态
+    this.$store.commit('setUser', data.user)
+    
+    // 为了防止刷新页面数据丢失，数据需要持久化
+    Cookie.set('user', data.user)
+    ```
+   安装 cookieparser 依赖
+   在store/index.js的`actions`中增加`nuxtServerInit`方法，`nuxtServerInit`是Nuxt.js的一个特殊`action`方法,这个`action`会在服务端渲染期间自动调用，作用是初始化容器数据，传递数据给客户端使用
+   ```base
+    nuxtServerInit({ commit }, { req }) {
+      let user = null
+      // 如果请求头中有 cookie
+      if (req.headers.cookie) {
+        // 使用 cookieparser 把 cookie 字符串转为 javascript 对象
+        const parsed = cookieparser.parse(req.headers.cookie)
+        try {
+          user = JSON.parse(parsed.user)
+        } catch (err) {
+            // No valid cookie found
+        }
+      }
+      // 提交 mutation 修改 state 状态
+      commit('setUser', user)
+    }
+   ```
+
+7. 处理导航栏链接展示状态
+    layout/index.vue页面中，增加计算属性，通过user判断用户是否是登录状态：
+    ```base
+    import { mapState } from 'vuex'
+    export default {
+      name: 'layoutIndex',
+      computed: {
+        ...mapState(['user'])
+      }
+    }
+    ```
+   导航栏html分为两部分，登录前和登录后，分别用template分别包裹，根据user判断显示用户信息以及导航菜单，没登录只显示home、sing in、sing up，登录后就显示其他菜单
+
+8. 处理页面访问权限
+    
+    考虑到同构渲染页面的拦截，不能使用路由拦截器，从服务端出发，在进入页面处理前就要处理页面的访问，通过中间件来拦截，Nuxt.js提供一个路由中间件的方案，可以处理服务端路由拦截，也可以处理客户端路由拦截
+    
+    中间件：https://zh.nuxtjs.org/guide/routing/#%E4%B8%AD%E9%97%B4%E4%BB%B6
+
+    中间件允许您定义一个自定义函数运行在一个页面或一组页面渲染之前
+    
+    每一个中间件应放置在 middleware/ 目录。文件名的名称将成为中间件名称 (middleware/auth.js将成为 auth 中间件)。然后给要保护的页面增加middleware属性，值为中间件的文件名
+    
+    中间件执行流程顺序：
+        * nuxt.config.js
+        * 匹配布局
+        * 匹配页面
+    定义两个中间件：
+    
+    middleware/authenticated.js
+    ```base
+     export default function({ store, redirect }) {
+       // 如果用户未登录，则跳转到登录页
+       if (!store.state.user) {
+         return redirect('/login')
+       }
+     }
+    ```
+   middleware/notAuthenticated.js
+   ```base
+   export default function ({ store, redirect }) {
+     // 如果用户已登录，则跳转到首页
+     if (store.state.user) {
+       return redirect('/')
+     }
+   }
+   ```
+    然后给settings/index.vue、profile/index.vue、editor/index页面增加属性middleware值为authenticated
+    ```base
+       export default {
+         name: 'Settings',
+         middleware: 'authenticated'
+       }
+    ```
+    给login/index.vue页面增加属性middleware值为notAuthenticated
+    ```base
+   export default {
+     name: 'LoginPage',
+     middleware: 'notAuthenticated',
+     // ...
+   } 
+    ```
+
+### 四、首页
+登录前首页展示所有的文章列表，文章列表可以分页，登录后显示用户关注的文章；标签列表，根据标签动态生成tab栏
+1. 公共文章列表
+    
+    api/article.js
+    ```base
+     import request from '@/utils/request'
+     
+     // 获取公共文章列表
+     export const getArticles = params => {
+       return request({
+         url: '/api/articles',
+         method: 'GET',
+         params
+       })
+     }
+    ```
+    为了更好地优化SEO，将数据渲染放到服务端进行，数据初始化代码写到asyncData ()函数中，循环渲染文章信息
+    
+    pages/home/index.vue
+    ```base
+     <div v-for="article in articles" :key="article.slug" class="article-preview">
+       <div class="article-meta">
+         <nuxt-link :to="{ name:'profile', params:{ username:article.author.username }}">
+           <img :src="article.author.image" />
+         </nuxt-link>
+         <div class="info">
+           <nuxt-link :to="{name:'profile', params:{ username:article.author.username }}" class="author">
+             {{ article.author.username }}
+           </nuxt-link>
+           <span class="date">{{ article.createAt }}</span>
+         </div>
+         <button class="btn btn-outline-primary btn-sm pull-xs-right" :class="{active: article.favorited}">
+           <i class="ion-heart"></i> {{ article.favoritesCount }}
+         </button>
+       </div>
+       <nuxt-link :to="{name:'article', params: { slug: article.slug }}" class="preview-link">
+         <h1>{{ article.title }}</h1>
+         <p>{{ article.description}}</p>
+         <span>Read more...</span>
+       </nuxt-link>
+     </div>
+     
+     import { getArticles } from '@/api/article'
+     
+     export default {
+       name: 'HomeIndex',
+     
+       async asyncData() {
+         const { data } = await getArticles()
+         return {
+           articles: data.articles,
+           articlesCount: data.articlesCount
+         }
+       }
+     }
+    ```
+
+2. 列表分页
+    * 分页参数的使用
+        
+        limit表示每次展示多少条，offset表示跳过前多少条。所以当点击了页码为page时，offset则为(page - 1) * limit
+        ```base
+         async asyncData() {
+           const page = 1
+           const limit = 2
+           const { data } = await getArticles({
+             limit,
+             offset: (page - 1) * limit
+           })
+           return {
+             articles: data.articles,
+             articlesCount: data.articlesCount
+           }
+         }
+        ```
+    * 分页处理
+    ```base
+     <nav>
+       <ul class="pagination">
+         <li class="page-item" :class="{active: item === page}" v-for="item in totalPage" :key="item">
+           <nuxt-link class="page-link" :to="{ name: 'home', query: { page: item }}">
+             {{item}}
+           </nuxt-link>
+         </li>
+       </ul>
+     </nav>
+   
+     import { getArticles } from '@/api/article'
+     export default {
+       name: "HomePage",
+       watchQuery: ['page'],
+       async asyncData ({ query }) {
+         const page = Number.parseInt(query.page || 1)
+         const limit = 20
+         const { data } = await getArticles({
+           limit,
+           offset: (page - 1) * limit
+         })
+         return {
+           limit,
+           page,
+           articles: data.articles,
+           articlesCount: data.articlesCount
+         }
+       },
+       computed: {
+         totalPage () {
+           return Math.ceil(this.articlesCount / this.limit)
+         }
+       }
+     };
+    ```
+   通过计算属性totalPage获取到总页面数。asyncData服务端渲染时通过URL上的query中的page参数获取到页码
+
+    循环生成的页码标签使用nuxt-link标签，在客户端进行路由切换。而在前端路由变化之前，会执行asyncData方法更新数据。但是Nuxt中默认情况下query参数的变化不能引起asyncData代码的执行，所以我们可以通过使用watchQuery参数监听到路由的变化，触发asyncData的调用
+    
+    https://zh.nuxtjs.org/api/pages-watchquery
+    
+    使用watchQuery属性可以监听参数字符串的更改。 如果定义的字符串发生变化，将调用所有组件方法(asyncData, fetch, validate, layout, ...)。 为了提高性能，默认情况下禁用
+    ```base
+     export default {
+       watchQuery: ['page']
+     }
+    ```
