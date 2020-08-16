@@ -2122,3 +2122,247 @@ export default {
        watchQuery: ['page']
      }
     ```
+
+3. 文章标签列表
+
+    api/tag.js
+    ```base
+     import request from '@/utils/request'
+     
+     // 获取文章标签列表
+     export const getTags = () => {
+       return request({
+         method: 'GET',
+         url: '/api/tags',
+       })
+     }
+    ```
+   
+   pages/home/index.vue
+   ```base
+    <div class="tag-list">
+                  <a
+                    href=""
+                    class="tag-pill tag-default"
+                    v-for="item in tags"
+                    :key="item"
+                  >{{item}}</a>
+                </div>
+   
+   import { getArticles } from '@/api/article'
+   import { getTags } from '@/api/tag'
+   export default {
+     name: "HomePage",
+     watchQuery: ['page'],
+     async asyncData ({ query }) {
+       const page = Number.parseInt(query.page || 1)
+       const limit = 20
+       const { data } = await getArticles({
+         limit,
+         offset: (page - 1) * limit
+       })
+       const { data: tagData } = await getTags()
+       return {
+         limit,
+         page,
+         articles: data.articles,
+         articlesCount: data.articlesCount,
+         tags: tagData.tags
+       }
+     },
+     computed: {
+       totalPage () {
+         return Math.ceil(this.articlesCount / this.limit)
+       }
+     }
+   }
+   ```
+
+4. 优化并行异步任务
+    
+    将两个没有依赖关系的异步任务通过使用`Promise.all`并行执行，提高请求速度。并发执行的速度大于串行执行的速度
+    ```base
+    import { getArticles } from '@/api/article'
+    import { getTags } from '@/api/tag'
+    export default {
+      name: "HomePage",
+      watchQuery: ['page'],
+      async asyncData ({ query }) {
+        const page = Number.parseInt(query.page || 1)
+        const limit = 20
+        const [articleRes, tagRes] = await Promise.all([
+          getArticles({
+            limit,
+            offset: (page - 1) * limit
+          }),
+          getTags()
+        ])
+        const { articles, articlesCount } = articleRes.data
+        const { tags } = tagRes.data
+        return {
+          limit,
+          page,
+          articles,
+          articlesCount,
+          tags
+        }
+      },
+      computed: {
+        totalPage () {
+          return Math.ceil(this.articlesCount / this.limit)
+        }
+      }
+    }
+    ```
+
+5. 处理标签列表链接和数据
+
+    ```base
+     <--分页-->
+     <div class="tag-list">
+       <nuxt-link
+               :to="{name: 'home',query: {tag: item}}"
+               class="tag-pill tag-default"
+               v-for="item in tags"
+               :key="item"
+       >{{item}}
+       </nuxt-link>
+     </div>
+    ```
+   ```base
+    watchQuery: ['page', 'tag'],// 此处监听query中tag变化
+      
+    // ...
+      
+     
+    getArticles({
+        limit,
+        offset: (page - 1) * limit,
+        tag: query.tag, // 此处增加tag参数
+      }),
+   ```
+
+6. 处理文章导航选项卡
+    ```base
+    <ul class="nav nav-pills outline-active">
+      <li v-if="user" class="nav-item" :class="{active: tab === 'your_feed'}">
+        <nuxt-link
+                   class="nav-link"
+                   :to="{
+                        name: 'home',
+                        query: {
+                        tab: 'your_feed'
+                        }
+                        }"
+                   exact
+                   >Your Feed</nuxt-link>
+      </li>
+      <li class="nav-item" :class="{active: tab === 'global_feed'}">
+        <nuxt-link
+                   class="nav-link"
+                   :to="{
+                        name: 'home'
+                        }"
+                   exact
+                   >Global Feed</nuxt-link>
+      </li>
+      <li v-if="tag" class="nav-item" :class="{active: tab === 'tag'}">
+        <nuxt-link
+                   class="nav-link"
+                   :to="{
+                        name: 'home',
+                        query: {
+                        tab: 'tag',
+                        tag: tag
+                        }
+                        }"
+                   exact
+                   > # {{ tag }}</nuxt-link>
+      </li>
+    </ul>
+    
+    <div class="tag-list">
+      <nuxt-link
+                 :to="{
+                      name: 'home',
+                      query: {
+                      tag: item,
+                      tab: 'tag'
+                      }
+                      }"
+                 class="tag-pill tag-default"
+                 v-for="item in tags"
+                 :key="item"
+                 >{{item}}</nuxt-link>
+    </div>
+    ```
+    ```base
+     import { getArticles } from '@/api/article'
+     import { getTags } from '@/api/tag'
+     import { mapState } from 'vuex'
+     export default {
+       name: "HomePage",
+       watchQuery: ['page', 'tag', 'tab'], // 这里增加了tab的监听
+       async asyncData ({ query }) {
+         const page = Number.parseInt(query.page || 1)
+         const limit = 20
+         const tab = query.tab || 'global_feed' // 将tab存到data里
+         const tag = query.tag // 将tag存到data里
+         const [articleRes, tagRes] = await Promise.all([
+           getArticles({
+             limit,
+             offset: (page - 1) * limit,
+             tag: query.tag
+           }),
+           getTags()
+         ])
+         const { articles, articlesCount } = articleRes.data
+         const { tags } = tagRes.data
+         return {
+           limit,
+           page,
+           articles,
+           articlesCount,
+           tags,
+           tab,
+           tag
+         }
+       },
+       computed: {
+         totalPage () {
+           return Math.ceil(this.articlesCount / this.limit)
+         },
+         ...mapState(['user']) // 用来判断用户是否登录
+       }
+     };
+    ```
+   
+7. 展示用户关注的文章列表
+    ```base
+     // 获取用户关注的文章列表
+     export const getYourFeedArticles = params => {
+       return request({
+         headers: {
+           // 添加用户身份，数据格式：Token空格Token数据
+           Authorization: 'Token eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTA4NjU2LCJ1c2VybmFtZSI6ImppYWlsaW5nIiwiZXhwIjoxNjAyMDcyNDkyfQ.Uoz9baKbVzE8oDpLFzAsmhdIPqLnfDCLmEzU7A8Cfog'
+         },
+         method: 'GET',
+         url: '/api/articles/feed',
+         params
+       })
+     }
+    ```
+   pages/home/index.vue改写部分
+    ```base
+     const loadArticles = tab !== 'your_feed'
+     ? getArticles
+     : getYourFeedArticles
+     const [articleRes, tagRes] = await Promise.all([
+       loadArticles({
+         limit,
+         offset: (page - 1) * limit,
+         tag: query.tag
+       }),
+       getTags()
+     ])
+    ```
