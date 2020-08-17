@@ -2366,3 +2366,486 @@ export default {
        getTags()
      ])
     ```
+
+8. 统一设置用户Token
+    
+    axios请求拦截器
+    
+    https://github.com/axios/axios#interceptors
+    
+    Nuxt.js插件：https://zh.nuxtjs.org/guide/plugins#%E6%B3%A8%E5%85%A5-context
+    
+    新建文件plugins/request.js
+    ```base
+    /**
+     * 基于 axios 封装的请求模块
+     */
+    
+    import axios from 'axios'
+    
+    // 创建请求对象
+    export const request = axios.create({
+      baseURL: 'https://conduit.productionready.io'
+    })
+    
+    // 通过插件机制获取上下文对象（query、params、req、res、app、store...）
+    // 插件导出函数必须作为 default 成员
+    export default ({ store }) => {
+    
+      // 请求拦截器
+      // Add a request interceptor
+      // 任何请求都要经过请求拦截器
+      // 我们可以在请求拦截器中做一些公共的业务处理，例如统一设置 token
+      request.interceptors.request.use(config => {
+        // Do something before request is sent
+        // 请求就会经过这里
+        const { user } = store.state
+    
+        if (user && user.token) {
+          config.headers.Authorization = `Token ${user.token}`
+        }
+    
+        // 返回 config 请求配置对象
+        return config
+      }, error => {
+        // 如果请求失败（此时请求还没有发出去）就会进入这里
+        return Promise.reject(error)
+      })
+    }
+    ```
+    在nuxt.config.js
+    ```base
+    module.exports = {
+     // 注册插件
+     plugins:[ '~/plugins/request.js' ] // 波浪线开头表示从根路径出发
+    }
+    ```
+    删除原本的utils/request.js文件，将原本api文件夹里面的文件引用的utils/request.js文件全部改为plugins/request.js
+9. 文章发布时间格式设置
+
+    Dayjs是一种更轻量级的日期插件，跟Moment的API用法相同，包含Moment最核心的功能
+    
+    Dayjs的GitHub仓库地址：https://github.com/iamkun/dayjs/blob/dev/docs/zh-cn/README.zh-CN.md
+    
+    在dayjs官网上查看日期格式：https://day.js.org/docs/en/display/format
+    
+    安装：`yarn add dayjs`
+    
+    新建文件plugins/dayjs.js
+    ```base
+    import Vue from 'vue'
+    import dayjs from 'dayjs'
+    
+    // {{ 表达式 | 过滤器 }}
+    Vue.filter('date', (value, format = 'YYYY-MM-DD HH:mm:ss') => {
+      return dayjs(value).format(format)
+    })
+    ```
+   去nuxt.config.js里面注册date过滤器插件
+   
+   ```base
+   module.exports = {
+     // ... 
+     
+   	// 注册插件
+     plugins: [
+       '~/plugins/request.js', // 波浪线开头表示从根路径触发
+       '~/plugins/dayjs.js',
+     ]
+   }
+   ```
+   对page/home/index.vue里面的日期使用过滤器
+   
+   <span class="date">{{article.createdAt | date('MMM DD, YYYY')}}</span>
+
+10. 文章点赞
+    
+    api/article.js增加两个按需导出的方法，处理文章点赞和取消点赞功能
+    ```base
+    // 添加点赞
+    export const addFavorite = slug => {
+      return request({
+        method: 'POST',
+        url: `/api/articles/${slug}/favorite`,
+      })
+    }
+    
+    // 取消点赞
+    export const deleteFavorite = slug => {
+      return request({
+        method: 'DELETE',
+        url: `/api/articles/${slug}/favorite`,
+      })
+    }
+    ```
+    视图中的button按钮添加事件
+    ```base
+    <button
+            class="btn btn-outline-primary btn-sm pull-xs-right"
+            :class="{active: article.favorited}"
+            @click="onFavorite(article)"
+            :disabled="article.favoriteDisabled"
+            >
+      <i class="ion-heart"></i> {{article.favoritesCount}}
+    </button>
+    
+    import { getArticles, getYourFeedArticles, addFavorite, deleteFavorite } from '@/api/article'
+    
+    // 主动给article增加一个favoriteDisabled属性
+    // 用来控制用户无法频繁点击，避免因为网络原因导致视图和数据库的点赞数不一致
+    // 下面这句话写在asyncData方法的return之前
+    articles.forEach(article => article.favoriteDisabled = false)
+    
+    methods: {
+      async onFavorite (article) {
+        article.favoriteDisabled = true // 禁用点击
+        if(article.favorited) {
+          // 取消点赞
+          await deleteFavorite(article.slug)
+          article.favorited = false
+          article.favoritesCount -= 1
+        } else {
+          // 添加点赞
+          await addFavorite(article.slug)
+          article.favorited = true
+          article.favoritesCount += 1
+        }
+        article.favoriteDisabled = false // 允许点击
+      }
+    }
+    ```
+### 五、文章详情
+展示文章详情内容、关注作者、点赞和取消点赞、评论功能
+1. 展示文章基本信息
+    在api/article.js中增加一个获取文章详情的方法
+    ```base
+    // 获取文章详情
+    export const getArticle = slug => {
+      return request({
+        method: 'GET',
+        url: `/api/articles/${slug}`,
+      })
+    }
+    ```
+   pages/article/index.vue
+   ```base
+   <h1>{{article.title}}</h1>
+   
+   <div class="row article-content">
+     <div class="col-md-12">
+       {{ article.body }}
+     </div>
+   </div>
+   
+   import { getArticle } from '@/api/article'
+   export default {
+     name: 'ArticleIndx',
+     async asyncData ({ params }) {
+       const { data } = await getArticle(params.slug)
+       return {
+         article: data.article
+       }
+     }
+   }
+   ```
+2. 文章详情 - markdown转HTML
+
+    可以使用slug为markdown-ddof1g的文章测试
+    
+    先安装处理markdown的依赖markdown-it `yarn add markdown-it`
+    
+    然后new一个 MarkdownIt的实例，使用实例的render方法转化markdown为HTML
+    ```base
+    <div class="row article-content">
+      <div class="col-md-12" v-html="article.body">
+      </div>
+    </div>
+    
+    import MarkdownIt from 'markdown-it'
+    import { getArticle } from '@/api/article'
+    export default {
+      name: 'ArticleIndx',
+      async asyncData ({ params }) {
+        const { data } = await getArticle(params.slug)
+        const { article } = data
+        const md = new MarkdownIt()
+        article.body = md.render(article.body)
+        return {
+          article: article
+        }
+      }
+    }
+    ```
+3. 展示文章作者相关信息
+    Pages/article/components/article-meta.vue
+    ```base
+    <template>
+      <div class="article-meta">
+        <nuxt-link
+          :to="{name: 'profile', params:{username:article.author.username}}">
+          <img :src="article.author.image" />
+        </nuxt-link>
+        <div class="info">
+          <nuxt-link
+            class="author"
+            :to="{name: 'profile',
+            params:{username:article.author.username}}"
+          >
+            {{article.author.username}}
+          </nuxt-link>
+          <span class="date">{{article.createdAt | date('MMM DD, YYYY')}}</span>
+        </div>
+        <button
+          :class="{active: article.author.following}"
+          class="btn btn-sm btn-outline-secondary">
+          <i class="ion-plus-round"></i>
+          &nbsp;
+          Follow Eric Simons <span class="counter">(10)</span>
+        </button>
+        &nbsp;&nbsp;
+        <button
+          :class="{active: article.favorited}"
+          class="btn btn-sm btn-outline-primary">
+          <i class="ion-heart"></i>
+          &nbsp;
+          Favorite Post <span class="counter">(29)</span>
+        </button>
+      </div>
+    </template>
+    
+    <script>
+    export default {
+      name: 'ArticleMeta',
+    
+      props: {
+        article: {
+          type: Object,
+          required: true
+        }
+      }
+    }
+    </script>
+    ```
+    pages/article/index.vue
+    ```base
+    <ArticleMeta :article="article"/>
+    ```
+
+4. 设置页面meta优化SEO
+    
+    https://zh.nuxtjs.org/guide/views/#html-%E5%A4%B4%E9%83%A8
+    
+    https://zh.nuxtjs.org/guide/views/#%E4%B8%AA%E6%80%A7%E5%8C%96%E7%89%B9%E5%AE%9A%E9%A1%B5%E9%9D%A2%E7%9A%84-meta-%E6%A0%87%E7%AD%BE
+    
+    https://zh.nuxtjs.org/api/pages-head/
+    
+    Nuxt 在 head 方法里可通过 this 关键字来获取组件的数据，你可以利用页面组件的数据来设置个性化的 meta 标签。
+    
+    注意: 为了避免子组件中的 meta 标签不能正确覆盖父组件中相同的标签而产生重复的现象，建议利用 hid 键为 meta 标签配一个唯一的标识编号
+
+    Pages/article/index.vue
+    ```base
+    head() {
+      return {
+        title: `${this.article.title} - RealWorld`,
+        meta: [
+          {
+            hid: 'description',
+            name: 'description',
+            content: this.article.description
+          }
+        ]
+      }
+    }
+    ```
+
+5. 通过客户端渲染展示评论列表
+
+    api/article.js
+    ```base
+    // 获取文章评论
+    export const getComments = slug => {
+      return request({
+        method: 'GET',
+        url: `/api/articles/${slug}/comments`,
+      })
+    }
+    ```
+    pages/article/components/article-comment.vue
+    ```base
+    <template>
+      <div>
+        <form class="card comment-form">
+          <div class="card-block">
+            <textarea class="form-control" placeholder="Write a comment..." rows="3"></textarea>
+          </div>
+          <div class="card-footer">
+            <img src="http://i.imgur.com/Qr71crq.jpg" class="comment-author-img" />
+            <button class="btn btn-sm btn-primary">
+              Post Comment
+            </button>
+          </div>
+        </form>
+        
+        <div class="card" v-for="comment in comments" :key="comment.id">
+          <div class="card-block">
+            <p class="card-text">{{comment.body}}</p>
+          </div>
+          <div class="card-footer">
+            <nuxt-link :to="{
+              name: 'profile',
+              params: {
+                username: comment.author.username
+              }
+            }" class="comment-author">
+              <img :src="comment.author.image" class="comment-author-img" />
+            </nuxt-link>
+            &nbsp;
+            <nuxt-link :to="{
+              name: 'profile',
+              params: {
+                username: comment.author.username
+              }
+            }" class="comment-author">{{comment.author.username}}</nuxt-link>
+            <span class="date-posted">{{comment.createdAt | date('MMM DD, YYYY')}}</span>
+          </div>
+        </div>
+    
+      </div>
+    </template>
+    
+    <script>
+    import { getComments } from '@/api/article'
+    export default {
+      name: 'ArticleComment',
+      props: {
+        article: {
+          type: Object,
+          required: true
+        }
+      },
+      data () {
+        return {
+          // 文章列表
+          comments: []
+        }
+      },
+      async mounted () {
+        // 不要求SEO，请求数据放到mounted里面，只走客户端渲染
+        const { data } = await getComments(this.article.slug)
+        this.comments = data.comments
+      }
+    }
+    </script>
+    ```
+   pages/article/index.vue
+   ```base
+   <ArticleComment :article="article" />
+   ```
+
+### 六、Nuxt.js 发布部署
+1. 使用命令打包
+    https://zh.nuxtjs.org/guide/commands
+    
+    | 命令 | 描述 |
+    | ---- | ---- |
+    | nuxt | 启动一个热加载的 Web 服务器（开发模式） localhost:3000 |
+    | nuxt build | 利用 webpack 编译应用，压缩 JS 和 CSS 资源（发布用） |
+    | nuxt start | 以生产模式启动一个 Web 服务器 (需要先执行nuxt build) |
+    | nuxt generate | 编译应用，并依据路由配置生成对应的 HTML 文件 (用于静态站点的部署) |
+    
+    可以将这些命令添加至 package.json
+    ```base
+    "scripts": {
+      "dev": "nuxt",
+      "build": "nuxt build",
+      "start": "nuxt start"
+    }
+    ```
+    先执行`yarn build`，再执行`yarn start`
+
+2. 最简单的部署方式
+    * 配置 Host + Port
+    ```base
+    // nuxt.config.js
+    server:{
+        host: '0.0.0.0',
+        port: 3000
+      },
+    ```
+    * 压缩发布
+        * .nuxt 文件夹（Nuxt打包生成的资源文件）
+        * static 文件夹（项目中的静态资源）
+        * nuxt.config.js（给Nuxt服务来使用的）
+        * package.json（因为在服务端要安装第三方包）
+        * yarn.lock（因为在服务端要安装第三方包）
+    * 把发布包传到服务端
+        * ssh root@（服务器ip地址）
+        * 选择一个目录创建一个realworld-nuxtjs文件夹：`mkdir realworld-nuxtjs`
+        * `cd realworld-nuxtjs`进入这个文件夹，然后使用pwd命令打印当前文件夹路径
+        * 回到本地，使用scp命令往服务器传压缩包: 本地压缩包路径地址 root@172.157.15.1:/服务器路径地址
+        * 也可以使用ftp等工具把压缩包、项目文件传到服务器
+    * 解压
+        * 回到服务器的`realworld-nuxtjs`文件夹里，此时已经有了一个`realworld-nuxtjs.zip`文件，执行`unzip realworld-nuxtjs.zip`对压缩包解压
+        * 然后使用`ls -al`查看解压后的所有文件
+    * 安装依赖
+        * 执行`yarn`
+    * 启动服务
+        * 执行`yarn start`启动服务
+        * 访问：http://xxxx.com:端口
+
+3. 使用PM2在后台启动应用
+    * Github仓库地址：https://github.com/Unitech/pm2
+    * 官方文档：https://pm2.io
+    * 在生产环境上安装：npm install --global pm2
+    * 启动：pm2 start 脚本路径，即：pm2 start npm -- start，我的服务器上使用pm2起yarn貌似有点问题，改为npm就成功了
+    * 访问：http://xxx.com:端口
+    
+    PM2常用命令
+    
+    | 命令 | 说明 |
+    | ---- | ---- |
+    | pm2 list | 查看应用列表 |
+    | pm2 start | 启动应用 |
+    | pm2 stop | 停止应用 |
+    | pm2 reload | 重载应用 |
+    | pm2 restart | 重启应用 |
+    | pm2 delete | 删除应用 |
+
+4. 自动化部署
+    
+    * 传统的部署方式
+        * 更新
+            * 本地构建
+            * 发布
+        * 更新
+            * 本地构建
+            * 发布
+        * ....
+    * 现代化的部署方式(CI/CD)【持续集成/持续部署】
+    ![](./img/18.jpg)
+
+5. 使用GitHub Actions实现自动部署
+    * CI/CD服务：
+        * Jenkins
+        * Gitlab CI
+        * Github Actions
+        * Travis CI
+        * Circle CI
+        * ....
+    * 准备环境
+        * Linux服务器
+        * 把代码提交到GitHub远程仓库
+    * 配置GitHub Action Token
+        * 生成：https://github.com/settings/tokens
+        * 头像 -> Settings -> Developer settings -> Personal access tokens -> Generate new Token
+        * Token名称填写`Tocken`，`Select scopes`勾选repo，然后滚动到网页最下面点击提交按钮。生成了Token，复制保存（注意该Token只显示一次，忘记了就再生成）
+        ![](./img/19.jpg)
+        
+        * 配置到项目的Secrets中：进入项目-> Settings -> Secrets -> New secret
+            * Name：建议和刚才生成Token保持一致
+            * Valeu：为刚才生成的Token
+        ![](./img/20.jpg)
+    * 配置 GitHub Action 执行脚本
+        * 在项目根目录创建.github/workflows目录
+        * 下载main.yml到workflows目录中
