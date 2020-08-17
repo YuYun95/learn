@@ -2848,4 +2848,33 @@ export default {
         ![](./img/20.jpg)
     * 配置 GitHub Action 执行脚本
         * 在项目根目录创建.github/workflows目录
-        * 下载main.yml到workflows目录中
+        * 下载main.yml到workflows目录中：https://github.com/lipengzhou/realworld-nuxtjs/edit/master/.github/workflows/main.yml
+        * 修改配置
+            * 修改对应的服务器项目路径
+            * wget后面的下载地址改为自己的仓库地址
+            * 在GitHub仓库里配置HOST、USERNAME、PASSWORD、PORT
+            ![](./img/20.jpg)
+        * 配置pm2配置文件
+        ```base
+        {
+          "apps": [
+            {
+              "name": "RealWorld",
+              "script": "npm",
+              "args": "start"
+            }
+          ]
+        }
+        ```
+        * 提交更新
+            * `git add .`
+            * `git commit -m "feat: 第一次发布部署"`
+            * `git push`(此时只是推送了提交记录，并不会触发自动化构建部署)
+            * `git add .`
+            * `git tag v0.1.0`(通过tag打版)
+            * `git tag`(查看版本)
+            * `git push origin v0.1.0`(把本地标签推送到远程仓库，会触发自动构建部署)
+        * 查看自动部署状态
+            * GitHub仓库-> Actions
+        * 访问网站
+        * 提交更新
