@@ -2876,5 +2876,7 @@ export default {
             * `git push origin v0.1.0`(把本地标签推送到远程仓库，会触发自动构建部署)
         * 查看自动部署状态
             * GitHub仓库-> Actions
+            * 服务器需要存在`main.yml`配置文件中配置的项目路径，否则会Deploy失败
+        ![](./img/22.jpg)
         * 访问网站
         * 提交更新
