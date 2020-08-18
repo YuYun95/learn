@@ -2421,6 +2421,7 @@ export default {
     }
     ```
     删除原本的utils/request.js文件，将原本api文件夹里面的文件引用的utils/request.js文件全部改为plugins/request.js
+    
 9. 文章发布时间格式设置
 
     Dayjs是一种更轻量级的日期插件，跟Moment的API用法相同，包含Moment最核心的功能
@@ -2514,6 +2515,7 @@ export default {
       }
     }
     ```
+    
 ### 五、文章详情
 展示文章详情内容、关注作者、点赞和取消点赞、评论功能
 1. 展示文章基本信息
@@ -2742,7 +2744,112 @@ export default {
    ```base
    <ArticleComment :article="article" />
    ```
+6. 登录评论
 
+    pages/article/components/article-unlogin.vue
+    ```base
+    <template>
+      <div>
+        <div class="col-xs-12 col-md-8 offset-md-2">
+          <div show-authed="true" style="display: none;">
+            <list-errors from="$ctrl.commentForm.errors" class="ng-isolate-scope"
+            ><ul class="error-messages ng-hide" ng-show="$ctrl.errors">
+              <!-- ngRepeat: (field, errors) in $ctrl.errors -->
+            </ul>
+            </list-errors>
+            <form
+              class="card comment-form ng-pristine ng-valid"
+              ng-submit="$ctrl.addComment()"
+            >
+              <div class="card-block">
+                <textarea
+                  class="form-control ng-pristine ng-untouched ng-valid ng-empty"
+                  placeholder="Write a comment..."
+                  rows="3"
+                  ng-model="$ctrl.commentForm.body"
+                >
+                </textarea>
+              </div>
+              <div class="card-footer">
+                <img class="comment-author-img" />
+                <button class="btn btn-sm btn-primary" type="submit">
+                  Post Comment
+                </button>
+              </div>
+            </form>
+          </div>
+    
+          <p show-authed="false" style="display: inherit;">
+            <nuxt-link to="/login">Sign in</nuxt-link> or
+            <nuxt-link to="/register">sign up</nuxt-link> to add comments
+            on this article.
+          </p>
+    
+        </div>
+      </div>
+    </template>
+    <script>
+    export default {
+      name: 'ArticleUnlogin'
+    }
+    </script>
+    ```
+    pages/article/index.vue
+    ```base
+    <article-comment v-if="user" :article="article" />
+    <article-unlogin v-else />
+    
+    import { mapState } from 'vuex'
+    import ArticleUnlogin from './components/article-unlogin'
+    
+    components: { ArticleUnlogin},
+    
+    computed: {
+      ...mapState(['user'])
+    }
+    ```
+
+7. 评论
+    
+    pages/article/components/article-comment.vue
+    ```base
+    <form class="card comment-form">
+      <div class="card-block">
+        <textarea v-model="comment" class="form-control" placeholder="Write a comment..." rows="3"></textarea>
+      </div>
+      <div class="card-footer">
+        <img :src="user.image" class="comment-author-img" />
+        <button class="btn btn-sm btn-primary" @click.prevent="handleAddComment">
+          Post Comment
+        </button>
+      </div>
+    </form>
+    
+    import { mapState } from 'vuex'
+    import { addComment } from '@/api/article'
+    
+    computed: {
+      ...mapState(['user'])
+    },
+    methods: {
+      async handleAddComment() {
+        const { data } = await addComment(this.article.slug, this.comment)
+        this.comments.unshift(data.comment)
+        this.comment = ''
+      }
+    }
+    ```
+    api/article.js
+    ```base
+    // 添加评论
+    export const addComment = (slug, body) => {
+      return request({
+        method: 'post',
+        url: `/api/articles/${slug}/comments`,
+        data: { body }
+      })
+    }
+    ```
 ### 六、Nuxt.js 发布部署
 1. 使用命令打包
     https://zh.nuxtjs.org/guide/commands
