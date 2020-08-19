@@ -3657,7 +3657,7 @@ export default {
         
         * 配置到项目的Secrets中：进入项目-> Settings -> Secrets -> New secret
             * Name：建议和刚才生成Token保持一致
-            * Valeu：为刚才生成的Token
+            * Value：为刚才生成的Token
             
         ![](./img/20.jpg)
         
