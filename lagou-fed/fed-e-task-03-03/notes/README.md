@@ -4,6 +4,7 @@
     * state，驱动应用的数据源
     * view，以声明方式将 state 映射到视图
     * actions，响应在 view 上的用户输入导致的状态变化
+    
     ![](./img/state.jpg)
 
 ### 二、组件间通信方式
@@ -908,9 +909,11 @@ import Vuex from '../myVuex'
     * 首屏渲染时间长
     * 不利于SEO
 * 借鉴传统的服务端渲染
+
 ![](./img/05.jpg)
 
 * 客户端激活为SPA
+
 ![](./img/06.jpg)
 
 * 同构应用
@@ -925,6 +928,7 @@ import Vuex from '../myVuex'
     * 现代化的服务端渲染（同构渲染）
 ### 二、传统的服务端渲染
 * 案例
+
 ![](./img/07.jpg)
 
 index.js
@@ -1001,6 +1005,7 @@ index.html
 
 ### 三、客户端渲染（CSR）
 * 服务端渲染的缺点，随着Ajax技术的普及得到了有效的解决，Ajax使用客户端动态获取数据成为可能，因此服务端渲染工作来到了客户端
+
 ![](./img/08.jpg)
 
 以Vue.js项目为例系统了解客户端渲染流程
@@ -1059,6 +1064,7 @@ http.get('http://localhost:8080/', res => {
         * 在客户端再执行一次，用于接管页面交互
     * 核心解决SEO和首屏渲染慢的问题
     * 拥有传统服务端渲染的优点，也有客户端渲染的优点
+    
 ![](./img/09.jpg)
 
 2. 如何实现同构渲染？
@@ -1286,6 +1292,7 @@ static/data.json
     创建内嵌子路由，你需要添加一个 Vue 文件，同时添加一个与该文件**同名的目录**用来存放子视图组件
 
     Warning: 别忘了在父组件(.vue文件) 内增加 <nuxt-child/> 用于显示子视图内容。
+    
     ![](./img/10.jpg)
 
 5. 路由配置
@@ -1319,6 +1326,7 @@ static/data.json
     ```
 ### 五、视图-模板
 Nuxt.js视图-结构
+
 ![](./img/11.jpg)
 
 1. 模板
@@ -1606,6 +1614,7 @@ export default {
     国内CDN网站：https://www.jsdelivr.com/，搜索ionicons，选择我们需要的版本的css的min版本，复制CDN链接，替换到link中
     
     ![](./img/15.png)
+    
     第二个link的CDN国内支持访问，就不用本地化了
     
     第三个link的CDN也是在国外，需要本地化，然而它不含字体文件，所以可以直接另存到本地，我们另存到了static/index.css
@@ -2850,6 +2859,701 @@ export default {
       })
     }
     ```
+
+8. 发布文章
+    
+    pages/editor/index.vue
+    ```base
+    <template>
+      <div class="editor-page">
+        <div class="container page">
+          <div class="row">
+            <div class="col-md-10 offset-md-1 col-xs-12">
+              <ul class="error-messages" v-if="errors">
+                <div v-for="(value, field) in errors" :key="field" class="ng-scope">
+                  <li v-for="error in value" :key="error" class="ng-binding ng-scope">
+                    {{field}} {{error}}
+                  </li>
+                </div>
+              </ul>
+              <form>
+                <fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="article.title" type="text" class="form-control form-control-lg"
+                           placeholder="Article Title">
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="article.description" type="text" class="form-control"
+                           placeholder="What's this article about?">
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <textarea v-model="article.body" class="form-control" rows="8"
+                              placeholder="Write your article (in markdown)"></textarea>
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="tag" type="text" class="form-control" placeholder="Enter tags"
+                           @keyup.enter="handlerEnterTag">
+                    <div class="tag-list">
+                      <span v-for="(tag, index) in article.tagList" :key="index" class="tag-default tag-pill">
+                      <i class="ion-close-round" @click="handlerRemoveTag(index)"></i>
+                      {{tag}}
+                    </span>
+                    </div>
+                  </fieldset>
+                  <button class="btn btn-lg pull-xs-right btn-primary" type="button" @click.prevent="handleSubmit">
+                    Publish Article
+                  </button>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    
+    <script>
+    import { createArticle } from '@/api/editor'
+    
+    export default {
+      name: 'EditorIndex',
+    
+      // 在路由匹配组件渲染之前会执行中间件处理
+      middleware: 'authenticated',
+    
+      data() {
+        return {
+          errors: null,
+          tag: '',
+          article: {
+            title: '',
+            description: '',
+            body: '',
+            tagList: []
+          }
+        }
+      },
+    
+      methods: {
+        handlerEnterTag() {
+          this.article.tagList.push(this.tag)
+          this.tag = ''
+        },
+    
+        handlerRemoveTag(index) {
+          this.article.tagList.splice(index, 1)
+        },
+    
+        async handleSubmit() {
+          try {
+            const { data } = await createArticle(this.article)
+            this.$router.push(`/article/${data.article.slug}`)
+          } catch (e) {
+            this.errors = e.response.data.errors
+          }
+        }
+      }
+    }
+    </script>
+    ```
+   api/article.js
+   ```base
+   // 发布文章
+   export const createArticle = article => {
+     return request({
+       url: '/api/articles',
+       method: 'post',
+       data: { article }
+     })
+   }
+   ```
+  
+9. 文章详情页follow
+    pages/article/components/article-meta.vue
+    ```base
+    <button
+            :class="{active: article.author.following}"
+            class="btn btn-sm btn-outline-secondary"
+            @click="handlerFollow(article.author.username)"
+          >
+            <i class="ion-plus-round"></i>
+            &nbsp;
+            {{article.author.following ? 'Unfollow' : 'Follow'}} {{article.author.username}}
+          </button>
+          &nbsp;&nbsp;
+          <button
+            :class="{active: article.favorited}"
+            class="btn btn-sm btn-outline-primary"
+            @click="onFavorite"
+          >
+            <i class="ion-heart"></i>
+            &nbsp;
+            {{article.favorited ? 'UnFavorite Article' : 'Favorite Article'}} <span class="counter">({{article.favoritesCount
+            }})</span>
+          </button>
+   
+   
+   import { followAuthor, unFollow, addFavorite, deFavorite } from '@/api/article'
+   
+   methods: {
+       async handlerFollow(author) {
+         const isFollow = this.article.author.following
+         if (isFollow) {
+           try {
+             const { data } = await unFollow(author)
+             this.$emit('updata', false)
+           } catch (e) {
+           }
+         } else {
+           try {
+             const { data } = await followAuthor(author)
+             this.$emit('updata', true)
+           } catch (e) {
+           }
+         }
+       },
+   
+       async onFavorite(){
+         const article = this.article
+         if (article.favorited) {
+           // 取消点赞
+           await deFavorite(article.slug)
+           this.$emit('onFavorite', false)
+         }else {
+           // 添加点赞
+           await addFavorite(article.slug)
+           this.$emit('onFavorite', true)
+         }
+       }
+     }
+    ```  
+   api/article.js
+   ```base
+   // follow
+   export const followAuthor = author => {
+     return request({
+       method: 'post',
+       url: `/api/profiles/${author}/follow`
+     })
+   }
+   
+   // unfollow
+   export const unFollow = author => {
+     return request({
+       method: 'delete',
+       url: `/api/profiles/${author}/follow`
+     })
+   }
+   ```
+   pages/article/index.vue
+   ```base
+   <article-meta :article="article" @updata="handleFollowArticle" @onFavorite="handleFavorite" />
+   
+   methods: {
+       handleFollowArticle(value) {
+         this.article.author.following = value
+       },
+   
+       handleFavorite(value) {
+         if (value) {
+           this.article.favorited = value
+           this.article.favoritesCount += 1
+         } else {
+           this.article.favorited = value
+           this.article.favoritesCount += -1
+         }
+       }
+     }
+   ```
+ 
+10. 本人文章详情页显示修改按钮和删除按钮
+    
+    pages/article/components/article-meta.vue
+    ```base
+    <span v-if="article.author.username!== user.username">
+          <button
+            :class="{active: article.author.following}"
+            class="btn btn-sm btn-outline-secondary"
+            @click="handlerFollow(article.author.username)"
+          >
+            <i class="ion-plus-round"></i>
+            &nbsp;
+            {{article.author.following ? 'Unfollow' : 'Follow'}} {{article.author.username}}
+          </button>
+          &nbsp;&nbsp;
+          <button
+            :class="{active: article.favorited}"
+            class="btn btn-sm btn-outline-primary"
+            @click="onFavorite"
+          >
+            <i class="ion-heart"></i>
+            &nbsp;
+            {{article.favorited ? 'UnFavorite Article' : 'Favorite Article'}} <span class="counter">({{article.favoritesCount
+            }})</span>
+          </button>
+        </span>
+        <span v-else>
+          <nuxt-link
+            class="btn btn-outline-secondary btn-sm"
+            :to="{name: 'editor',params: {slug: article.slug,},}"
+          >
+            <i class="ion-edit"></i> Edit Article
+          </nuxt-link>
+    
+          <button
+            class="btn btn-outline-danger btn-sm"
+            :class="{ disabled: article.isDeleting }"
+            @click="handlerDelete(article)"
+          >
+            <i class="ion-trash-a"></i> Delete Article
+          </button>
+        </span>
+    
+    import { mapState } from 'vuex'
+    import { followAuthor, unFollow, addFavorite, deFavorite, deleteArticle } from '@/api/article'
+    
+    computed: {
+        ...mapState(['user'])
+      },
+    
+    methods: {
+     async handlerDelete(article) {
+           this.article.isDeleting = true
+           await deleteArticle(article.slug)
+           this.article.isDeleting = false
+           this.$router.push('/')
+         }
+    }
+    
+    ```
+    api/article.js
+    ```base
+    // 删除文章
+    export const deleteArticle = slug => {
+      return request({
+        method: 'DELETE',
+        url: `/api/articles/${slug}`,
+      })
+    }
+    ```
+
+11. 修改文章
+    
+    pages/editor/index.vue
+    ```base
+    import { createArticle, getArticle, updateArticle } from '@/api/article'
+    
+    export default {
+      name: 'EditorIndex',
+    
+      // 在路由匹配组件渲染之前会执行中间件处理
+      middleware: 'authenticated',
+    
+      data() {
+        return {
+          errors: null,
+          slug: null,
+          tag: '',
+          article: {
+            title: '',
+            description: '',
+            body: '',
+            tagList: []
+          }
+        }
+      },
+    
+      async mounted() {
+        const { slug } = this.$route.params
+        if (slug) {
+          this.slug = slug
+          const { data } = await getArticle(slug)
+          this.article = data.article
+        }
+      },
+    
+      methods: {
+        handlerEnterTag() {
+          this.article.tagList.push(this.tag)
+          this.tag = ''
+        },
+    
+        handlerRemoveTag(index) {
+          this.article.tagList.splice(index, 1)
+        },
+    
+        async handleSubmit() {
+          try {
+            if (this.slug) {
+              const { data } = await updateArticle(this.slug, this.article)
+              this.$router.push(`/article/${data.article.slug}`)
+            } else {
+              const { data } = await createArticle(this.article)
+              this.$router.push(`/article/${data.article.slug}`)
+            }
+    
+          } catch (e) {
+            this.errors = e.response.data.errors
+          }
+    
+        }
+      }
+    }
+    ```
+    
+12. 修改个人资料
+    
+    pages/settings/index.vue
+    ```base
+    <template>
+      <div class="settings-page">
+        <div class="container page">
+          <div class="row">
+    
+            <div class="col-md-6 offset-md-3 col-xs-12">
+              <h1 class="text-xs-center">Your Settings</h1>
+              <ul class="error-messages">
+                <template v-for="(messages, field) in errors">
+                  <li v-for="(message, index) in messages" :key="index">
+                    {{ field }} {{ messages}}
+                  </li>
+                </template>
+              </ul>
+    
+              <form>
+                <fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="user.image" class="form-control" type="text" placeholder="URL of profile picture">
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="user.username" class="form-control form-control-lg" type="text" placeholder="Your Name">
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <textarea v-model="user.bio" class="form-control form-control-lg" rows="8"
+                              placeholder="Short bio about you"></textarea>
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="user.email" class="form-control form-control-lg" type="text" placeholder="Email">
+                  </fieldset>
+                  <fieldset class="form-group">
+                    <input v-model="user.password" class="form-control form-control-lg" type="password"
+                           placeholder="Password">
+                  </fieldset>
+                  <button class="btn btn-lg btn-primary pull-xs-right" @click.prevent="handleSubmit">
+                    Update Settings
+                  </button>
+                </fieldset>
+              </form>
+              <hr/>
+              <button class="btn btn-outline-danger" @click="handleLogout">Or click here to logout.</button>
+            </div>
+    
+          </div>
+        </div>
+      </div>
+    </template>
+    
+    <script>
+    const Cookie = process.client ? require('js-cookie') : undefined
+    import { mapState } from 'vuex'
+    import { updateUser } from '@/api/user'
+    
+    export default {
+      name: 'SettingsIndex',
+    
+      middleware: 'authenticated',
+    
+      data() {
+        return {
+          user: {
+            bio: null,
+            email: null,
+            image: null,
+            username: null,
+            password: ''
+          },
+          errors: {}
+        }
+      },
+    
+      computed: {
+        ...mapState({ storeUser: 'user' })
+      },
+    
+      mounted() {
+        this.user.bio = this.storeUser.bio
+        this.user.email = this.storeUser.email
+        this.user.image = this.storeUser.image
+        this.user.username = this.storeUser.username
+        this.user.password = this.storeUser.password
+      },
+    
+      methods: {
+        async handleSubmit() {
+          try {
+            const { data } = await updateUser({ user: this.user })
+    
+            this.$store.commit('setUser', data.user)
+    
+            Cookie.set('user', data.user)
+            this.$router.push(`/profile/${data.user.username}`)
+          } catch (e) {
+            this.errors = e.response.data.errors
+          }
+        },
+    
+        handleLogout () {
+          this.$store.commit('setUser', null)
+          Cookie.set('user', null)
+          this.$router.push('/')
+        }
+      }
+    }
+    </script>
+    ```
+    api/user.js
+    ```base
+    // 修改用户
+    export const updateUser = data => {
+      return request({
+        url: '/api/user',
+        method: 'put',
+        data
+      })
+    }
+    ```
+    
+13. 用户个人主页
+    
+    pages/profile/index.vue
+    ```base
+    <template>
+      <div class="profile-page">
+    
+        <div class="user-info">
+          <div class="container">
+            <div class="row">
+    
+              <div class="col-xs-12 col-md-10 offset-md-1">
+                <img :src="profile.image" class="user-img" />
+                <h4>{{profile.username}}</h4>
+                <p>
+                  {{profile.bio}}
+                </p>
+                <button v-if="profile.username !== user.username" class="btn btn-sm btn-outline-secondary action-btn"
+                        @click="handlerFollow">
+                  <i class="ion-plus-round"></i>
+                  &nbsp;
+                  {{profile.following ? 'UnFollow' : 'Follow'}} {{profile.username}}
+                </button>
+                <button v-else class="btn btn-sm btn-outline-secondary action-btn">
+                  <nuxt-link :to="{name:'settings'}">
+                    <i class="ion-gear-a"></i>
+                    &nbsp;
+                    Edit Profile Settings
+                  </nuxt-link>
+                </button>
+              </div>
+    
+            </div>
+          </div>
+        </div>
+    
+        <div class="container">
+          <div class="row">
+    
+            <div class="col-xs-12 col-md-10 offset-md-1">
+              <div class="articles-toggle">
+                <ul class="nav nav-pills outline-active">
+                  <li class="nav-item">
+                    <nuxt-link
+                      class="nav-link"
+                      exact
+                      :class="{active: tab === 'my'}"
+                      :to="{name: 'profile',params: {profile: profile.username},query: {tab: 'my'}}">
+                      My Articles
+                    </nuxt-link>
+                  </li>
+                  <li class="nav-item">
+                    <nuxt-link
+                      class="nav-link"
+                      exact
+                      :class="{active: tab === 'favorited'}"
+                      :to="{name: 'profile',params: {profile: profile.username},query: {tab: 'favorited'}}">
+                      Favorited Articles
+                    </nuxt-link>
+                  </li>
+                </ul>
+              </div>
+    
+              <div v-for="article in articles" :key="article.slug" class="article-preview">
+                <div class="article-meta">
+                  <nuxt-link
+                    :to="{name: 'profile', params:{username:article.author.username}}">
+                    <img :src="article.author.image" />
+                  </nuxt-link>
+                  <div class="info">
+                    <nuxt-link :to="{name: 'profile', params:{username:article.author.username}}" class="author">
+                      {{article.author.username}}
+                    </nuxt-link>
+                    <span class="date">{{article.createdAt | date('MMM DD, YYYY')}}</span>
+                  </div>
+                  <button
+                    :class="{active: article.favorited}"
+                    :disabled="article.favoriteDisabled"
+                    class="btn btn-outline-primary btn-sm pull-xs-right"
+                    @click="onFavorite(article)"
+                  >
+                    <i class="ion-heart"></i>
+                    {{article.favoritesCount}}
+                  </button>
+                </div>
+                <nuxt-link :to="{name:'article', params:{slug:article.slug}}" class="preview-link">
+                  <h1>{{article.title}}</h1>
+                  <p>{{article.description}}</p>
+                  <span>Read more...</span>
+                  <ul class="tag-list">
+                    <li class="tag-default tag-pill tag-outline" v-for="tag in article.tagList" :key="tag">
+                      {{tag}}
+                    </li>
+                  </ul>
+                </nuxt-link>
+              </div>
+              <!-- 分页 -->
+              <template v-if="totalPage">
+                <nav>
+                  <ul class="pagination">
+                    <li class="page-item" :class="{active: item === page}" v-for="item in totalPage" :key="item">
+                      <nuxt-link
+                        class="page-link"
+                        :to="{name: 'profile',
+                      params: {username: profile.username},
+                      query: {page: item,tab}}"
+                      >
+                        {{item}}
+                      </nuxt-link>
+                    </li>
+                  </ul>
+                </nav>
+              </template>
+            </div>
+    
+          </div>
+        </div>
+    
+      </div>
+    </template>
+    
+    <script>
+    import { mapState } from 'vuex'
+    import { getProfiles } from '@/api/profile'
+    import { getArticles, addFavorite, deFavorite, followAuthor, unFollow, } from '@/api/article'
+    
+    export default {
+      name: 'UserProfile',
+    
+      middleware: 'authenticated',
+    
+      data() {
+        return {
+          profile: {},
+          tab: '',
+          limit: '',
+          page: '',
+          articles: '',
+          articlesCount: '',
+        }
+      },
+    
+      watch: {
+        $route() {
+          this.handleGetProfiles()
+          this.handleGetArticles()
+        }
+      },
+    
+      computed: {
+        ...mapState(['user']),
+        totalPage() {
+          return Math.ceil(this.articlesCount / this.limit)
+        },
+      },
+    
+      mounted() {
+        this.handleGetProfiles()
+        this.handleGetArticles()
+      },
+    
+      methods: {
+        async handleGetProfiles() {
+          const { data } = await getProfiles(this.$route.params.username || this.user.username)
+          this.profile = data.profile
+        },
+    
+        async handleGetArticles() {
+          const { tab = 'my', page = 1 } = this.$route.query
+          const { username } = this.$route.params
+          const limit = 5
+          const offset = (page - 1) * limit
+    
+          const articleParams = tab === 'my' ? { author: username } : { favorited: username }
+          articleParams.limit = limit
+          articleParams.offset = offset
+    
+          const [profileRes, articlesRes] = await Promise.all([
+            getProfiles(username), getArticles(articleParams)
+          ])
+          const { profile } = profileRes.data
+          const { articles, articlesCount } = articlesRes.data
+          articles.forEach(article => article.favoriteDisabled = false)
+    
+          this.tab = tab
+          this.limit = limit
+          this.page = page
+          this.profile = profile
+          this.articles = articles
+          this.articlesCount = articlesCount
+        },
+    
+        async handlerFollow() {
+          const author = this.profile.username
+          const isFollow = this.profile.following
+          if (isFollow) {
+            try {
+              await unFollow(author)
+              this.profile.following = false
+            } catch (e) {
+            }
+          } else {
+            try {
+              await followAuthor(author)
+              this.profile.following = true
+            } catch (e) {
+            }
+          }
+        },
+    
+        async onFavorite(article) {
+          if (!this.user) return this.$router.push('/login')
+          article.favoriteDisabled = true // 禁用点击
+          if (article.favorited) {
+            // 取消点赞
+            await deFavorite(article.slug)
+            article.favorited = false
+            article.favoritesCount -= 1
+          } else {
+            // 添加点赞
+            await addFavorite(article.slug)
+            article.favorited = true
+            article.favoritesCount += 1
+          }
+          article.favoriteDisabled = false // 允许点击
+        },
+      }
+    }
+    </script>
+    
+    ```
+    
 ### 六、Nuxt.js 发布部署
 1. 使用命令打包
     https://zh.nuxtjs.org/guide/commands
@@ -2930,6 +3634,7 @@ export default {
             * 发布
         * ....
     * 现代化的部署方式(CI/CD)【持续集成/持续部署】
+    
     ![](./img/18.jpg)
 
 5. 使用GitHub Actions实现自动部署
@@ -2947,12 +3652,15 @@ export default {
         * 生成：https://github.com/settings/tokens
         * 头像 -> Settings -> Developer settings -> Personal access tokens -> Generate new Token
         * Token名称填写`Tocken`，`Select scopes`勾选repo，然后滚动到网页最下面点击提交按钮。生成了Token，复制保存（注意该Token只显示一次，忘记了就再生成）
+        
         ![](./img/19.jpg)
         
         * 配置到项目的Secrets中：进入项目-> Settings -> Secrets -> New secret
             * Name：建议和刚才生成Token保持一致
             * Valeu：为刚才生成的Token
+            
         ![](./img/20.jpg)
+        
     * 配置 GitHub Action 执行脚本
         * 在项目根目录创建.github/workflows目录
         * 下载main.yml到workflows目录中：https://github.com/lipengzhou/realworld-nuxtjs/edit/master/.github/workflows/main.yml
@@ -2960,7 +3668,9 @@ export default {
             * 修改对应的服务器项目路径
             * wget后面的下载地址改为自己的仓库地址
             * 在GitHub仓库里配置HOST、USERNAME、PASSWORD、PORT
+            
             ![](./img/20.jpg)
+            
         * 配置pm2配置文件
         ```base
         {
@@ -2984,6 +3694,8 @@ export default {
         * 查看自动部署状态
             * GitHub仓库-> Actions
             * 服务器需要存在`main.yml`配置文件中配置的项目路径，否则会Deploy失败
+            
         ![](./img/22.jpg)
+        
         * 访问网站
         * 提交更新
