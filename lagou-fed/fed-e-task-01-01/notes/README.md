@@ -1,4 +1,4 @@
-## ECMAScript
+## ECMAScript2015
 1. overView
     * 实际上javascript是ECMAScript的扩展语言，ECMAScript只提供最简单的语法只是停留语言层面，并不能用来实际功能开发
     
@@ -1021,13 +1021,396 @@
     console.log(iterable.next())
     ```
 
+29. 实现可迭代接口--iterable
+    ```javascript
+    const obj = { // 实现了可迭代接口Iterable，约定内部必须有一个用于返回迭代器的iterator方法
+        [Symbol.iterator]: function () {
+            return { // 实现了迭代器接口iterator，约定内部必须有一个用于迭代的next方法
+                next: function () {
+                    return { // 迭代结果接口IterationResult，约定对象内部必须有value属性，表示当前被迭代的数据，值是任意类型；和一个done属性，值是布尔值，表示迭代有没有结束
+                        value: 'tom',
+                        done: true
+                    }
+                }
+            }
+        }
+    }
+    ```
+    
+    for...of 执行原理
+    * 调用原型对象上的`[Symbol.iterator]()`方法，返回数组的迭代器对象，该对象原型对象上存在一个next方法
+    
+    * 调用next方法，返回一个对象，对象有两个成员value 和 done，value的值为遍历对象的值，done值为布尔，代表是否遍历完
+    
+    * 所以迭代器维护着一个数据指针，每调用一次next，指针都往后移一位
+    ```javascript
+    const obj = {
+        store: ['foo', 'bar', 'baz'],
+        [Symbol.iterator]: function () {
+            let index = 0
+            const self = this
+            return {
+                next: function () {
+                    const result = {
+                        value: self.store[index],
+                        done: index >= self.store.length
+                    }
+                    index++
+                    return result
+                }
+            }
+        }
+    }
+    for (const item of obj) { // 没报错，说明实现了迭代接口
+        console.log(item)
+    }
+    ```
 
+30. 迭代器模式
 
+    迭代器的核心是对外提供统一遍历接口，让外部不用再去关系数据内部的结果是怎样的
+    
+    场景：协同开发一个任务清单应用
+    
+    下面例子中的 each 方法只适用于当前例子结果，而 iterator 是语言层面实现的迭代器，所以他适用于任何数据结构，只需你通过代码实现一个iteration方法实现迭代逻辑即可
+    ```javascript
+    // A 的代码
+    const todos = {
+      life: ['吃饭', '睡觉', '打豆豆'],
+      learn: ['语文', '数学', '外语'],
+      work: ['喝茶'],
+      each: function(callback) {
+        const all = [].concat(this.life, this.learn, this.work)
+        for (const item of all) {
+          callback(item)
+        }
+      },
+      [Symbol.iterator]:function() {
+        const all = [...this.life, ...this.learn, ...this.work]
+        let index = 0
+        return {
+          next: function() {
+            return {
+              value: all[index],
+              done: index++ >= all.length
+            }
+          }
+        }
+      }
+    }
+    
+    // 一、 B 的代码 (由于代码耦合，A 的代码添加、删除属性，B 的代码也要改变)
+    for (const item of todos.life){ console.log(item) }
+    for (const item of todos.learn){ console.log(item) }
+    for (const item of todos.work){ console.log(item) }
+    
+    // 二、 A 的代码提供统一遍历的接口each后就, B 的代码就简单的多
+    todos.each(function(item) {
+      console.log(item)
+    })
+    
+    // 三、 A 的代码实现可迭代接口
+    for (const item of todos) {
+      console.log(item)
+    }
+    ```
 
+31. Generator
 
+    避免异步编程中回调嵌套过深，提供更好的异步编程解决方案
+    
+    语法：在普通函数function后面添加 * ，这样普通函数就变成了生成器函数（Generator）
+    ```javascript
+    function* foo() {
+        console.log('tom');
+        return 100
+    }
+    const result = foo()
+    console.log('result', result) // 输出生成器对象，可以看到原型上存在next方法
+    console.log('next', result.next()) // 输出{value:100,done:true}
+    ```
+    生成器对象也实现了Iterator接口（迭代器接口协议）
+    
+    生成器函数会自动返回一个生成器对象，调用这个对象的next方法才会让函数体执行，执行过程中遇到yield关键字，函数的执行将被暂停，yield后面的值将会作为next的结果返回；如果继续执行生成器对象的next方法，函数将会从暂停的位置继续执行，当函数执行完后next返回的done值为true
+    
+    特点：Generator是惰性执行
+    ```javascript
+    function* foo() {
+        console.log('111')
+        yield 100
+        console.log('222');
+        yield 200
+        console.log('333');
+        yield 300
+    }
+    const generator = foo()
+    console.log(generator.next()) // { value:100, done: false } 此时 yield 100 后面的代码还没执行
+    console.log(generator.next())
+    console.log(generator.next())
+    ```
 
+32. Generator 应用
 
+    案例1：发号器
+    ```javascript
+    function* createIdMaker() {
+        let id = 1
+        while (true) {
+            yield id++
+        }
+    }
+    
+    const idMaker = createIdMaker()
+    console.log(idMaker.next().value)
+    console.log(idMaker.next().value)
+    console.log(idMaker.next().value)
+    ```
+    
+    案例2：Generator实现Iterator方法
+    ```javascript
+    const todos = {
+        life: ['吃饭', '睡觉', '打豆豆'],
+        learn: ['语文', '数学', '外语'],
+        work: ['喝茶'],
+    
+        [Symbol.iterator]: function* () {
+            const all = [...this.life, ...this.learn, ...this.work]
+            for (const item of all) {
+                yield item
+            }
+        }
+    }
+    for (const item of todos) {
+        console.log(item)
+    }
+    ```
 
+## ECMAScript2016
+1. Array.prototype.includes
 
+    Array.prototype.includes
+    ```javascript
+    const arr = ['foo', 1, NaN, false, undefined, null]
+    console.log(arr.includes(NaN));
+    console.log(arr.includes(null));
+    console.log(arr.includes(undefined));
+    ```
+    
+2. 指数运算
+    
+   指数运算: **
+   ```javascript
+   console.log('ES5', Math.pow(2, 10));
+   console.log('ES2016', 2 ** 10);
+   ```
 
+## ECMAScript2017
+1. Object.values
 
+    Object.values 返回对象的所有值的数组
+    ```javascript
+    const obj = {
+        foo: 'value1',
+        bar: 'value2'
+    }
+    
+    // Object.values 返回对象的所有值的数组
+    console.log(Object.values(obj)); // ['value1', ['value2']]
+    ```
+
+2. Object.entries
+
+    Object.entries   以数组的形式返回对象中所有的键值对
+    ```javascript
+    const obj = {
+        foo: 'value1',
+        bar: 'value2'
+    }
+    
+    // Object.entries   以数组的形式返回对象中所有的键值对
+    console.log(Object.entries(obj)); // [['foo', 'value1'], ['bar', 'value2']]
+    for (const [key, value] of Object.entries(obj)) {
+        console.log(key, value)
+    }
+    
+    console.log(new Map(Object.entries(obj)));
+    
+    ```
+
+3. Object.getOwnPropertyDescriptors
+
+    用来获取一个对象的所有自身属性的描述符
+    
+    ```javascript
+    const p1 = {
+        firstName: 'Yan',
+        lastName: 'Zeng',
+        get fullName() {
+            return this.firstName + ' ' + this.lastName
+        }
+    }
+    console.log(p1.fullName); // Yan Zeng
+    
+    const p2 = Object.assign({}, p1)
+    p2.firstName = 'zce'
+    console.log(p2.fullName) // 输出 Yan Zeng，而不是zce Zeng；拿到的是p1的firstName，因为Object.assign()复制时把firstName当做一个普通的属性复制
+    
+    // getOwnPropertyDescriptors 可以获取对象的完整描述信息，对于getter、setter就可以复制了
+    const descriptors = Object.getOwnPropertyDescriptors(p1)
+    // console.log('descriptors', descriptors);
+   
+    // defineProperties直接在一个对象上定义新的属性或修改现有属性，并返回该对象。
+    const p3 = Object.defineProperties({}, descriptors)
+    p3.firstName = 'zce' // 此时修改firstName，fullName就会跟着修改
+    console.log(p3.fullName); // zce Zeng
+    
+    ```
+
+4. String.prototype.padStart、String.prototype.padEnd
+    
+    字符串填充方法：用给定的字符串去填充目标字符串的开始或结束位置，知道字符串达到指定长度
+    ```javascript
+    const books = {
+        html: 5,
+        css: 17,
+        javascript: 129
+    }
+    for (const [name, count] of Object.entries(books)) {
+        console.log(name, count)
+    }
+    
+    for (const [name, count] of Object.entries(books)) {
+        console.log(`${name.padEnd(16, '-')}`) // 指定字符串长度为16，不够的在后面填充 '-'
+        console.log(`${count.toString().padStart(3, '0')}`) // 指定字符串长度为 3，不够的在前面填充 '0'; 005/017
+    }
+    ```
+
+5. 允许函数参数列表最后一位添加尾逗号
+    ```javascript
+    function foo(baz, foo, ) { }
+    ```
+
+6. async/await
+
+    async/await 是Promise的语法糖
+
+## 强类型与弱类型
+1. 类型系统
+
+   强类型与弱类型（类型安全角度）
+   
+   静态类型和动态类型（类型检查角度）
+
+2. 类型安全
+
+   强类型：语言层面限制函数的实参类型必须与形参类型相同；有更强的类型约束；不允许任意的隐式类型转换
+   
+   弱类型：语言层面不会限制实参的类型；几乎没有什么约束；允许任意的数据隐式类型转换
+   
+   变量类型允许随时改变的特点，不是强弱类型的差异，python是强类型语言，但是他的变量类型也可以随时改变
+
+3. 类型系统（类型检查角度）
+
+   静态类型：一个变量声明时它的类型就是明确的；声明后，它的类型就不允许再修改
+   
+   动态类型：运行阶段才能够明确变量类型；而且变量的类型随时可以改变；也就是说变量没有类型，变量中存放的值是有类型的
+   ```javascript
+   var foo = 100
+   foo = 'bar'
+   console.log(foo)
+   ```
+
+4. Javascript类型系统特征
+
+   弱类型且动态类型
+   
+   缺失了类型系统的可靠性
+   
+   javascript没有编译环节
+   
+5. 弱类型的问题
+
+   在运行的时候才能发现错误，而一些延迟执行的方法在测试阶段肯能没测试到，而留下隐患；而强类型语言在编写的时候就直接报语法错误
+   ```javascript
+   // 在运行的时候才能发现错误
+   const obj = {}
+   obj.foo()
+
+   setTimeout(() => {
+   obj.foo()
+   }, 1000000)
+   ```
+   当两个变量进行运算操作时，会出现预期之外的情况（类型不明确，造成函数功能改变）
+   ```javascript
+   function sum(x, y) {
+     return x + y
+   }
+   sum(100,100)
+   sum(100,'100') // 这里运行时是字符串拼接
+   ```
+   因为弱类型对对象所以器错误的用法，对象属性规定是字符串和symbol类型，其他的类型会自动转换
+   ```javascript
+   const obj = {}
+   obj[true] = 100
+   console.log(obj['true'])
+   ```
+
+6. 强类型语言的优势
+   
+   错误能更早暴露，在编码阶段就可以发现问题
+   
+   代码更智能，编码更准确（开发工具智能提示功能）
+   
+   重构更加牢靠
+   
+   减少不必要的类型判断
+
+## Flow静态类型检查方案
+1. Flow概述
+    
+   Flow 是 javascript 的类型检查器，工作原理是在代码中添加类型注解方式标记变量、参数是什么类型，Flow根据类型注解检查代码是否有类型使用异常，从而实现在开发阶段对类型异常的检查，避免在运行阶段才发现类型使用错误
+   
+   Flow 没有规定要给每个变量添加类型注解，可以根据自己的需要添加
+   ```flow js
+   function sum(a:number, b:number) {
+     return a + b
+   }
+   sum(100, 100)
+   sum(100, '100')
+   ```
+
+2. Flow快速上手
+   
+   初始化package.json
+   
+   安装依赖：`yarn add flow-bin --dev`
+   
+   通过`yarn flow init`初始化Flow的配置文件
+   
+   使用：前提在文件中开始位置添加`//@flow`标记，这样Flow执行检测时才会检查这个文件；编辑器自带语法检查，所以编辑器会报错，所以可以把编辑器自带语法校验关闭
+   
+   执行`yarn flow`执行编码，如果有类型使用异常就会报错，第一次比较慢，会在后台开启一个服务
+   
+   完成编码工作后，执行`flow stop`结束服务
+   ```flow js
+   // @flow
+   function sum(a:number, b:number) {
+     return a + b
+   }
+   sum(100, '100')
+   ```
+
+3. Flow编译移除注解
+   
+   因为类型注解不是javascript的，所以在执行是会报错，所以在完成编码后用工具移除注解
+   
+   安装插件：`yarn add flow-remove-types --dev`
+   
+   运行`yarn flow-remove . -d dist`，.：源代码所在的目录
+
+## TypeScript 语言规范与基本应用
+1. 概述
+    
+    TypeScript是一门基于Javascript之上的编程语言，解决Javascript类型系统的问题
+    
+    TypeScript大大提高代码的可靠程度
