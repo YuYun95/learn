@@ -1406,11 +1406,234 @@
    
    安装插件：`yarn add flow-remove-types --dev`
    
-   运行`yarn flow-remove . -d dist`，.：源代码所在的目录
+   运行`yarn flow-remove src -d dist`，'src'：该位置的参数表示源代码所在的目录;'-d dist'：输出的位置
+   
+   也可以使用babel移除注解
+   
+   安装：`yarn add @babel/core @babel/cli @babel/preset-flow --dev`
+   
+   在根目录添加`.babelrc`文件，文件内容如下
+   ```base
+   {
+     "presets": ["@babel/preset-flow"]
+   }
+   ```
+   运行`yarn babel src -d dist`
+
+4. Flow开发工具插件
+    
+    Flow对类型异常信息是输出到控制台的，编辑器安装插件可以直接对类型异常问题直接显示
+    
+    在vscode搜索flow，在搜索结果安装flow language support，该插件可以可以对类型异常的代码标记为红色波浪线，在编辑器底部左侧信息显示异常信息；但是编码后要保存后才会重新检查代码中的问题
+    
+    Flow 官网给出编辑器支持情况：https://flow.org/en/docs/editors/
+    
+5. Flow 类型推断
+
+    Flow 可以根据代码使用情况自动推断代码成员的类型
+    ```flow js
+    // @flow
+    function square(n) {
+      return n * n
+    }
+   square('10')
+    ```
+   Flow 类型注解
+   
+   函数参数类型注解：在参数后面添加冒号和类型，如果传入的参数类型不是规定的将报错
+   
+   变量类型注解：声明变量时在变量名后添加冒号和类型，如果变量值类型不是规定的将报错
+   
+   函数返回值：如果没有返回值使用void，有返回值则使用相应的类型
+   ```flow js
+   function square(n: number) {
+       return n * n
+   }
+   
+   let num: number = 100
+       // num = 'string'
+   
+   function foo(): number {
+       // return 'string'
+       return 100
+   }
+   
+   function bar(): void {}
+   ```
+
+   
+6. 原始类型
+    ```flow js
+   /**
+    * 原始类型
+    * 
+    * @flow
+    */
+   
+   const a: string = 'foobar'
+   
+   // number类型可以等于Infinity NaN 数字
+   const b: number = Infinity // NaN // 100
+   
+   const c: boolean = true // false
+   
+   const d: null = null
+   
+   // void表示类型为undefined
+   const e: void = undefined
+   
+   const f: symbol = Symbol() 
+   ```
+
+7.数组类型
+   ```flow js
+    /**
+     * 数组类型
+     * 
+     * @flow
+     */
+    
+    // 方式一、用一个泛型参数表示数组每个元素的类型
+    const arr1: Array<number> = [1, 2, 3] // 全部由数字组成的数组
+    
+    // 方式二、
+    const arr2: number[] = [1, 2, 3] // 全部由数字组成的数组
+    
+    // 元组
+    const foo: [string, number] = ['string', Infinity] // 规定数组的长度，并且规定位置上元素的类型
+   ```
+    
+8.对象类型
+   ```flow js
+    /**
+     * 对象类型
+     * 
+     * @flow
+     */
+    
+    const obj1: { foo: string, bar: number } = { foo: 'string', bar: 100 } // 当前变量必须具有foo 和 bar 类型分别为string和number
+    
+    const obj2: { foo?: string, bar: number } = { bar: 100 } // 问号表示元素可选
+    
+    const obj3: { [string]: number } = {} // 可以动态添加属性，但是属性名类型为string，值的类型为number
+    obj3.key1 = 99
+    obj3.key2 = 100
+    
+
+   ```
+
+9. 函数类型
+
+    函数类型主要是对参数和返回值做类型约束，参数约束可以在参数名后添加类型注解；返回值类型在函数的括号后面添加注解，如果函数没有返回值，会默认返回undefined，那么添加':void'
+    ```flow js
+    /**
+     * 函数类型
+     * 
+     * @flow
+     */
+    
+    // 表示回调函数参数类型分别为string和number没有返回值
+    function foo(callback: (string, number) => void) {
+        callback('string', 100)
+    }
+    
+    foo(function (str, n){
+        // 不可以有返回值
+    })
+   ```
+
+10. 特性类型
+    ```flow js
+    /**
+     * 特殊类型
+     * 
+     * @flow
+     */
+    
+    // 字面量类型：限制变量必须是某个值
+    const a: 'foo' = 'foo'
+    //  const a:'foo' = 'foo1' // 不等于foo所以报错
+    
+    // 字面量类型一般配合联合类型，组合成几个值
+    const type: 'success' | 'warning' | 'danger' = 'danger' // 值只能从这三个选
+    
+    // 使用type 关键字单独声明一个类型，表示多个类型联合的结果
+    // StringOrNumber表示一个类型的别名，可以在多个地方重复使用
+    type StringOrNumber = string | number
+    
+    const b: StringOrNumber = 'string'
+    const bb: string | number = 'string' // 100 表示值可以是string或数字
+    
+    // maybe 类型表示有可能
+    const gender: ?number = null // undefined
+    ```
+
+11. Mixed Any
+    ```flow js
+    /**
+     * Mixed  Any
+     * 
+     * @flow
+     */
+    // 区别
+    // any：弱类型
+    // mixed：强类型
+    
+    // Mixed：接收任意类型的值，string|number|boolean|...
+    function passMixed(value: mixed) {
+        // 内部不明确为字符串，不能当字符串使用；数字也一样
+        if (typeof value === 'string') {
+            value.substr(1)
+        }
+        if (typeof value === 'number') {
+            value * value
+        }
+    }
+    
+    passMixed('string')
+    passMixed(100)
+    
+    // Any：主要兼容老代码，也是一个弱类型
+    function passAny(value: any) {
+        value.substr(1)
+        value * value
+    }
+    passAny('string')
+    passAny(100)
+    ```
 
 ## TypeScript 语言规范与基本应用
-1. 概述
-    
+
+1. typescript概述
     TypeScript是一门基于Javascript之上的编程语言，解决Javascript类型系统的问题
-    
+        
     TypeScript大大提高代码的可靠程度
+    
+    Typescript最终编译成Javascript，所以任何一种javascript运行环境都支持Typescript
+    
+    功能更强大，生态也更健全、更完善
+    
+    缺点一：语言本身多了很多概念
+    
+    缺点二：项目初期，typescript会增加一些成本（小项目增加成本）
+    
+    typescript数据渐进式
+
+    ![](./img/2.jpg)
+
+2. TypeScript快速上手
+
+   安装typescript
+   
+   使用yarn/npm tsc 文件名，这样就可以编辑文件，编辑过程会检查类型和移除注解之类扩展语法，还会自动转换ES新特性
+   
+   typescript可以完全按照javascript标准语法编写代码
+   
+   ```typescript
+   const hello = (name: string) => {
+       console.log(`Hello ${name}`)
+   }
+   
+   // hello(100) // 报错
+   hello('typescript')
+   ```
