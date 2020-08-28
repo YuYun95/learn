@@ -1623,9 +1623,9 @@
 
 2. TypeScript快速上手
 
-   安装typescript
+   安装`yarn add typescript --dev`
    
-   使用yarn/npm tsc 文件名，这样就可以编辑文件，编辑过程会检查类型和移除注解之类扩展语法，还会自动转换ES新特性
+   使用命令`yarn tsc 文件名`，这样就可以编辑文件，编辑过程会检查类型和移除注解之类扩展语法，还会自动转换ES新特性
    
    typescript可以完全按照javascript标准语法编写代码
    
@@ -1637,3 +1637,275 @@
    // hello(100) // 报错
    hello('typescript')
    ```
+
+3. Typescript配置文件
+    
+    执行`yarn tsc --init`生成配置文件
+    
+    在执行编译命令、编码时时就会根据该配置文件的配置来编译、检查代码，但是在执行`yarn tsc 文件名`编译时这个配置文件是不会生效的，只有执行`yarn tsc`编译整个项目的时候生效
+    
+4. Typescript原始类型
+    ```typescript
+    // string/number/boolean默认值允许为空(null/undefined需要关闭配置文件中配置的严格模式)
+    const a: string = 'string'
+    
+    const b: number = Infinity // NaN // 100
+    
+    const c: boolean = true // false
+    
+    // const d: boolean = null
+    
+    const e: void = undefined // 空值，一般用在函数没有返回值中，只能存放null和undefined
+    
+    const f: null = null
+    
+    const g: undefined = undefined
+    
+    const h: symbol = Symbol() // 只能存symbol类型
+    
+    ```
+
+5. Typescript标准库声明
+    
+    标准库就是内置对象所对应的声明
+    
+    在tsconfig.json配置文件中写上：
+    ```base
+   "lib": ["ES2015", "DOM"]
+    ```
+
+6. 中文错误消息
+    ```base
+    yarn tsc --locale zh-CN 
+    ```
+
+7. 作用域
+    
+    定义一个其他文件已经存在的变量会报错，因为它是定义在全局作用域上的，所以在编译是会出现错误
+    
+    每个文件都是全局作用域，所以在不同文件中定义同名变量会报错，解决方案
+    * 使用立即执行函数，产生作用域
+    ```typescript
+   (function() {
+     const a = 123
+   })() 
+   ```
+   * 使用export
+   ```javascript
+   const a = 11
+   export {} // 确保跟其他实例没有成员冲突
+   ```
+    
+8. Object类型
+    
+    Typescript中的Object类型指非原始类型，如 对象、数组、函数
+    
+    object类型并不单指对象，而是指除了原始类型之外的其他类型
+
+    对象的赋值必须与定义的属性保持一致，不能多也不能少。更专业的写法是用接口
+
+    ```typescript
+   export {} // 确保跟其他实例没有成员冲突
+   
+   const foo: object = function () {} // [] // {} 
+   
+   const obj: {foo: number, bar: string} = {foo: 123, bar: 'string'} 
+   
+   const arr1: Array<number> = [1, 2, 3] // 使用Array泛型，'<number>'表示元素类型
+   
+   const arr2: number[] = [1, 2, 3] // 使用元素类型和'[]'
+   
+   function sum (...args: number[]) {
+     return args.reduce((prev, current) => prev + current, 0)
+   }
+   sum(1, 2, 3) 
+   ```
+
+9. 元组类型
+
+    明确元素数量以及元素类型的数组；例如Object.entries(obj)的返回值里面的每一个元素都是一个元组
+   ```typescript
+   export {}
+   
+   const tuple:[number, string] = [19, 'zyh']
+   // 下标取值
+   // const age = tuple[0]
+   // const name = tuple[1]
+   
+   // 数组解构
+   const [age, name] = tuple
+   ```
+
+10. 枚举类型
+
+    枚举类型会影响编译后的结果（入侵编译后的代码），在编译的时候不会被移除，而是编译成一个双向的键值对对象（可以通过键获取值，也可以通过值获取键）
+
+    ```typescript
+    export {}
+    // JS中没有枚举类型，使用对象模拟枚举
+    // const PostStatus = {
+    //   Draft: 0,
+    //   Uppublished: 1,
+    //   Published: 2
+    // }
+    
+    // 枚举类型。使用时和对象属性一样
+    // 如果不指定值，则从0开始累加。如果指定了第一个成员的值，后面的成员则在第一个成员基础上累加
+    // 值如果是字符串，就得指定具体的值
+    // enum PostStatus {
+    //   Draft = '草稿',
+    //   Unpublished = '未发布',
+    //   Published = '发布'
+    // }
+    
+    const enum PostStatus {
+      Draft = 0,
+      Uppublished = 1,
+      Published = 2
+    }
+    
+    const post = {
+      title: 'Hello TypeScript',
+      content: 'Type...',
+      status: PostStatus.Draft
+    }
+    ```
+
+11. 函数类型
+
+    对函数的输入输入出进行限制（参数、返回值）
+    * 函数声明方式
+    
+      规定函数参数的个数和参数位置的类型；函数是否有返回值，返回值为什么类型
+      
+      如果参数可选，在参数名后添加问号，或者使用ES2015的参数默认值；参数可选或参数默认值要出现在函数参数列表最后
+      
+      接收任意个参数，可以使用ES2015的rest（剩余）操作符
+      
+      规定了函数参的类型、数量，在调用时也要传入对应的类型、数量
+      ```typescript
+      // 获取不确定参数
+      // function func1 (a: number, b: number): string {
+      // function func1 (a: number, b?: number): string {
+      // function func1 (a: number, b: number = 10): string {
+      function func1 (a: number, b: number = 10, ...rest: number[]): string {
+        return 'func1'
+      }
+      
+      func1(100, 200)
+      
+      func1(100)
+      
+      func1(100, 200, 300)
+      ```
+      
+    * 函数表达式
+    
+      因为函数放在一个变量中，接收函数的变量也应该有类型；typescript默认可以推断出变量的类型，但是如果函数接收的是回调函数，那么就要约束参数类型；使用类似于箭头函数的方式进行约束，表示参数和返回值的类型
+      ```typescript
+      const func2: (a: number, b: number) => string = function (a: number, b: number): string {
+        return 'string'
+      }
+      ```
+
+12. 任意类型
+    
+    运行过程可以接收其他类型的值，所以typescript不会对any类型做类型检查；所以任然可以像javascript一样调用任意成员，**语法**上不会报错
+    
+    any类型是为了兼容老的代码，它还是动态类型，是不安全的，尽量少用
+    ```typescript
+    function stringify (value: any) {
+      return JSON.stringify(value)
+    }
+    
+    stringify('string')
+    stringify(100)
+    stringify(true)
+    
+    let foo: any = 'string'
+    foo = 100
+    foo.bar()
+    ```
+    
+13. 隐式类型推断
+    
+    如果没有明确通过类型注解标记变量类型，typescript会根据变量的使用情况推断变量的类型
+    
+    如果typescript无法推断变量具体类型，那就标注为any类型
+    ```typescript
+    export {}
+    let age = 18 // ts 推断出类型是number
+    // age = 'str' // 会报错 不能将类型“"str"”分配给类型“number”
+    
+    let foo // 此时无法推断具体类型，foo则是动态类型，any类型
+    foo = 1 // 不会报错
+    foo = 'string' // 不会报错
+    ```
+
+14. 类型断言
+
+    特殊情况下typescript无法推断变量的类型，但是我们可以明确知道变量的类型
+    类型断言不是把一个类型转换为另一个类型；代码转换是代码运行时的概念；类型断言是编译过程的概念，代码编译后断言就不存在了
+    ```typescript
+    const nums = [110, 120, 130, 140]
+    const res = nums.find(i => i > 0) //这个一定会返回数字，但是 ts 不知道，所以推断为any
+    // const square = res  * res
+    
+    // 方式一 使用 as 关键词
+    const num1 = res as number // 断言 num1 为数字类型
+    
+    // 方式二 在变量前使用'<>'断言
+    // 如果代码使用了JSX，这里的'<>'会和jsx标签产生冲突，JSX下不能使用
+    const num2 = <number>res
+    ```
+
+15. interface 接口
+
+    接口就是约束对象的结构，一个对象去实现一个接口，它就必须要拥有这个接口当中所约束的所有成员
+    
+    可以理解为一种规范、契约，可以用来约定对象的结果
+    
+    约定对象上有哪些成员，成员是什么类型
+    ```typescript
+    // 可以用分号分割，分号可以省略
+    interface Post {
+      title: string
+      content: string
+    }
+    
+    // 传入的参数必须包含title和content
+    function printPost (post: Post) {
+      console.log(post.title)
+      console.log(post.content)
+    }
+    
+    printPost({
+      title:'Hello TypeScript',
+      content: 'A javascript superset'
+    })
+    ```
+    可选属性、只读属性
+    ```typescript
+    interface Post {
+      title: string
+      content: string
+      subtitle?: string // 可有可无的属性，也就是说该属性为string或者undefined
+      readonly summary: string //readonly 表示该属性值运行读
+    }
+    ```
+    动态属性
+    ```typescript
+    interface Cache {
+      [prop:string]:string
+    }
+    const cache:Cache = { }
+    cache.foo = 'ff'
+    ```
+
+
+
+
+
+
+
+
