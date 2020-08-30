@@ -1896,11 +1896,195 @@
     动态属性
     ```typescript
     interface Cache {
+     // key可以是任意名称，string表示键的类型，最后的string表示值的类型
       [prop:string]:string
     }
     const cache:Cache = { }
     cache.foo = 'ff'
     ```
+
+16. 类 Class
+
+    描述一类具体事物的抽象特征，ES6以前，函数 + 原型模拟实现类，ES6开始javascript中有了专门的class
+    
+    typescript增强了class的相关语法，类的属性在使用前必须在类中先声明，是为了给属性添加标注
+    * 类的基本使用
+    ```typescript
+    class Person {
+      // 类的属性必须要有初始值，可以在等号后面赋值，也可以在构造函数赋值，否则会报错
+      // 要先在类中定义才能在构造函数constructor中为属性赋值
+      name: string // = 'init name'
+      age: number
+    
+      constructor (name: string, age: number) {
+        // 要明确声明类所拥有的属性，而不是在构造函数动态通过this动态添加
+        this.name = name
+        this.age = age
+      }
+    
+      sayHi (msg: string): void {
+        console.log(`I an ${this.name}, ${msg}`)
+      }
+    }
+    ```
+    * 访问修饰符：private、public、protected
+    private    表示私有属性，只能在类的内部访问
+    
+    public     表示共有属性，typescript中属性默认就是public
+    
+    protected  表示受保护的，只允许在子类中访问
+    
+    如果构造函数是protected，也不能在外部实例化，但是允许继承
+    ```typescript
+    class Person {
+      // 类的属性必须要有初始值
+      public name: string // = 'init name'
+      private age: number // 私有属性，只能在类的内部访问
+      protected gender: boolean
+    
+      protected constructor (name: string, age: number) {
+        this.name = name
+        this.age = age
+        this.gender = true
+      }
+    
+      sayHi (msg: string): void {
+        console.log(`I an ${this.name}, ${msg}`)
+        console.log(this.name)
+      }
+    }
+    
+    const tom = new Person('tom', 18) // constructor受保护不可以实例化
+    console.log(tom.name)
+    // console.log(tom.age) // 报错，age是私有属性，只能在类 Person 中访问
+    // console.log(tom.gender) //访问不到，报错； 属性 gender 受保护，只能在类 Person 及其子类中访问
+    
+    class Student extends Person {
+      constructor (name: string, age: number) {
+        super(name, age)
+        // 父类的protected属性子类可以访问
+        console.log(this.gender)
+      }
+    }
+    ```
+    构造函数默认是public，如果使用private，那就不能被外部实例化，也不能被继承，这就只能在这个类中添加静态方法，在静态方法中创建这个类的实例
+    ```base
+    class Student extends Person {
+      private constructor(name: string, age: number) {
+        super(name, age)
+        console.log(this.gender)
+      }
+      static create(name: string, age: number) {
+        return new Student(name, age)
+      }
+    }
+    
+    const jack = Student.create('jack', 18)
+    ```
+    只读属性,在属性声明前面加上readonly即可
+    ```base
+    protected readonly gender: boolean
+    ```
+
+17. 类与接口
+
+    一个接口可以抽象多个方法；也可以把接口细分，因为类不一定同时存在多个方法
+    ```base
+    // 尽可能让接口简单。一个接口只约束一个能力，一个类实现多个接口
+    interface Eat {
+      eat (foo: string): void
+    }
+    
+    interface Run {
+      run (distance: number): void
+    }
+    
+    class  Person implements Eat, Run {
+      eat(food: string): void {
+        console.log(`优雅的进餐：${food}`)
+      }
+    
+      run(distance: number): void {
+        console.log(`直立行走：${distance}`)
+      }
+    }
+    
+    class  Animal implements Eat, Run {
+      eat(food: string): void {
+        console.log(`呼噜呼噜的吃：${food}`)
+      }
+    
+      run(distance: number): void {
+        console.log(`爬行：${distance}`)
+      }
+    }
+    ```
+
+18. 抽象类
+
+    跟接口类似，约束子类的必须有某个成员，但抽象类可以包含具体的实现
+    
+    抽象类：在class关键词前添加abstract，如果类被定义为抽象类，那就只能被继承不能通过new创建实例对象
+    
+    抽象方法：在方法名前添加abstract，不需要方法体，只需规定有没参数，参数类型，有没返回值
+    ```base
+    abstract class Animal {
+      eat (food: string): void {
+        console.log(`呼噜呼噜地吃：${food}`)
+      }
+    
+      abstract run (distance: number): void // 抽象方法
+    }
+    
+    class Dog extends Animal {
+      run (distance: number): void {
+        console.log('四脚爬行', distance)
+      }
+    }
+    
+    const d = new Dog()
+    d.eat('草')
+    d.run(100)
+    ```
+
+19. 泛型
+
+    定义函数、接口或类时没有指定类型，在使用是再指定类型，目的是极大程度的复用代码
+    
+    在函数名后使用'<泛型参数>'，一般泛型参数用T作为名称，然后把函数中不明确的类型都用T代表
+    ```typescript
+    function createArray<T> (length: number, value: T): T[] {
+      const arr = Array<T>(length).fill(value)
+      return arr
+    }
+    
+    const str = createArray<string>(1, 'string')
+    const num = createArray<number>(1, 2)
+    ```
+
+20. 类型声明
+    
+    TypeScript中的扩展名为d.ts的文件就是类型声明文件
+    
+    如果第三方库没有类型声明文件，可以安装一个对应的类型声明模块
+    
+    如果第三方没有类型声明文件，那么可以使用declare声明对应的类型，对传入第三方库的参数和返回值做声明
+    
+    ```typescript
+    import { camelCase } from 'lodash'
+    
+    declare function camelCase (input: string): string
+    
+    const res = camelCase('hell world')
+    
+    ```
+
+
+
+
+
+
+
 
 
 
