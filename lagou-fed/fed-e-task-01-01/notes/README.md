@@ -2351,14 +2351,111 @@ obj = null
 
 4. 通过原型新增方法
     
+    在原型对象上新增实例对象需要的方法
+    ```base
+    var fn1 = function() {
+     // 不推荐这样写
+      this.foo = function() {
+        console.log(1111)
+      }
+    }
+    let f1 = new fn()
+   
+    var fn2 = function() {}
+   
+   // 推荐这样写
+    fn2.prototype.foo = function() {
+      console.log(1111)
+    }
+    let fn2 = new fn2()
+    ```
+
+5. 避开闭包陷阱
     
+    闭包是一种强大的语法，闭包使用不当很容易出现内存泄露，不要为了闭包而闭包 
+    ```base
+    function foo() {
+      var el = document.getElementById('btn')
+      el.onclick = function() {
+        console.log(el.id)
+      }
+    }
+    
+    foo()
+   
+    function foo() {
+      var el = document.getElementById('btn')
+      el.onclick = function() {
+        console.log(el.id)
+      }
+      el = null // 释放内存
+    }
+     foo()
+    ```
 
+6. 避免属性访问方法使用
+    
+    JS不需要属性的访问方法，所有属性都是外部可见的；使用属性访问方法只会增加一层重定义，没有访问的控制力
+    ```base
+    function Person () {
+      this.name = 'jal'
+      this.age = 18
+      this.getAge = function () {
+        return this.age
+      }
+    }
+    const p1 = new Person()
+    // 不建议这样用
+    const a = p1.getAge()
+    
+    function Person () {
+      this.name = 'jal'
+      this.age = 18
+    }
+    const p2 = new Person()
+    // 建议这样用
+    const b = p2.age
+    ```
 
+7. For循环优化
+    
+    缓存数组长度：arr.length
 
+8. 采用最优循环方式
 
+    优先forEach 其次 for 最后for in
 
+9. 文档碎片优化节点添加
+    
+    节点的添加操作必然会有回流和重绘，文档碎片优化节点添加 document.createDocumentFragment()
+    ```base
+    const frag = document.createDocumentFragment()
+      for(var i = 0; i < 10; i++) {
+        var op = document.createElement('p')
+        op.innerHTML = i
+        frag.appendChild(op)
+    }
+    document.body.appendChild(frag)
+    ```
 
+10. 克隆优化节点操作
+    
+    需要的DOM元素与界面已有的元素相似，可以克隆，减少样式、属性的添加
+    ```base
+    var oldp = document.getElementById('box1')
+    for (var i = 0; i < 3; i++) {
+      var p = oldp.cloneNode(false) // true：递归克隆子节点
+      p.innerHTML = i
+      document.body.appendChild(p)
+    }
+    ```
 
-
-
-
+11. 直接量替换new Object
+    ```base
+    var a = [1, 2, 3] // 直接量
+    
+    var a1 = new Array(3) // Object操作
+    a1[0] = 1
+    a1[1] = 2
+    a1[2] = 3
+    ```
