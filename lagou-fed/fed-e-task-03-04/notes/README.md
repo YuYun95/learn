@@ -191,16 +191,125 @@ renderer.renderToString(app, {
     前端编写这两个 entry 通过 webpack 打包为 bundle
 
 2. 源码结构
+    ```base
+    src
+    ├── components
+    │   ├── Foo.vue
+    │   ├── Bar.vue
+    │   └── Baz.vue
+    ├── App.vue
+    ├── app.js # 通用 entry(universal entry)
+    ├── entry-client.js # 仅运行于浏览器
+    └── entry-server.js # 仅运行于服务器
+    ```
+    App.vue
+    ```base
+    <template>
+      <div id="app">
+        <h1>{{message}}</h1>
+        <h2>客户端动态交互</h2>
+        <div>
+          <input v-model="message" type="text">
+        </div>
+        <div>
+          <button @click="onClick">点击测试</button>
+        </div>
+      </div>
+    </template>
+    
+    <script>
+    export default {
+      name: "App",
+      
+      data() {
+        return {
+          message: '拉勾教育'
+        }
+      },
+    
+      methods: {
+        onClick() {
+          console.log('Hello World')
+        }
+      }
+    }
+    </script>
+    ```
+    `app.js` 是我们应用程序的「通用 entry」。在纯客户端应用程序中，我们将在此文件中创建根Vue实例，并直接挂载到DOM。但是，对应服务器端渲染（SSR），责任转移到纯客户端entry文件。`app.js`简单地使用export导出一个`createApp`函数：
+    ```base
+    /**
+     * 通用启动入口
+     */
+    
+    import Vue from 'vue'
+    import App from './App'
+    
+    // 导出一个工厂函数，用于创建新的应用程序、router、store实例
+    // 各个用户之间互不影响
+    export function createApp() {
+      const app = new Vue({
+        // 根实例简单的渲染应用程序组件
+        render: h => h(App)
+      })
+      return {app}
+    }
+    ```
+    `entry-client.js` 客户端 entry 只需创建应用程序，并且将其挂载到 DOM 中：
+    ```base
+    /**
+     * 客户端入口
+     */
+    
+    import {createApp} from './app'
+    
+    // 客户端特定引导逻辑......
+    
+    const {app} = createApp()
+    
+    // 这里假定App.vue 模板中根元素具有 `id="app"`
+    app.$mount('#app')
+    ```
+    服务器 entry 使用 default export 导出函数，并在每次渲染中重复调用此函数。此时，除了创建和返回应用程序实例之外，它不会做太多事情 - 但是稍后我们将在此执行服务器端路由匹配 (server-side route matching) 和数据预取逻辑 (data pre-fetching logic)
 
+3. 安装依赖
+    
+    (1)安装生产依赖
+    ```base
+    npm i vue vue-server-renderer express cross-env
+    ```
+   | 包 | 说明 |
+   | ---- | ---- |
+   | vue | Vue.js核心库 |
+   | vue-server-renderer | Vue服务端渲染工具 |
+   | express | 基于Node的webpack服务框架 |
+   | cross-env | 通过npm scripts设置跨平台环境变量 |
+    (2).安装开发依赖
+    ```base
+    npm i -D webpack webpack-cli webpack-merge webpack-node-externals @babel/core @babel/plugin-transform-runtime @babel/preset-env babel-loader css-loader url-loader file-loader rimraf vue-loader vue-template-compiler friendly-errors-webpack-plugin
+    ```
+   | 包 | 说明 |
+   | ---- | ---- |
+   | webpack | webpack核心包 |
+   | webpack-cli | webpack的命令行工具 |
+   | webpack-merge | webpack配置信息合并工具 |
+   | webpack-node-externals | 排除webpack中的Node模块 |
+   | rimraf | 基于Node封装的一个跨平台`rm -rf`工具 |
+   | friendly-errors-webpack-plugin | 友好的webpack错误提示 |
+   | @babel/core<br/> @babel/plugin-transform-runtime<br/> @babel/preset-env<br/> babel-loader | Babel相关工具 |
+   | vue-loader<br/> vue-template-compiler | 处理.vue资源 |
+   | file-loader | 处理字体资源 |
+   | css-loader | 处理CSS资源 |
+   | url-loader | 处理图片资源 |
 
-
-
-
-
-
-
-
-
+4. webpack配置文件及打包命令
+    
+    (1) 初始化webpack打包配置文件
+    ```base
+    build
+    |---webpack.base.config.js # 公共配置
+    |---webpack.client.config.js # 客户端打包配置文件
+    |---webpack.server.config.js # 服务端打包配置文件
+    ```
 
 
 
