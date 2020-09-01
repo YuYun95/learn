@@ -2423,7 +2423,10 @@ obj = null
 
 8. 采用最优循环方式
 
-    优先forEach 其次 for 最后for in
+    ```js
+    [1, 2, , 3]
+   ```
+    优先forEach，forEach不会对空值处理 其次 for，for会开启两个作用域 最后for in
 
 9. 文档碎片优化节点添加
     
