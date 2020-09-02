@@ -209,7 +209,7 @@ renderer.renderToString(app, {
         <h1>{{message}}</h1>
         <h2>客户端动态交互</h2>
         <div>
-          <input v-model="message" type="text">
+          <input v-model="message">
         </div>
         <div>
           <button @click="onClick">点击测试</button>
@@ -219,17 +219,15 @@ renderer.renderToString(app, {
     
     <script>
     export default {
-      name: "App",
-      
-      data() {
+      name: 'App',
+      data: function () {
         return {
           message: '拉勾教育'
         }
       },
-    
       methods: {
-        onClick() {
-          console.log('Hello World')
+        onClick () {
+          console.log('Hello World！')
         }
       }
     }
@@ -242,16 +240,16 @@ renderer.renderToString(app, {
      */
     
     import Vue from 'vue'
-    import App from './App'
+    import App from './App.vue'
     
-    // 导出一个工厂函数，用于创建新的应用程序、router、store实例
-    // 各个用户之间互不影响
-    export function createApp() {
+    // 导出一个工厂函数，用于创建新的
+    // 应用程序、router 和 store 实例
+    export function createApp () {
       const app = new Vue({
-        // 根实例简单的渲染应用程序组件
+        // 根实例简单的渲染应用程序组件。
         render: h => h(App)
       })
-      return {app}
+      return { app }
     }
     ```
     `entry-client.js` 客户端 entry 只需创建应用程序，并且将其挂载到 DOM 中：
@@ -260,16 +258,28 @@ renderer.renderToString(app, {
      * 客户端入口
      */
     
-    import {createApp} from './app'
+    import { createApp } from './app'
     
-    // 客户端特定引导逻辑......
+    // 客户端特定引导逻辑……
     
-    const {app} = createApp()
+    const { app } = createApp()
     
-    // 这里假定App.vue 模板中根元素具有 `id="app"`
+    // 这里假定 App.vue 模板中根元素具有 `id="app"`
     app.$mount('#app')
     ```
     服务器 entry 使用 default export 导出函数，并在每次渲染中重复调用此函数。此时，除了创建和返回应用程序实例之外，它不会做太多事情 - 但是稍后我们将在此执行服务器端路由匹配 (server-side route matching) 和数据预取逻辑 (data pre-fetching logic)
+    ```base
+    /**
+     * 服务端启动入口
+     */
+    
+    import { createApp } from './app'
+    
+    export default context => {
+      const { app } = createApp()
+      return app
+    }
+    ```
 
 3. 安装依赖
     
@@ -311,12 +321,91 @@ renderer.renderToString(app, {
     |---webpack.server.config.js # 服务端打包配置文件
     ```
 
+5. 配置构建命令
+    ```base
+    "scripts": {
+      "build:client": "cross-env NODE_ENV=production webpack --config build/webpack.client.config.js",
+      "build:server": "cross-env NODE_ENV=production webpack --config build/webpack.server.config.js",
+      "build": "rimraf dist && npm run build:client && npm run build:server"
+    }
+    ```
 
+6. 启动应用
 
+    server.js
+    ```base
+    const Vue = require('vue')
+    const express = require('express')
+    const fs = require('fs')
+    
+    const serverBundle = require('./dist/vue-ssr-server-bundle.json')
+    const clientManifest = require('./dist/vue-ssr-client-manifest.json')
+    const { static } = require('express')
+    const template = fs.readFileSync('./index.template.html', 'utf-8')
+    const renderer = require('vue-server-renderer').createBundleRenderer(serverBundle, {
+      template,
+      clientManifest
+    })
+    
+    const server = express()
+    
+    // 请求前缀，使用express中间件的static处理
+    // 当请求'/dist'路径资源的时候，去'./dist'目录查找
+    server.use('/dist', express.static('./dist'))
+    
+    server.get('/', (req, res) => {
+    
+      renderer.renderToString({
+        title: '拉勾教育',
+        meta: `
+          <meta name="description" content="拉勾教育" >
+        `
+      }, (err, html) => {
+        if (err) {
+          return res.status(500).end('Internal Server Error.')
+        }
+        res.setHeader('Content-Type', 'text/html; charset=utf8') // 设置编码，防止乱码
+        res.end(html)
+      })
+    })
+    
+    server.listen(3000, () => {
+      console.log('server running at port 3000...')
+    })
 
+    ```
+    
+7. 解析渲染流程
 
-
-
+    (1).vue-ssr-server-bundle.json解析
+    
+    `renderer.renderToString()`方法需要把Vue实例渲染为html，只不过是在`createBundleRenderer()`方法创建了
+    
+    `createBundleRenderer()`方法第一个参数是服务端打包的结果`vue-ssr-server-bundle.json`
+    
+    `vue-ssr-server-bundle.json`描述服务端打包信息，'entry'属性是服务端打包后的入口，值是打包配置文件定义的，值所指向的文件就在该文件的'files'属性中
+    
+    `files`中的模块代码就是在服务端打包通过`entry-server`打包出来的一个结果文件
+    
+    `maps`属性就是`files`中的js模块的信息，开发调试使用
+    
+     (2).vue-ssr-server-bundle.json如何使用的
+      renderer在渲染的时候，会加载serverBundle当中的入口（entry）文件，加载里面的代码，然后执行，就得到了`entry-server.js`中的创建的Vue实例，把Vue实例渲染，把渲染结果注入到模板当中，最后把数据发送给客户端
+      
+     (3).`clientManifest`
+      客户端渲染激活，把客户端打包的js注入到页面中，clientManifest，对应`vue-ssr-client-manifest.json`客户端打包后的文件
+      
+      `publicPath`属性，对应客户端打包中配置的出口`publicPath`
+      
+      `all`属性是客户端打包所有构建出来的资源文件app.js、app.map
+      
+      `initial`属性值是打包后的app.js，serverRender在渲染的时候把`initial`中的资源自动的注入到模板页面的`<!--vue-ssr-outlet-->`之后
+      
+      `async`属性存储一些异步资源的资源信息，如，在代码中加载了一些异步组件、模块
+      
+      `modules`是针对原始模块依赖信息说明
+       
+       客户端激活：https://ssr.vuejs.org/zh/guide/hydration.html
 
 
 
