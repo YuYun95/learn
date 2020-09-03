@@ -416,13 +416,133 @@ renderer.renderToString(app, {
     
     server.js
     ```base
+    const Vue = require('vue')
+    const express = require('express')
+    const fs = require('fs')
+    const {createBundleRenderer} = require('vue-server-renderer')
+    const setupDevServer = require('./build/setup-dev-server')
     
+    const server = express()
+    
+    // 请求前缀，使用express中间件的static处理
+    server.use('/dist', express.static('./dist'))
+    
+    const isProd = process.env.NODE_ENV === 'production'
+    
+    let renderer
+    let onReady
+    if (isProd) {
+      const serverBundle = require('./dist/vue-ssr-server-bundle.json')
+      const clientManifest = require('./dist/vue-ssr-client-manifest.json')
+      const {static} = require('express')
+      const template = fs.readFileSync('./index.template.html', 'utf-8')
+      renderer = createBundleRenderer(serverBundle, {
+        template,
+        clientManifest
+      })
+    } else {
+      // 开发模式 -> 监视打包构建 -> 重新生成 Renderer 渲染器
+      // 为什么传server？在开发模式给web服务挂载中间件
+      // 每当监视构建打包完成后，回调函数会被执行
+      onReady = setupDevServer(server, (serverBundle, template, clientManifest) => {
+        renderer = createBundleRenderer(serverBundle, {
+          template,
+          clientManifest
+        })
+      })
+    }
+    
+    const render = (req, res) => {
+      renderer.renderToString({
+        title: '拉勾教育',
+        meta: `
+          <meta name="description" content="拉勾教育" >
+        `
+      }, (err, html) => {
+        if (err) {
+          return res.status(500).end('Internal Server Error.')
+        }
+        res.setHeader('Content-Type', 'text/html; charset=utf8') // 设置编码，防止乱码
+        res.end(html)
+      })
+    }
+    
+    server.get('/', isProd ? renderer : async (req, res) => {
+      // TODO: 等待有了 Renderer 渲染器以后，调用 render 进行渲染
+      await onReady
+      render()
+    })
+    
+    server.listen(3000, () => {
+      console.log('server running at port 3000...')
+    })
+
+    ```
+    build/setup-dev-server.js
+    ```base
+    module.exports = (server, callback) => {
+      let ready // ready就是promise中的resolve
+      const onReady = new Promise(r => ready = r)
+    
+      // 监视构建 -> 更新 Renderer
+    
+      let template
+      let serverBundle
+      let clientManifest
+      
+      return onReady
+      
+    }
+    ```
+3. update更新函数
+    ```base
+    const update = () => {
+        if (template && serverBundle && clientManifest) {
+          ready()
+          callback(serverBundle, template, clientManifest)
+        }
+      }
     ```
 
+4. 处理模板文件
+    
+    安装第三方监视库`npm install chokidar`
+    ```base
+     const fs = require('fs')
+     const path = require('path')
+     const chokidar = require('chokidar')
+   
+     // 监视构建 template -> 调用 update -> 更新 Renderer 渲染器
+      const templatePath = path.resolve(__dirname, '../index.template.html')
+      template = fs.readFileSync(templatePath, 'utf-8')
+      update()
+      // 原生监视方法 fs.watch、fs.watchFile
+      // 第三方监视库 chokidar
+    
+      // 监视模板文件变化，文件发生变化重新读取
+      chokidar.watch(templatePath).on('change', () => {
+        template = fs.readFileSync(templatePath, 'utf-8')
+        update()
+      })
+    ```
 
-
-
-
+5. 服务端监视打包
+    ```base
+      const resolve = file => path.resolve(__dirname, file)
+   
+      // 监视构建 serverBundle -> 调用 update -> 更新 Renderer 渲染器
+      const serverConfig = require('./webpack.server.config')
+      const serverCompiler = webpack(serverConfig)
+      serverCompiler.watch({}, (err, stats) => {
+        if (err) throw err // 错误指webpack本身的错误
+        // 自己源代码是否有错
+        if (stats.hasErrors()) return
+    
+        // 读取最新构建的server-bundle.json文件 更新 创建renderer渲染器
+        serverBundle = JSON.parse(fs.readFileSync(resolve('../dist/vue-ssr-server-bundle.json'), 'utf-8')) // 不用require，有缓存
+        update()
+      })
+    ```
 
 
 
