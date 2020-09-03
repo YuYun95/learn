@@ -407,8 +407,17 @@ renderer.renderToString(app, {
        
        客户端激活：https://ssr.vuejs.org/zh/guide/hydration.html
 
+### 六、构建配置开发模式
+1. 基本思路
+    
+    生产模式直接渲染，开发模式监视打包构建，重新生成Renderer渲染器
 
-
+2. 提取处理模块
+    
+    server.js
+    ```base
+    
+    ```
 
 
 
