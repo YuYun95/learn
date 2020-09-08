@@ -532,6 +532,7 @@ renderer.renderToString(app, {
    
       // 监视构建 serverBundle -> 调用 update -> 更新 Renderer 渲染器
       const serverConfig = require('./webpack.server.config')
+      // serverCompiler是一个webpack编译器，直接监听资源改变，进行打包构建
       const serverCompiler = webpack(serverConfig)
       serverCompiler.watch({}, (err, stats) => {
         if (err) throw err // 错误指webpack本身的错误
@@ -543,6 +544,109 @@ renderer.renderToString(app, {
         update()
       })
     ```
+
+6. 把数据写入内存中
+
+    webpack在打包的时候会把大把的结果写入磁盘进行读写操作，在开发模式会频繁的修改代码意味着频繁的读写磁盘数据，读写磁盘的操作是比较慢的，而把构建结果写入内存中可以提高速度
+    
+    https://webpack.js.org/api/node/#custom-file-systems，自定义webpack文件系统，打包结果默认写入磁盘，配置第三方包`memfs`可以写入内存
+    
+    也可以使用webpack官方提供的工具https://github.com/webpack/webpack-dev-middleware，打包结果默认写入内存
+    
+    ```base
+      // 监视构建 serverBundle -> 调用 update -> 更新 Renderer 渲染器
+      const serverConfig = require('./webpack.server.config')
+      const serverCompiler = webpack(serverConfig)
+    
+      // 自动的执行打包构建，也是以监视的方式，这样就不用我们watch
+      const serverDevMiddleware =  devMiddleware(serverCompiler, {
+        logLevel: 'silent' // 关闭日志输出，由 FriendlyErrorsWebpackPlugin 处理
+      })
+    
+      // 每当构建结束触发，'server'是一个自定义标识，可以随便起
+      serverCompiler.hooks.done.tap('server', () => {
+        // serverDevMiddleware.fileSystem 到devMiddleware内部的操作文件系统的对象
+        serverBundle = JSON.parse(serverDevMiddleware.fileSystem.readFileSync(resolve('../dist/vue-ssr-server-bundle.json'), 'utf-8')) // 不用require，有缓存
+        update()
+      })
+    ```
+
+7. 客户端构建
+    
+    server.js
+    ```base
+    server.get('/', isProd ? renderer : async (req, res) => {
+      // 等待有了 Renderer 渲染器以后，调用 render 进行渲染
+      await onReady
+      render(req, res)
+    })
+    ```
+
+    setup-dev-server.js
+    ```base
+     const devMiddleware = require('webpack-dev-middleware')
+   
+    // 监视构建 clientManifest -> 调用 update -> 更新 Renderer 渲染器
+      const clientConfig = require('./webpack.client.config')
+      clientConfig.plugins.push(new webpack.HotModuleReplacementPlugin())
+      clientConfig.entry.app = [
+        'webpack-hot-middleware/client?quiet=true&reload=true', // 和服务端交互处理热更新一个客户端脚本
+        clientConfig.entry.app
+      ]
+      clientConfig.output.filename = '[name].js' // 热更新模式下确保一致的hash
+      const clientCompiler = webpack(clientConfig)
+    
+      // 自动的执行打包构建，也是以监视的方式，这样就不用我们watch
+      const clientDevMiddleware = devMiddleware(clientCompiler, {
+        publicPath: clientConfig.output.publicPath,
+        logLevel: 'silent' // 关闭日志输出，由 FriendlyErrorsWebpackPlugin 处理
+      })
+    
+      // 每当构建结束触发，'client'是一个自定义标识，可以随便起
+      clientCompiler.hooks.done.tap('client', () => {
+        // clientDevMiddleware.fileSystem 到devMiddleware内部的操作文件系统的对象
+        clientManifest = JSON.parse(clientDevMiddleware.fileSystem.readFileSync(resolve('../dist/vue-ssr-client-manifest.json'), 'utf-8')) // 不用require，有缓存
+        update()
+      })
+    
+      server.use(hotMiddleware(clientCompiler, {
+        log: false // 关闭它本身的日志输出
+      }))
+    
+      // 重要！！！将clientDevMiddleware挂载到express服务中，提供对其内存中数据的访问
+      server.use(clientDevMiddleware)
+    ```
+
+8. 热更新
+
+    https://github.com/webpack-contrib/webpack-hot-middleware，可以实现打包后自动更新网页内容（热跟新）
+    ```base
+    clientConfig.plugins.push(new webpack.HotModuleReplacementPlugin())
+    
+    clientConfig.entry.app = [
+      'webpack-hot-middleware/client?quiet=true&reload=true', // 和服务端交互处理热更新一个客户端脚本
+      clientConfig.entry.app
+    ]
+    clientConfig.output.filename = '[name].js' // 热更新模式下确保一致的 hash
+    
+    const hotMiddleware = require('webpack-hot-middleware')
+    
+    server.use(hotMiddleware(clientCompiler, {
+      log: false // 关闭它本身的日志输出
+    }))
+    ```
+
+9. 编写通用应用注意事项
+
+    https://ssr.vuejs.org/zh/guide/universal.html
+
+
+
+
+
+
+
+
 
 
 
