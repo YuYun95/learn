@@ -467,7 +467,7 @@ renderer.renderToString(app, {
       })
     }
     
-    server.get('/', isProd ? renderer : async (req, res) => {
+    server.get('/', isProd ? render : async (req, res) => {
       // TODO: 等待有了 Renderer 渲染器以后，调用 render 进行渲染
       await onReady
       render()
@@ -640,6 +640,209 @@ renderer.renderToString(app, {
 
     https://ssr.vuejs.org/zh/guide/universal.html
 
+## 七、路由处理
+1. 配置VueRouter
+    
+    src/router/index.js
+    ```base
+    import Vue from 'vue'
+    import VueRouter from 'vue-router'
+    import Home from '@/pages/Home'
+    
+    Vue.use(VueRouter)
+    
+    export const createRouter = () => {
+      const router = new VueRouter({
+        mode: 'history', // 同构不能使用hash，history兼容前后端
+        routes: [
+          {
+            path: '/',
+            name: 'home',
+            component: Home
+          },
+          {
+            path: '/about',
+            name: 'about',
+            component: () => import('@/pages/About')
+          },
+          {
+            path: '*',
+            name: 'error404',
+            component: () => import('@/pages/404')
+          }
+        ]
+      })
+      return router
+    }
+    ```
+
+2. 将路由注册到根实例
+    
+    src/app.js
+    ```base
+    /**
+     * 通用启动入口
+     */
+    
+    import Vue from 'vue'
+    import App from './App.vue'
+    import {createRouter} from './router/index'
+    
+    // 导出一个工厂函数，用于创建新的，否则每个用户访问相同的路由
+    // 应用程序、router 和 store 实例
+    export function createApp() {
+      const router = createRouter()
+      const app = new Vue({
+        router, // 把路由挂载到 vue 根实例中
+        // 根实例简单的渲染应用程序组件。
+        render: h => h(App)
+      })
+      return {app, router}
+    }
+    ```
+
+3. 适配服务端入口
+
+    https://ssr.vuejs.org/zh/guide/routing.html，拷贝代码替换entry-server.js代码
+    ```base
+   // entry-server.js
+    import { createApp } from './app'
+    
+    export default context => {
+      // 因为有可能会是异步路由钩子函数或组件，所以我们将返回一个 Promise，
+      // 以便服务器能够等待所有的内容在渲染前，
+      // 就已经准备就绪。（如，异步路由）
+      return new Promise((resolve, reject) => {
+        const { app, router } = createApp()
+    
+        // 设置服务器端 router 的位置
+        router.push(context.url)
+    
+        // 等到 router 将可能的异步组件和钩子函数解析完
+        router.onReady(() => {
+          const matchedComponents = router.getMatchedComponents()
+          // 匹配不到的路由，执行 reject 函数，并返回 404
+          if (!matchedComponents.length) {
+            return reject({ code: 404 })
+          }
+    
+          // Promise 应该 resolve 应用程序实例，以便它可以渲染
+          resolve(app)
+        }, reject)
+      })
+    }
+    ```
+   路由表里已经配置过404页面了，所以不用额外判断404，然后将Promise改成async/await的形式，最终代码如下
+   ```base
+   import { createApp } from './app'
+   
+   // context参数是有server.js中的renderToString方法传递的第一个参数
+   export default async context => {
+   
+     // 因为有可能会是异步路由钩子函数或组件，所以我们将返回一个 Promise，
+     // 以便服务器能够等待所有的内容在渲染前，
+     // 就已经准备就绪。（如，异步路由）
+     const { app, router } = createApp()
+   
+     // 设置服务器端 router 的位置
+     router.push(context.url) // 拿到客户端请求路径，设置路由
+   
+     // 等到 router 将可能的异步组件和钩子函数解析完
+     // new Promise((resolve, reject) => {
+     //   router.onReady(resolve,reject)
+     // })
+     await new Promise(router.onReady.bind(router)) // onReady内部有this指向的问题
+   
+     return app
+   }
+
+   ```
+
+4. 服务端server适配
+
+   我们的服务器代码使用了一个 * 处理程序，它接受任意 URL。这允许我们将访问的 URL 传递到我们的 Vue 应用程序中，然后对客户端和服务器复用相同的路由配置！
+   ```base
+   const render = async (req, res) => {
+     try {
+       const html = await renderer.renderToString({
+         title: '拉勾教育',
+         meta: `
+         <meta name="description" content="拉勾教育" >
+       `,
+         url: req.url
+       })
+       res.setHeader('Content-Type', 'text/html; charset=utf8') // 设置编码，防止乱码
+       res.end(html)
+     } catch (err) {
+       return res.status(500).end('Internal Server Error.')
+     }
+   }
+   
+   // 服务端路由设置为 *，意味着所有的路由（服务端本身的路由【express路由】）都会进入这里
+   server.get('*', isProd ? render : async (req, res) => {
+     // 等待有了 Renderer 渲染器以后，调用 render 进行渲染
+     await onReady
+     render(req, res)
+   })
+   ```
+
+5. 适配客户端入口
+
+   https://ssr.vuejs.org/zh/guide/routing.html#%E4%BB%A3%E7%A0%81%E5%88%86%E5%89%B2
+   
+   需要注意的是，你仍然需要在挂载 app 之前调用 router.onReady，因为路由器必须要提前解析路由配置中的异步组件，才能正确地调用组件中可能存在的路由钩子。这一步我们已经在我们的服务器入口 (server entry) 中实现过了，现在我们只需要更新客户端入口 (client entry)：
+   ```base
+   /**
+    * entry-client.js
+    * 客户端入口
+    */
+   
+   import { createApp } from './app'
+   
+   // 客户端特定引导逻辑……
+   
+   const { app, router } = createApp()
+   
+   router.onReady(() => {
+     app.$mount('#app')
+   })
+   ```
+
+6. 处理完成
+    
+   路由出口(router-view)：
+    
+   App.vue
+   ```base
+    <template>
+      <div id="app">
+        <ul>
+          <li>
+            <router-link to="/">Home</router-link>
+          </li>
+          <li>
+            <router-link to="/about">About</router-link>
+          </li>
+        </ul>
+        <!--  路由出口  -->
+        <router-view/>
+      </div>
+    </template>
+   ```
+   
+   路由懒加载，在页面head有特殊的link标签，href值是js文件，link标签有rel属性，值有preload、prefetch，表示预加载这里的资源，不会执行代码。
+   
+   ![](./img/2.jpg)
+   
+   preload加载的是当前页用的资源，prefetch加载的是下一页用到的资源，在浏览器空闲的时候加载，也就是不一定加载成功资源。
+   
+   当你跳转页面的时候，会在header中插入一个script标签，这里才会真正的执行里面的代码，这个script标签的js，可能之前prefetch已经加载回来了
+   
+   ![](./img/3.jpg)
+   
+   ![](./img/4.jpg)
+   
+   同构时希望客户端尽早接管服务端渲染内容，让他拥有交互能力，如果使用script标签会去下载对应的资源执行里面的代码会阻塞页面的渲染
 
 
 
