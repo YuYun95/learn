@@ -844,8 +844,76 @@ renderer.renderToString(app, {
    
    同构时希望客户端尽早接管服务端渲染内容，让他拥有交互能力，如果使用script标签会去下载对应的资源执行里面的代码会阻塞页面的渲染
 
+## 八、管理页面Head内容
+1. Head内容
+    
+    实现不同页面的head内容
 
-
+    vue官方Head管理：https://ssr.vuejs.org/zh/guide/head.html
+    
+    第三方模块：GitHub地址https://github.com/nuxt/vue-meta、官网https://vue-meta.nuxtjs.org/guide/
+    
+    安装依赖库`yarn add vue-meta`
+    
+    在通用app.js入口导入，https://vue-meta.nuxtjs.org/guide/
+    ```base
+    import VueMeta from 'vue-meta'
+    
+    Vue.use(VueMeta)
+    
+    Vue.mixin({
+      metaInfo: {
+        titleTemplate: '%s - Vue服务端渲染' // 当页面提供标题后，最终标题会渲染在‘%s’
+      }
+    })
+    ```
+   https://vue-meta.nuxtjs.org/guide/ssr.html#add-vue-meta-to-the-context
+   
+   entry-server.js的导出函数里添加代码：
+   
+   ```base
+   const meta = app.$meta() // 一定要在路由导航之前
+   context.meta = meta // 路由导航之后
+   ```
+   
+   将meta数据注入到模板页面index.template.html中
+   
+   https://vue-meta.nuxtjs.org/guide/ssr.html#inject-metadata-into-page-string
+   
+   ```base
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     {{{ meta.inject().title.text() }}}
+     {{{ meta.inject().meta.text() }}}
+   </head>
+   <body>
+     <!--vue-ssr-outlet-->
+   </body>
+   </html>
+   ```
+   
+   Home.vue页面
+   ```base
+   export default {
+     name: "Home",
+     metaInfo: {
+       title: '首页'
+     }
+   }
+   ```
+   About.vue页面
+   ```base
+   export default {
+     name: "About",
+     metaInfo: {
+       title: '关于'
+     }
+   }
+   ```
+   metaInfo可以定制的信息https://vue-meta.nuxtjs.org/api/#metainfo-properties
 
 
 
