@@ -242,7 +242,7 @@ renderer.renderToString(app, {
     import Vue from 'vue'
     import App from './App.vue'
     
-    // 导出一个工厂函数，用于创建新的
+    // 导出一个工厂函数，用于创建新的，
     // 应用程序、router 和 store 实例
     export function createApp () {
       const app = new Vue({
@@ -319,6 +319,181 @@ renderer.renderToString(app, {
     |---webpack.base.config.js # 公共配置
     |---webpack.client.config.js # 客户端打包配置文件
     |---webpack.server.config.js # 服务端打包配置文件
+    ```
+   
+    webpack.base.config.js
+    ```base
+    /**
+     * 公共配置
+     */
+    const VueLoaderPlugin = require('vue-loader/lib/plugin')
+    const path = require('path')
+    const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
+    const resolve = file => path.resolve(__dirname, file)
+    
+    const isProd = process.env.NODE_ENV === 'production'
+    
+    module.exports = {
+      mode: isProd ? 'production' : 'development',
+      output: {
+        path: resolve('../dist/'),
+        publicPath: '/dist/',
+        filename: '[name].[chunkhash].js'
+      },
+      resolve: {
+        alias: {
+          // 路径别名，@ 指向 src
+          '@': resolve('../src/')
+        },
+        // 可以省略的扩展名
+        // 当省略扩展名的时候，按照从前往后的顺序依次解析
+        extensions: ['.js', '.vue', '.json']
+      },
+      devtool: isProd ? 'source-map' : 'cheap-module-eval-source-map',
+      module: {
+        rules: [
+          // 处理图片资源
+          {
+            test: /\.(png|jpg|gif)$/i,
+            use: [
+              {
+                loader: 'url-loader',
+                options: {
+                  limit: 8192,
+                },
+              },
+            ],
+          },
+    
+          // 处理字体资源
+          {
+            test: /\.(woff|woff2|eot|ttf|otf)$/,
+            use: [
+              'file-loader',
+            ],
+          },
+    
+          // 处理 .vue 资源
+          {
+            test: /\.vue$/,
+            loader: 'vue-loader'
+          },
+    
+          // 处理 CSS 资源
+          // 它会应用到普通的 `.css` 文件
+          // 以及 `.vue` 文件中的 `<style>` 块
+          {
+            test: /\.css$/,
+            use: [
+              'vue-style-loader',
+              'css-loader'
+            ]
+          },
+    
+          // CSS 预处理器，参考：https://vue-loader.vuejs.org/zh/guide/pre-processors.html
+          // 例如处理 Less 资源
+          // {
+          //   test: /\.less$/,
+          //   use: [
+          //     'vue-style-loader',
+          //     'css-loader',
+          //     'less-loader'
+          //   ]
+          // },
+        ]
+      },
+      plugins: [
+        new VueLoaderPlugin(),
+        new FriendlyErrorsWebpackPlugin()
+      ]
+    }
+    ```
+   
+    webpack.client.config.js
+    ```base
+    /**
+     * 客户端打包配置
+     */
+    const { merge } = require('webpack-merge')
+    const baseConfig = require('./webpack.base.config.js')
+    const VueSSRClientPlugin = require('vue-server-renderer/client-plugin')
+    
+    module.exports = merge(baseConfig, {
+      entry: {
+        app: './src/entry-client.js' // 相对于执行打包所处的目录（这里是vue-ssr目录）
+      },
+    
+      module: {
+        rules: [
+          // ES6 转 ES5
+          {
+            test: /\.m?js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env'],
+                cacheDirectory: true,
+                plugins: ['@babel/plugin-transform-runtime']
+              }
+            }
+          },
+        ]
+      },
+    
+      // 重要信息：这将 webpack 运行时分离到一个引导 chunk 中，
+      // 以便可以在之后正确注入异步 chunk。
+      optimization: {
+        splitChunks: {
+          name: "manifest",
+          minChunks: Infinity
+        }
+      },
+    
+      plugins: [
+        // 此插件在输出目录中生成 `vue-ssr-client-manifest.json`。
+        new VueSSRClientPlugin()
+      ]
+    })
+    ```
+    
+    webpack.server.config.js
+    ```base
+    /**
+     * 服务端打包配置
+     */
+    const { merge } = require('webpack-merge')
+    const nodeExternals = require('webpack-node-externals')
+    const baseConfig = require('./webpack.base.config.js')
+    const VueSSRServerPlugin = require('vue-server-renderer/server-plugin')
+    
+    module.exports = merge(baseConfig, {
+      // 将 entry 指向应用程序的 server entry 文件
+      entry: './src/entry-server.js',
+    
+      // 这允许 webpack 以 Node 适用方式处理模块加载
+      // 并且还会在编译 Vue 组件时，
+      // 告知 `vue-loader` 输送面向服务器代码(server-oriented code)。
+      target: 'node',
+    
+      output: {
+        filename: 'server-bundle.js',
+        // 此处告知 server bundle 使用 Node 风格导出模块(Node-style exports)
+        libraryTarget: 'commonjs2'
+      },
+    
+      // 不打包 node_modules 第三方包，而是保留 require 方式直接加载
+      externals: [nodeExternals({
+        // 白名单中的资源依然正常打包
+        allowlist: [/\.css$/]
+      })],
+    
+      plugins: [
+        // 这是将服务器的整个输出构建为单个 JSON 文件的插件。
+        // 默认文件名为 `vue-ssr-server-bundle.json`
+        new VueSSRServerPlugin()
+      ]
+    })
     ```
 
 5. 配置构建命令
