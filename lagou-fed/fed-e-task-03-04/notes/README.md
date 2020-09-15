@@ -242,7 +242,7 @@ renderer.renderToString(app, {
     import Vue from 'vue'
     import App from './App.vue'
     
-    // 导出一个工厂函数，用于创建新的
+    // 导出一个工厂函数，用于创建新的，
     // 应用程序、router 和 store 实例
     export function createApp () {
       const app = new Vue({
@@ -319,6 +319,181 @@ renderer.renderToString(app, {
     |---webpack.base.config.js # 公共配置
     |---webpack.client.config.js # 客户端打包配置文件
     |---webpack.server.config.js # 服务端打包配置文件
+    ```
+   
+    webpack.base.config.js
+    ```base
+    /**
+     * 公共配置
+     */
+    const VueLoaderPlugin = require('vue-loader/lib/plugin')
+    const path = require('path')
+    const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
+    const resolve = file => path.resolve(__dirname, file)
+    
+    const isProd = process.env.NODE_ENV === 'production'
+    
+    module.exports = {
+      mode: isProd ? 'production' : 'development',
+      output: {
+        path: resolve('../dist/'),
+        publicPath: '/dist/',
+        filename: '[name].[chunkhash].js'
+      },
+      resolve: {
+        alias: {
+          // 路径别名，@ 指向 src
+          '@': resolve('../src/')
+        },
+        // 可以省略的扩展名
+        // 当省略扩展名的时候，按照从前往后的顺序依次解析
+        extensions: ['.js', '.vue', '.json']
+      },
+      devtool: isProd ? 'source-map' : 'cheap-module-eval-source-map',
+      module: {
+        rules: [
+          // 处理图片资源
+          {
+            test: /\.(png|jpg|gif)$/i,
+            use: [
+              {
+                loader: 'url-loader',
+                options: {
+                  limit: 8192,
+                },
+              },
+            ],
+          },
+    
+          // 处理字体资源
+          {
+            test: /\.(woff|woff2|eot|ttf|otf)$/,
+            use: [
+              'file-loader',
+            ],
+          },
+    
+          // 处理 .vue 资源
+          {
+            test: /\.vue$/,
+            loader: 'vue-loader'
+          },
+    
+          // 处理 CSS 资源
+          // 它会应用到普通的 `.css` 文件
+          // 以及 `.vue` 文件中的 `<style>` 块
+          {
+            test: /\.css$/,
+            use: [
+              'vue-style-loader',
+              'css-loader'
+            ]
+          },
+    
+          // CSS 预处理器，参考：https://vue-loader.vuejs.org/zh/guide/pre-processors.html
+          // 例如处理 Less 资源
+          // {
+          //   test: /\.less$/,
+          //   use: [
+          //     'vue-style-loader',
+          //     'css-loader',
+          //     'less-loader'
+          //   ]
+          // },
+        ]
+      },
+      plugins: [
+        new VueLoaderPlugin(),
+        new FriendlyErrorsWebpackPlugin()
+      ]
+    }
+    ```
+   
+    webpack.client.config.js
+    ```base
+    /**
+     * 客户端打包配置
+     */
+    const { merge } = require('webpack-merge')
+    const baseConfig = require('./webpack.base.config.js')
+    const VueSSRClientPlugin = require('vue-server-renderer/client-plugin')
+    
+    module.exports = merge(baseConfig, {
+      entry: {
+        app: './src/entry-client.js' // 相对于执行打包所处的目录（这里是vue-ssr目录）
+      },
+    
+      module: {
+        rules: [
+          // ES6 转 ES5
+          {
+            test: /\.m?js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env'],
+                cacheDirectory: true,
+                plugins: ['@babel/plugin-transform-runtime']
+              }
+            }
+          },
+        ]
+      },
+    
+      // 重要信息：这将 webpack 运行时分离到一个引导 chunk 中，
+      // 以便可以在之后正确注入异步 chunk。
+      optimization: {
+        splitChunks: {
+          name: "manifest",
+          minChunks: Infinity
+        }
+      },
+    
+      plugins: [
+        // 此插件在输出目录中生成 `vue-ssr-client-manifest.json`。
+        new VueSSRClientPlugin()
+      ]
+    })
+    ```
+    
+    webpack.server.config.js
+    ```base
+    /**
+     * 服务端打包配置
+     */
+    const { merge } = require('webpack-merge')
+    const nodeExternals = require('webpack-node-externals')
+    const baseConfig = require('./webpack.base.config.js')
+    const VueSSRServerPlugin = require('vue-server-renderer/server-plugin')
+    
+    module.exports = merge(baseConfig, {
+      // 将 entry 指向应用程序的 server entry 文件
+      entry: './src/entry-server.js',
+    
+      // 这允许 webpack 以 Node 适用方式处理模块加载
+      // 并且还会在编译 Vue 组件时，
+      // 告知 `vue-loader` 输送面向服务器代码(server-oriented code)。
+      target: 'node',
+    
+      output: {
+        filename: 'server-bundle.js',
+        // 此处告知 server bundle 使用 Node 风格导出模块(Node-style exports)
+        libraryTarget: 'commonjs2'
+      },
+    
+      // 不打包 node_modules 第三方包，而是保留 require 方式直接加载
+      externals: [nodeExternals({
+        // 白名单中的资源依然正常打包
+        allowlist: [/\.css$/]
+      })],
+    
+      plugins: [
+        // 这是将服务器的整个输出构建为单个 JSON 文件的插件。
+        // 默认文件名为 `vue-ssr-server-bundle.json`
+        new VueSSRServerPlugin()
+      ]
+    })
     ```
 
 5. 配置构建命令
@@ -914,6 +1089,230 @@ renderer.renderToString(app, {
    }
    ```
    metaInfo可以定制的信息https://vue-meta.nuxtjs.org/api/#metainfo-properties
+
+## 九、数据预取和状态管理
+1. 思路分析
+    
+    Vue SSR 数据预取和状态：https://ssr.vuejs.org/zh/guide/data.html
+    
+    在服务器端渲染(SSR)期间，我们本质上是在渲染我们应用程序的"快照"，所以如果应用程序依赖于一些异步数据，**那么在开始渲染过程之前，需要先预取和解析好这些数据**
+    
+    另一个需要关注的问题是在客户端，在挂载 (mount) 到客户端应用程序之前，需要获取到与服务器端应用程序完全相同的数据 - 否则，客户端应用程序会因为使用与服务器端应用程序不同的状态，然后导致混合失败
+    
+    为了解决这个问题，获取的数据需要位于视图组件之外，即放置在专门的数据预取存储容器(data store)或"状态容器(state container)）"中。首先，在服务器端，我们可以在渲染之前预取数据，并将数据填充到 store 中。此外，我们将在 HTML 中序列化(serialize)和内联预置(inline)状态。这样，在挂载(mount)到客户端应用程序之前，可以直接从 store 获取到内联预置(inline)状态
+     
+2. 数据预取
+    
+    ```base
+    npm install vuex
+    ```
+    src/store/index.js
+    ```base
+    import Vue from 'vue'
+    import Vuex from 'vuex'
+    import axios from 'axios'
+    
+    Vue.use(Vuex)
+    
+    export const createStore = () => {
+      return new Vuex.Store({
+        state: () => ({ // 防止交叉请求带来的数据状态污染
+          posts: []
+        }),
+    
+        mutations: {
+          setPosts(state, data) {
+            state.posts = data
+          }
+        },
+    
+        actions: {
+          // 在服务端渲染期间务必让 action 返回一个Promise
+          async getPosts({ commit }) { // async 默认返回Promise
+            // return new Promise()
+            const { data } = await axios.get('https://cnodejs.org/api/v1/topics')
+            commit('setPosts', data.data)
+          }
+        }
+      })
+    }
+    ```
+   
+   将容器注入到入口文件src/app.js
+   ```base
+   /**
+    * 通用启动入口
+    */
+   
+   import Vue from 'vue'
+   import App from './App.vue'
+   import { createRouter } from './router/index'
+   import VueMeta from 'vue-meta'
+   import { createStore } from './store'
+   
+   Vue.use(VueMeta)
+   
+   Vue.mixin({
+     metaInfo: {
+       titleTemplate: '%s - Vue服务端渲染' // 当页面提供标题后，最终标题会渲染在‘%s’
+     }
+   })
+   
+   // 导出一个工厂函数，用于创建新的，否则每个用户访问相同的路由
+   // 应用程序、router 和 store 实例
+   export function createApp() {
+     const router = createRouter()
+     const store = createStore()
+     const app = new Vue({
+       router, // 把路由挂载到 vue 根实例中
+       store, // 把容器挂载到 Vue 跟实例中
+       // 根实例简单的渲染应用程序组件。
+       render: h => h(App)
+     })
+     return { app, router, store }
+   }
+   ```
+   src/pages/Posts.vue
+   ```base
+   <template>
+     <div>
+       <h1>Post list</h1>
+       <ul>
+         <li v-for="post in posts" :key="post.id">{{post.title}}</li>
+       </ul>
+     </div>
+   </template>
+   
+   <script>
+   // import axios from 'axios'
+   import { mapState, mapActions } from 'vuex'
+   
+   export default {
+     name: 'Posts',
+     metaInfo: {
+       title: 'Posts'
+     },
+   
+     data() {
+       return {
+         // posts: []
+       }
+     },
+   
+     computed: {
+       ...mapState(['posts'])
+     },
+   
+     // Vue SSR 特殊为服务端渲染提供的一个生命周期钩子函数
+     serverPrefetch() {
+       // 发起action，返回 Promise
+       // this.$store.dispatch('getPosts')
+       return this.getPosts()
+     },
+   
+     methods: {
+       ...mapActions(['getPosts'])
+     }
+   
+     // 服务端渲染
+     // 只支持 beforeCreate 和 created
+     // 不会等待 beforeCreate 和 created 中的异步操作
+     // 不支持响应式数据
+     // 所有这种做法在服务端渲染中是不会工作的！！！
+     // async created() {
+     //   console.log('Posts Created Start')
+     //   const { data } = await axios({
+     //     method: 'GET',
+     //     url: 'https://cnodejs.org/api/v1/topics'
+     //   })
+     //   this.posts = data.data
+     //   console.log('Posts Created End')
+     // }
+   }
+   </script>
+   ```
+   created钩子函数中异步请求结果:
+   
+   ![](./img/5.jpg)
+   
+   `npm run dev`运行，打开页面发现闪了一下，页面的内容没了，打开网络请求查看发现服务端是有数据返回的
+   
+   原因是拿到的数据存储到服务端的vuex容器中了，应该同时把数据同步到客户端的vuex容器中
+   
+   服务端和客户端数据状态不同步导致合并失败，合并失败客户端要重新渲染，但是客户端是没有这个数据状态的，所以页面没数据
+   
+   ![](./img/6.jpg)
+
+3. 将数据预取同步到客户端
+
+    entry-server.js
+    ```base
+    /**
+     * 服务端启动入口
+     */
+    
+    import { createApp } from './app'
+    
+    // context参数是有server.js中的renderToString方法传递的第一个参数
+    export default async context => {
+      // 因为有可能会是异步路由钩子函数或组件，所以我们将返回一个 Promise，
+      // 以便服务器能够等待所有的内容在渲染前，
+      // 就已经准备就绪。（如，异步路由）
+      const { app, router, store } = createApp()
+    
+      const meta = app.$meta() // 一定要在路由导航之前
+    
+      // 设置服务器端 router 的位置
+      router.push(context.url) // 拿到客户端请求路径，设置路由
+    
+      context.meta = meta // 路由导航之后
+    
+      // 等到 router 将可能的异步组件和钩子函数解析完
+      // new Promise((resolve, reject) => {
+      //   router.onReady(resolve,reject)
+      // })
+      await new Promise(router.onReady.bind(router)) // onReady内部有this指向的问题
+    
+      // 服务端渲染完毕以后调用，也就可以拿到容器状态数据
+      context.rendered = () => {
+        // Renderer 会把 context.state 数据对象内联到页面模板中
+        // 最终发送给客户端的页面中会包含一段脚本：window.__INITIAL_STATE__ = context.state
+        // 客户端就要把页面中的 window.INITIAL_STATE__拿出来填充到客户端 store 容器中
+        context.state = store.state
+      }
+    
+      return app
+    }
+    ```
+    entry-client.js
+    ```base
+    /**
+     * 客户端入口
+     */
+    
+    import { createApp } from './app'
+    
+    const { app, router, store } = createApp()
+    
+    if (window.__INITIAL_STATE__) {
+      store.replaceState(window.__INITIAL_STATE__) // 替换容器状态
+    }
+    
+    router.onReady(() => {
+      app.$mount('#app')
+    })
+    
+    ```
+
+
+
+
+
+
+
+
+
+
 
 
 
