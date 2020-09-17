@@ -1343,7 +1343,80 @@ renderer.renderToString(app, {
     * 不适合有大量动态内容的应用
         * 如果渲染路线中包含特定于用户查看其内容或其他动态源的内容，则应确保您具有可以显示的占位符组件，直到动态内容加载到客户端为止。否则可能有点怪异
 
+### 二、Gridsome基础
+1. 创建Gridsom项目
+    
+    Gridsome依赖sharp，国内的用户很难安装成功sharp，所以使用淘宝镜像安装sharp
+    ```base
+    npm config set sharp_binary_host "https://npm.taobao.org/mirrors/sharp"
+    npm config set sharp_libvips_binary_host "https://npm.taobao.org/mirrors/sharp-libvips"
+    ```
+    sharp是C++语言编写的，所以还要安装C++环境
+    
+    安装node-gyp，编译C++扩展包
+    
+    根据node-gyp的官方文档 https://github.com/nodejs/node-gyp 的说明对不同操作系统进行安装命令：
+
+    On Unix
+    * Python v2.7, v3.5, v3.6, v3.7, or v3.8
+    * `make`
+    * A proper C/C++ compiler toolchain, like [GCC](https://gcc.gnu.org/)
+
+    * On macOS
+    ATTENTION: If your Mac has been upgraded to macOS Catalina (10.15), please read [macOS_Catalina.md](https://github.com/nodejs/node-gyp/blob/master/macOS_Catalina.md).
+    * Python v2.7, v3.5, v3.6, v3.7, or v3.8
+    * Xcode
+        * You also need to install the `XCode Command Line Tools` by running `xcode-select --install`. Alternatively, if you already have the full Xcode installed, you can find them under the menu `Xcode -> Open Developer Tool -> More Developer Tools....` This step will install `clang`, `clang++`, and `make`.
+    
+    On Windows
+    Install the current version of Python from the [Microsoft Store package.](https://docs.python.org/3/using/windows.html#the-microsoft-store-package)
+    
+    然后根据Gridsome官网https://gridsome.org/docs/ 的教程安装gridsome，
+    ```base
+    npm install --global @gridsome/cli 
+    ```
+   拉取远程模板到本地：
+   ```base
+   gridsome create my-gridsome-site
+   ```
+   安装依赖的时候比较慢，又没有进度条，可以按ctrl+C中断掉，然后进入已经生成的`my-gridsome-site`目录下，执行`rm -rf node_modules`删除半成品`node_modules`，然后重新执行`npm install`，此时就能看到进度了
+   
+   安装好依赖之后，可以在package.json里查看命令
+   
+   执行`npm run develop`启动项目
+
+2. 预渲染
+    
+    Gridsome会把`pages`目录下的组件自动生成路由
+    
+    在pages目录下创建一个Foo.vue页面
+    ```base
+    <template>
+      <div>
+        <h1>Foo Page</h1>
+      </div>
+    </template>
+    
+    <script>
+    export default {
+      name: 'FooPage'
+    }
+    </script>
+    
+    <style>
+    
+    </style>
+
+    ```
+   访问http://localhost:8080/foo
+   
+   然后执行`npm run build`进行打包，打包后生成了一个dist文件
+   
+   安装serve：`npm i -g serve`
+   
+   然后在这个dist路径下起一个静态服务：`serve dist`
+   然后访问http://localhost:5000 就可以看到页面是由服务端渲染好了返回的，然后客户端的交互都是单页面应用形式。
 
 
-
-
+   
+   
