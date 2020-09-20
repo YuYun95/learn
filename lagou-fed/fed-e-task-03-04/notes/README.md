@@ -1417,6 +1417,541 @@ renderer.renderToString(app, {
    然后在这个dist路径下起一个静态服务：`serve dist`
    然后访问http://localhost:5000 就可以看到页面是由服务端渲染好了返回的，然后客户端的交互都是单页面应用形式。
 
+3. 目录结构
 
+   `src/main.js`是整个项目的入口，加载了`/layouts/Default.vue`
+   ```base
+   // This is the main.js file. Import global CSS and scripts here.
+   // The Client API can be used here. Learn more: gridsome.org/docs/client-api
+   
+   import DefaultLayout from '~/layouts/Default.vue'
+   
+   export default function (Vue, { router, head, isClient }) {
+     // Set default layout as a global component
+     Vue.component('Layout', DefaultLayout)
+   }
+   ```
+   Default.vue 特殊之处
+   ```base
+   <static-query>
+   query {
+     metadata {
+       siteName
+     }
+   }
+   </static-query>
+   ```
+   专门查询`Graphql`数据给`Gridsom`用
+   
+   `src/templates`文件夹是放集合的节点(组件)
+   
+   `src/pages`是路由页面，自动生成路由，我们不需要配置路由
+   
+   `src/layouts`放布局组件
+   
+   `src/components`放公共组件
+   
+   `src/.temp`放打包过程生成的文件
+   
+   `.catch`是缓存的一些内容
+   
+   `node_modules`放第三方包
+   
+   `static`放不需要打包编译的文件，指静态的资源
+   
+   `gridsome.config.js` Gridsome的配置文件
+   
+   `gridsome.server.js` 也是Girdsome的配置文件，是配置服务端的，Gridsome内部的服务配置
+   
+4. 项目配置
+
+   在 https://gridsome.org/docs/config 可以查看Gridsome的配置
+
+   `gridsome.config.js`
+   ```base
+   // This is where project configuration and plugin options are located.
+   // Learn more: https://gridsome.org/docs/config
+   
+   // Changes here require a server restart.
+   // To restart press CTRL + C in terminal and run `gridsome develop`
+   
+   module.exports = {
+     siteName: '拉勾教育',
+     siteDescription: '大前端',
+     plugins: []
+   }
+   ```
+   运行，浏览器打开可以看到浏览器的标签、meta标签description 显示对应的数据
+
+5. Pages
+   
+   (1) 基于文件形式
+   
+   直接在src/pages目录下创建一个文件
+   
+   (2) 基于编程方式
+
+   gridsome.server.js
+   
+   ```base
+   api.createPages(({ createPage }) => {
+       // Use the Pages API here: https://gridsome.org/docs/pages-api/
+       createPage({
+         path: '/my-page',
+         component: './src/templates/MyPage.vue'
+       })
+     })
+   ```
+   
+   src/templates/MyPage.vue
+   
+   ```base
+   <template>
+     <div>
+       <h1>
+         MyPage
+       </h1>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     name: 'MyPage',
+     metaInfo: {
+       title: 'MyPage' // 配置header中的title
+     }
+   }
+   </script>
+   
+   <style>
+   
+   </style>
+   ```
+   重启项目后访问http://localhost:8080/my-page就可以看到MyPage页面
+
+6. 动态路由
+   
+   (1) pages下面创建的页面文件名称用方括号括起来，作为动态路由参数
+
+   src/pages/user/[id].vue
+   ```base
+   <template>
+     <div>
+       <h1>
+         User {{$route.params.id}} Page
+       </h1>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     name: "UserPage"
+   }
+   </script>
+   
+   <style scoped>
+   
+   </style>
+   ```
+   访问：http://localhost:8080/user/1
+   
+   就可以看到 User 1 Page 这个内容了
+
+   (2) 编程方式
+   
+   gridsome.server.js
+
+   ```base
+   api.createPages(({ createPage }) => {
+     createPage({
+       path: '/user/:id(\\d+)', //正则表达式，id必须是数字
+       component: './src/templates/User.vue'
+     })
+   })
+   ```
+   
+7. 集合
+   
+   ```base
+   <template>
+     <Layout>
+       <h1>Posts1</h1>
+       <ul>
+         <li v-for="post in posts" :key="post.id">{{ post.title }}</li>
+       </ul>
+     </Layout>
+   </template>
+   
+   <script>
+   import axios from 'axios'
+   export default {
+     name: 'Posts1',
+     data () {
+       return {
+         posts: []
+       }
+     },
+     async created () {
+       const { data } = await axios.get('https://jsonplaceholder.typicode.com/posts')
+       this.posts = data
+     }
+   }
+   </script>
+   
+   <style>
+   
+   </style>
+   ```
+   数据是在客户端动态加载请求过来的，不是预渲染生成的
+   
+   想要数据预渲染，得使用Gridsome中的集合Collections
+   ```base
+   // gridsome.server.js
+   const axios = require('axios')
+   
+   module.exports = function (api) {
+     api.loadSource(async actions => {
+       const collection = actions.addCollection('Post')
+   
+       const { data } = await axios.get('https://api.example.com/posts')
+   
+       for (const item of data) {
+         collection.addNode({
+           id: item.id,
+           title: item.title,
+           content: item.content
+         })
+       }
+     })
+   }
+   ```
+
+8. 在GraphQL中查询数据
+   
+   运行项目，访问http://localhost:8080/___explore
+   
+   ![](./img/7.jpg)
+
+   点击`DOCS`可以查看有哪些数据被查询
+   
+   左侧是我们需要查询的数据
+   
+   点击中间的按钮
+   
+   右侧返回数据
+
+9. 在页面中查询GraphQL
+
+   Posts2.vue，静态页面，服务端渲染的
+
+   ```base
+   <template>
+     <Layout>
+         <h1>Posts2</h1>
+         <ul>
+           <li v-for="edge in $page.posts.edges" :key="edge.node.id">
+             <g-link to="/">{{edge.node.title}}</g-link>
+           </li>
+         </ul>
+       </Layout>
+   </template>
+   
+   <script>
+   export default {
+     name: 'Posts2',
+   }
+   </script>
+   
+   <style>
+   
+   </style>
+   
+   <page-query>
+   query {
+     posts: allPost {
+       edges {
+         node {
+           id
+           title
+         }
+       }
+     }
+   }
+   </page-query>
+   ```
+
+10. 使用模板渲染节点页面
+    
+    配置动态路由模板
+    ```base
+    // gridsome.config.js
+    module.exports = {
+      siteName: '拉钩教育',
+      siteDescription: '大前端',
+      plugins: [],
+      templates: {
+        Post: [
+          {
+            path: '/posts/:id',
+            component: './src/templates/Post.vue'
+          }
+        ]
+      }
+    }
+    ```
+    
+    模板页面src/template/Post.vue，预渲染页面，从GraphQL获取的数据
+    ```base
+    <template>
+      <Layout>
+        <h1>{{$page.post.title}}</h1>
+        <p>{{$page.post.content}}</p>
+      </Layout>
+    </template>
+    
+    <page-query>
+      query($id: ID!) { # 动态路由参数会自动传入进来
+        post(id: $id) {
+          id
+          title
+          content
+        }
+      }
+    </page-query>
+    <script>
+    export default {
+      name: 'PostPage',
+      metaInfo () {
+        return {
+          title: this.$page.post.title
+        }
+      }
+    }
+    </script>
+    
+    <style>
+    
+    </style>
+    ```
+    
+    metaInfo写成函数形式可以通过this.$page获取到graphQL返回的数据
+
+
+### 三、Gridsome案例
+1. 创建项目
+   ```base
+   gridsome create blog-with-gridsome
+   ```
+   当进入install的时候按ctrl C中断，然后进入文件夹执行npm install来安装第三方包
+   ```base
+   cd blog-with-gridsome
+   npm install
+   ```
+
+2. 处理首页模板
+   
+   Fork Bootstrap的一个模板：https://github.com/StartBootstrap/startbootstrap-clean-blog
+   
+   然后执行git clone https://github.com/YuYun95/startbootstrap-clean-blog.git --depth=1，只克隆最后一个版本就行了
+   
+   然后回到我们的项目中，安装需要的依赖
+   
+   ```base
+   npm i bootstrap
+   npm i @fortawesome/fontawesome-free
+   ```
+   新建目录文件 src/assets/css/index.css，内容：
+   ```base
+   @import url("https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic");
+   @import url("https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800");
+   ```
+   
+   在main.js 引入资源
+   ```base
+   import 'bootstrap/dist/css/bootstrap.min.css'
+   import '@fortawesome/fontawesome-free/css/all.min.css'
+   
+   import './assets/css/index.css'
+   ```
+   
+   把克隆的 startbootstrap-clean-blog项目中的 css/clean-blog.css 内容拷贝到刚才新建的index.css文件中
+
+   把startbootstrap-clean-blog中的index.html里面的body部分的HTML代码拷贝到我们的项目中的src/pages/Index.vue中
+   
+   把startbootstrap-clean-blog中的img文件夹拷贝到我们的项目中的static中，作为静态资源使用，static里的文件不会经过打包编译，可以提高构建速度
+   
+   把模板中的img路径，前加`/`，如：`/img/home-bg.jpg`
+
+3. 处理其他页面模板
+   
+   将Index.vue中的头部、尾部代码剪切到layouts/Default.vue中，注意头尾代码中间要放一个<slot/>插槽
+   
+   然后将Index.vue的最外层组件由div改为Layout。Layout已经在全局注册过了，可以直接使用
+   
+   然后pages目录写Post.vue、About.vue、Contact.vue页面，把startbootstrap-clean-blog中的post.html、about.html、contact.html中的代码拿过来即可
+   
+4. 使用本地md文件管理文章内容
+   
+   ```base
+   npm i @gridsome/source-filesystem
+   npm i @gridsome/transformer-remark # 转换MD文件
+   ```
+   创建两个md文件，content/blog/article1.md、contetn/blog/artcle2.md
+   
+   在gridsome.config.js中配置
+   ```base
+   module.exports = {
+     siteName: 'Gridsome',
+     siteDescription: '',
+     plugins: [
+       {
+         use: '@gridsome/source-filesystem',
+         options: {
+           typeName: 'BlogPost',
+           path: './content/blog/**/*.md'
+         }
+       }
+     ]
+   }
+   ```
+   运行项目访问 http://localhost:8080/___explore
+   
+   在GraphQL中查询数据可以把配置path路径的md文件的内容查询到
+   
+   ![](./img/8.jpg)
+   
+5. Strapi介绍
+
+   网址：https://strapi.io/
+
+   strapi是一个通用的内容管理系统。
+   
+   执行创建strapi命令
+
+   ```base
+   yarn create strapi-app my-project --quickstart
+   ```
+
+   ![](./img/9.jpg)
+
+   ![](./img/10.jpg)
+   
+   ![](./img/11.jpg)
+   
+6. 使用Strapi接口数据
+   
+   默认是Restful API
+   
+   https://strapi.io/documentation/v3.x/content-api/api-endpoints.html#get-an-entry
+   
+   ![](./img/12.jpg)
+   
+   给用户配置权限：
+   
+   ![](./img/13.jpg)
+   
+   使用Postman进行接口测试：
+   
+   ![](./img/14.jpg)
+   
+7. 访问受保护的API
+   
+   ![](./img/15.jpg)
+   
+   创建一个用户：admin, 123456
+   
+   注册、登录的API：https://strapi.io/documentation/v3.x/plugins/users-permissions.html#concept
+   
+   使用Postman测试登录接口
+   
+   ![](./img/17.jpg)
+   
+   请求其他接口时，http头部要增加授权信息Authorization: Bearer ${token}
+   
+   ![](./img/18.jpg)
+   
+8. 通过GraphQL访问Strapi
+   
+   安装
+   
+   ```base
+   npm install @gridsome/source-strapi
+   ```
+   
+   使用
+   
+   ```base
+   // gridsome.config.js
+   export default {
+     plugins: [
+       {
+         use: '@gridsome/source-strapi',
+         options: {
+           apiURL: 'http://localhost:1337',
+           queryLimit: 1000, // Defaults to 100
+           contentTypes: ['article', 'user'],
+           singleTypes: ['impressum'],
+           // Possibility to login with a Strapi user,
+           // when content types are not publicly available (optional).
+           loginData: {
+             identifier: '',
+             password: ''
+           }
+         }
+       }
+     ]
+   }
+   ```
+   重启应用，才会拉取最新数据(后台新增了数据，要重启应用拉取最新数据)
+   
+9. 设计文章和标签数据模型
+   
+   删除原来的测试数据：
+   
+   ![](./img/19.jpg)
+   
+   创建新的Content Type，名称为Post，有四个字段
+   
+   ![](./img/20.jpg)
+   
+   再创建一个新的Content Type，名称为Tag，有两个字段，其中字段posts为引用类型，为多对多的关系
+   
+   ![](./img/21.jpg)
+   
+   ![](./img/22.jpg)
+   
+   新增一个Tag，标题为HTML
+   
+   然后修改post里面的标题为post 1的数据，选择Tags为HTML
+   
+   ![](./img/23.jpg)
+   
+   然后回到Tags表中的HTML数据的编辑屏，还可以再关联别的Posts
+   
+   在角色和权限中设置public角色权限查询Posts和Tags的权限
+   
+   ![](./img/24.jpg)
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
    
    
