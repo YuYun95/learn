@@ -1933,15 +1933,296 @@ renderer.renderToString(app, {
    ![](./img/24.jpg)
    
    
+## 封装Vue.js组件库
+### 一、组件库介绍
+1. 开源组件库
    
+   * Element-UI
+   * IView
+
+2. 组件开发方式CDD（Component-Driven Development 组件驱动开发）
+
+   * 自下而上
+   * 从组件级别开始，到页面级别结束
    
+   即：先从相对完善的设计中抽象出组件，先隔离开发组件再开发页面
+
+3. CDD的好处
    
+   * 组件在最大程度被重用
+   * 并行开发
+   * 可视化测试
    
+### 二、处理组件边界情况
+1. $root
+   main.js
+   ```base
+   new Vue({
+     render: h => h(App),
+     data: {
+       title: '根实例 - Root'
+     },
+     methods: {
+       handle() { console.log(this.title) }
+     }
+   }).$mount (#app)
    
+   ```
+   components/01root/01-root.vue
+   ```base
+   <template>
+     <div>
+       <!-- 小型应用中可以在 vue 根实例里存储共享数据 组件中可以通过 $root 访问根实例 -->
+       $root.title: {{ $root.title }}
+       <br />
+       <button @click="$root.handle">获取 title</button>
+       <button @click="$root.title='Hello $root'">改变 title</button>
+     </div>
+   </template>
+   ```
+2. $parent / $children
+
+   01-parent.vue
+   ```base
+   <template>
+     <div class="parent">
+       parent
+       <child></child>
+     </div>
+   </template>
    
+   <script>
+   import child from './02-child'
+   export default {
+     components: {
+       child
+     },
+     data () {
+       return {
+         title: '获取父组件实例'
+       }
+     },
+     methods: {
+       handle () {
+         console.log(this.title)
+       }
+     }
+   }
+   </script>
    
+   <style>
+   .parent {
+     border: palegreen 1px solid;
+   }
+   </style>
+   ```
    
+   02-child.vue
+   ```base
+   <template>
+     <div class="child">
+       child<br>
+       $parent.title：{{ $parent.title }}<br>
+       <button @click="$parent.handle">获取 $parent.title</button>
+       <button @click="$parent.title = 'Hello $parent.title'">改变 $parent.title</button>
+     
+       <grandson></grandson>
+     </div>
+   </template>
    
+   <script>
+   import grandson from './03-grandson'
+   export default {
+     components: {
+       grandson
+     }
+   }
+   </script>
+   
+   <style>
+   .child {
+     border:paleturquoise 1px solid;
+   }
+   </style>
+   ```
+   
+   03-grandson.vue
+   ```base
+   <template>
+     <div class="grandson">
+       grandson<br>
+       $parent.$parent.title：{{ $parent.$parent.title }}<br>
+       <button @click="$parent.$parent.handle">获取 $parent.$parent.title</button>
+       <button @click="$parent.$parent.title = 'Hello $parent.$parent.title'">改变 $parent.$parent.title</button>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+   }
+   </script>
+   
+   <style>
+   .grandson {
+     border:navajowhite 1px solid;
+   }
+   </style>
+   ```
+3. $refs
+   
+   $refs 应用在HTML标签上获取的是DOM，应用在子组件上获取的是子组件对象，在组件渲染完毕（mounted生命周期）后才可以用
+
+   01-parent.vue
+   ```base
+   <template>
+     <div>
+       <myinput ref="mytxt"></myinput>
+   
+       <button @click="focus">获取焦点</button>
+     </div>
+   </template>
+   
+   <script>
+   import myinput from './02-myinput'
+   export default {
+     components: {
+       myinput
+     },
+     methods: {
+       focus () {
+         this.$refs.mytxt.focus() // 组件的focus方法
+         this.$refs.mytxt.value = 'hello'
+       }
+     }
+     // mounted () {
+     //   this.$refs.mytxt.focus()
+     // }
+   }
+   </script>
+   ```
+   
+   02-myinput.vue
+   ```base
+   <template>
+     <div>
+       <input v-model="value" type="text" ref="txt">
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     data () {
+       return {
+         value: 'default'
+       }
+     },
+     methods: {
+       focus () {
+         this.$refs.txt.focus()
+       }
+     }
+   }
+   </script>
+   ```
+   
+
+4. 依赖注入 provide / inject
+   
+   注意：inject进来的数据是非响应式的，不能修改inject进来的成员
+   
+   01-parent.vue
+   ```base
+   <template>
+     <div class="parent">
+       parent
+       <child></child>
+     </div>
+   </template>
+   
+   <script>
+   import child from './02-child'
+   export default {
+     components: {
+       child
+     },
+     provide () {
+       return {
+         title: this.title,
+         handle: this.handle
+       }
+     },
+     data () {
+       return {
+         title: '父组件 provide'
+       }
+     },
+     methods: {
+       handle () {
+         console.log(this.title)
+       }
+     }
+   }
+   </script>
+   
+   <style>
+   .parent {
+     border: palegreen 1px solid;
+   }
+   </style>
+   ```
+   
+   02-child.vue
+   ```base
+   <template>
+     <div class="child">
+       child<br>
+       title：{{ title }}<br>
+       <button @click="handle">获取 title</button>
+       <button @click="title='xxx'">改变 title</button>
+       <grandson></grandson>
+     </div>
+   </template>
+   
+   <script>
+   import grandson from './03-grandson'
+   export default {
+     components: {
+       grandson
+     },
+     inject: ['title', 'handle'] // inject 的成员是provide提供的
+   }
+   </script>
+   
+   <style>
+   .child {
+     border:paleturquoise 1px solid;
+   }
+   </style>
+   ```
+   
+   03-grandson.vue
+   ```base
+   <template>
+     <div class="grandson">
+       grandson<br>
+       title：{{ title }}<br>
+       <button @click="handle">获取 title</button>
+       <button @click="title='yyy'">改变 title</button>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     inject: ['title', 'handle']
+   }
+   </script>
+   
+   <style>
+   .grandson {
+     border:navajowhite 1px solid;
+   }
+   </style>
+   ```
    
    
    
