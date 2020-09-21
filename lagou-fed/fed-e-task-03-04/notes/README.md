@@ -1932,6 +1932,449 @@ renderer.renderToString(app, {
    
    ![](./img/24.jpg)
    
+10. 展示文章列表、分页
+    
+    分页https://gridsome.org/docs/pagination/
+    
+    pages/Index.vue
+    ```base
+    <template>
+      <Layout>
+    
+        <!-- Page Header -->
+        <header class="masthead" style="background-image: url('/img/home-bg.jpg')">
+          <div class="overlay"></div>
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="site-heading">
+                  <h1>Clean Blog</h1>
+                  <span class="subheading">A Blog Theme by Start Bootstrap</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+    
+        <!-- Main Content -->
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+              <div class="post-preview" v-for="edge in $page.posts.edges" :key="edge.node.id">
+                <g-link :to="'post/'+edge.node.id">
+                  <h2 class="post-title">
+                    {{edge.node.title}}
+                  </h2>
+                </g-link>
+                <p class="post-meta">
+                  Posted by
+                  <a href="#">{{edge.node.created_by.firstname + edge.node.created_by.lastname}}</a>
+                  on {{edge.node.created_at}}
+                </p>
+                <p>
+                  <span v-for="tag in edge.node.tags" :key="tag.id">
+                    <a href="">{{tag.title}}</a>
+                     &nbsp;&nbsp;
+                  </span>
+                </p>
+                <hr />
+              </div>
+              <Pager :info="$page.posts.pageInfo" />
+            </div>
+          </div>
+        </div>
+    
+      </Layout>
+    </template>
+    
+    <page-query>
+    query ($page: Int) {
+      posts: allStrapiPost (perPage: 2, page: $page) @paginate {
+        pageInfo {
+          totalPages
+          currentPage
+        }
+        edges {
+          node {
+            id
+            title
+            created_at
+            created_by {
+              id
+              firstname
+              lastname
+            }
+            tags {
+              id
+              title
+            }
+          }
+        }
+      }
+    }
+    </page-query>
+    <script>
+    import { Pager } from 'gridsome'
+    export default {
+      name: 'HomePage',
+      components: {
+        Pager
+      },
+      metaInfo: {
+        title: "Hello, world!",
+      },
+    };
+    </script>
+    ```
+   
+11. 展示文章详情
+    
+    gridsome.config.js
+    ````base
+    module.exports = {
+      siteName: 'Gridsome',
+      siteDescription: '',
+      plugins: [
+        {
+          use: '@gridsome/source-filesystem',
+          options: {
+            typeName: 'BlogPost',
+            path: './content/blog/**/*.md'
+          }
+        },
+        {
+          use: '@gridsome/source-strapi',
+          options: {
+            apiURL: 'http://localhost:1337',
+            queryLimit: 1000, // Defaults to 100
+            contentTypes: ['post'], // StrapiPost
+            // typeName: 'Strapi,
+            // singleTypes: ['impressum'],
+            // Possibility to login with a Strapi user,
+            // when content types are not publicly available (optional).
+            // loginData: {
+            //   identifier: '',
+            //   password: ''
+            // }
+          }
+        }
+      ],
+      templates: {
+        // StrapiPost为上面Plugin中配置的typeName和contentTypes的组合
+        StrapiPost: [
+          {
+            path: '/post/:id',
+            component: './src/templates/Post.vue'
+          }
+        ]
+      }
+    }
+    ````
+    
+    src/templates/Post.vue
+    ```base
+    <template>
+      <Layout>
+        <!-- Page Header -->
+        <header
+                class="masthead"
+                :style="{backgroundImage: `url(http://localhost:1337${$page.post.cover.url})`}"
+        >
+          <div class="overlay"></div>
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="post-heading">
+                  <h1>{{$page.post.title}}</h1>
+                  <span class="meta"
+                  >Posted by
+                    <a href="#">{{$page.post.created_by.firstname + $page.post.created_by.lastname}}</a>
+                    on {{$page.post.created_at}}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+    
+        <!-- Post Content -->
+        <article>
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-8 col-md-10 mx-auto">
+                {{$page.post.content}}
+              </div>
+            </div>
+          </div>
+        </article>
+      </Layout>
+    </template>
+    
+    <page-query>
+      query($id: ID!) {
+      post: strapiPost(id: $id) {
+      id
+      title
+      content
+      cover {
+      url
+      }
+      tags {
+      id
+      title
+      }
+      created_at
+      created_by {
+      id
+      firstname
+      lastname
+      }
+      }
+      }
+    </page-query>
+    
+    <script>
+    export default {
+      name: 'PostPage'
+    }
+    </script>
+    
+    <style></style>
+    ```
+   
+12. 处理Markdown格式的文章内容
+
+    安装markdown处理器：npm install markdown-it
+    
+    src/templates/Post.vue
+    ```base
+    <div class="col-lg-8 col-md-10 mx-auto" v-html="mdToHtml($page.post.content)">
+    </div>
+    
+    <script>
+    import MarkDownIt from 'markdown-it'
+    const md = new MarkDownIt()
+    export default {
+      name: 'PostPage',
+      methods: {
+        mdToHtml (markdown) {
+        return md.render(markdown)
+      }
+      }
+    }
+    </script>
+    ```
+
+13. 文章标签
+    
+    src/templates/Tag.vue
+   
+    ```base
+    <template>
+        <Layout>
+    
+        <!-- Page Header -->
+        <header class="masthead" style="background-image: url('/img/home-bg.jpg')">
+          <div class="overlay"></div>
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="site-heading">
+                  <h1># {{$page.tag.title}}</h1>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+    
+        <!-- Main Content -->
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+              <div class="post-preview" v-for="post in $page.tag.posts" :key="post.id">
+                <g-link :to="'post/'+post.id">
+                  <h2 class="post-title">
+                    {{post.title}}
+                  </h2>
+                </g-link>
+                <p class="post-meta">
+                  Posted by
+                  on {{post.created_at}}
+                </p>
+                <hr />
+              </div>
+            </div>
+          </div>
+        </div>
+    
+      </Layout>
+    </template>
+    
+    <page-query>
+    query($id: ID!) {
+      tag: strapiTag(id: $id) {
+        title
+        id
+        posts {
+          id
+          title
+          created_at
+        }
+      }
+    }
+    </page-query>
+    
+    <script>
+    export default {
+      name: 'TagPage'
+    }
+    </script>
+    
+    <style>
+    
+    </style>
+    ```
+    
+   gridsome.config.js
+   ```base
+   module.exports = {
+     siteName: 'Gridsome',
+     plugins: [
+       {
+         use: '@gridsome/source-filesystem',
+         options: {
+           typeName: 'BlogPost',
+           path: './content/blog/**/*.md'
+         }
+       },
+       {
+         use: '@gridsome/source-strapi',
+         options: {
+           apiURL: 'http://localhost:1337',
+           queryLimit: 1000, // Defaults to 100
+           contentTypes: ['post', 'tag'], // StrapiPost
+   
+         }
+       }
+     ],
+     templates: {
+       // StrapiPost为上面Plugin中配置的typeName和contentTypes的组合
+       StrapiPost: [
+         {
+           path: '/post/:id',
+           component: './src/templates/Post.vue'
+         }
+       ],
+       StrapiTag: [
+         {
+           path: '/tag/:id',
+           component: './src/templates/Tag.vue'
+         }
+       ]
+     }
+   }
+   ```
+   
+14. 基本设置
+    
+   ![](./img/25.jpg)
+    
+   ![](./img/26.jpg)
+   
+   ![](./img/27.jpg)
+   
+   gridsome.config.js的source-strapi插件增加singleTypes: ['general']配置，就可以获取general数据，重启项目就生效
+   
+   src/pages/Index.vue
+   
+   ```base
+   <!-- Page Header -->
+       <header
+         class="masthead"
+         :style="{
+           backgroundImage: `url(http://localhost:1337${general.cover.url})`
+         }"
+       >
+         <div class="overlay"></div>
+         <div class="container">
+           <div class="row">
+             <div class="col-lg-8 col-md-10 mx-auto">
+               <div class="site-heading">
+                 <h1>{{general.title}}</h1>
+                 <span class="subheading">{{general.subtitle}}</span>
+               </div>
+             </div>
+           </div>
+         </div>
+       </header>
+   ```
+   ```base
+   <page-query>
+   query ($page: Int) {
+     # ----
+    
+     general: allStrapiGeneral {
+       edges {
+         node {
+           title
+           subtitle
+           cover {
+             url
+           }
+         }
+       }
+     }
+   }
+   </page-query>
+   ```
+   ```base
+   <script>
+   import { Pager } from 'gridsome'
+   export default {
+   // ----
+     
+     computed: {
+       general () {
+         return this.$page.general.edges[0].node
+       }
+     }
+   };
+   </script>
+   ```
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
    
 ## 封装Vue.js组件库
 ### 一、组件库介绍
