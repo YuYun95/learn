@@ -2235,146 +2235,320 @@ renderer.renderToString(app, {
     </style>
     ```
     
-   gridsome.config.js
-   ```base
-   module.exports = {
-     siteName: 'Gridsome',
-     plugins: [
-       {
-         use: '@gridsome/source-filesystem',
-         options: {
-           typeName: 'BlogPost',
-           path: './content/blog/**/*.md'
-         }
-       },
-       {
-         use: '@gridsome/source-strapi',
-         options: {
-           apiURL: 'http://localhost:1337',
-           queryLimit: 1000, // Defaults to 100
-           contentTypes: ['post', 'tag'], // StrapiPost
-   
+    gridsome.config.js
+       ```base
+       module.exports = {
+         siteName: 'Gridsome',
+         plugins: [
+           {
+             use: '@gridsome/source-filesystem',
+             options: {
+               typeName: 'BlogPost',
+               path: './content/blog/**/*.md'
+             }
+           },
+           {
+             use: '@gridsome/source-strapi',
+             options: {
+               apiURL: 'http://localhost:1337',
+               queryLimit: 1000, // Defaults to 100
+               contentTypes: ['post', 'tag'], // StrapiPost
+       
+             }
+           }
+         ],
+         templates: {
+           // StrapiPost为上面Plugin中配置的typeName和contentTypes的组合
+           StrapiPost: [
+             {
+               path: '/post/:id',
+               component: './src/templates/Post.vue'
+             }
+           ],
+           StrapiTag: [
+             {
+               path: '/tag/:id',
+               component: './src/templates/Tag.vue'
+             }
+           ]
          }
        }
-     ],
-     templates: {
-       // StrapiPost为上面Plugin中配置的typeName和contentTypes的组合
-       StrapiPost: [
-         {
-           path: '/post/:id',
-           component: './src/templates/Post.vue'
-         }
-       ],
-       StrapiTag: [
-         {
-           path: '/tag/:id',
-           component: './src/templates/Tag.vue'
-         }
-       ]
-     }
-   }
-   ```
+       ```
    
 14. 基本设置
+   
+    ![](./img/25.jpg)
     
-   ![](./img/25.jpg)
+    ![](./img/26.jpg)
     
-   ![](./img/26.jpg)
+    ![](./img/27.jpg)
    
-   ![](./img/27.jpg)
+    gridsome.config.js的source-strapi插件增加singleTypes: ['general']配置，就可以获取general数据，重启项目就生效
    
-   gridsome.config.js的source-strapi插件增加singleTypes: ['general']配置，就可以获取general数据，重启项目就生效
+    src/pages/Index.vue
    
-   src/pages/Index.vue
-   
-   ```base
-   <!-- Page Header -->
-       <header
-         class="masthead"
-         :style="{
-           backgroundImage: `url(http://localhost:1337${general.cover.url})`
-         }"
-       >
-         <div class="overlay"></div>
-         <div class="container">
-           <div class="row">
-             <div class="col-lg-8 col-md-10 mx-auto">
-               <div class="site-heading">
-                 <h1>{{general.title}}</h1>
-                 <span class="subheading">{{general.subtitle}}</span>
+       ```base
+       <!-- Page Header -->
+           <header
+             class="masthead"
+             :style="{
+               backgroundImage: `url(http://localhost:1337${general.cover.url})`
+             }"
+           >
+             <div class="overlay"></div>
+             <div class="container">
+               <div class="row">
+                 <div class="col-lg-8 col-md-10 mx-auto">
+                   <div class="site-heading">
+                     <h1>{{general.title}}</h1>
+                     <span class="subheading">{{general.subtitle}}</span>
+                   </div>
+                 </div>
                </div>
              </div>
-           </div>
-         </div>
-       </header>
-   ```
-   ```base
-   <page-query>
-   query ($page: Int) {
-     # ----
-    
-     general: allStrapiGeneral {
-       edges {
-         node {
-           title
-           subtitle
-           cover {
-             url
+           </header>
+       ```
+       ```base
+       <page-query>
+       query ($page: Int) {
+         # ----
+        
+         general: allStrapiGeneral {
+           edges {
+             node {
+               title
+               subtitle
+               cover {
+                 url
+               }
+             }
            }
          }
        }
-     }
-   }
-   </page-query>
-   ```
-   ```base
-   <script>
-   import { Pager } from 'gridsome'
-   export default {
-   // ----
-     
-     computed: {
-       general () {
-         return this.$page.general.edges[0].node
-       }
-     }
-   };
-   </script>
-   ```
+       </page-query>
+       ```
+       ```base
+       <script>
+       import { Pager } from 'gridsome'
+       export default {
+       // ----
+         
+         computed: {
+           general () {
+             return this.$page.general.edges[0].node
+           }
+         }
+       };
+       </script>
+       ```
+       
+15. 联系我
+    
+    ![](./img/28.jpg)
+    
+    设置权限
+    
+    ![](./img/29.jpg)
    
+    页面中使用传统客户端表单提交功能
+    
+    src/pages/Contact.vue
    
+    ```base
+    <input v-model="form.name" type="text" class="form-control" placeholder="Name" id="name" required data-validation-required-message="Please enter your name.">
+    
+    <input v-model="form.email" type="email" class="form-control" placeholder="Email Address" id="email" required data-validation-required-message="Please enter your email address.">
+    
+    <input v-model="form.phone" type="tel" class="form-control" placeholder="Phone Number" id="phone" required data-validation-required-message="Please enter your phone number.">
+    
+    <textarea v-model="form.message" rows="5" class="form-control" placeholder="Message" id="message" required data-validation-required-message="Please enter a message."></textarea>
+    
+    <button type="submit" class="btn btn-primary" id="sendMessageButton" @click.prevent="onSubmit">Send</button>
+    ```
+    
+    ```base
+    <script>
+    import axios from 'axios'
+    
+    export default {
+      name: "ContactPage",
+    
+      data() {
+        return {
+          form: {
+            name: '',
+            email: '',
+            phone: '',
+            message: ''
+          }
+        }
+      },
+    
+      methods: {
+        async onSubmit() {
+          try {
+            const {data} = await axios({
+              method: 'POST',
+              url: 'http://localhost:1337/contacts',
+              data: this.form
+            })
+            window.alert('发送成功')
+          } catch (err) {
+            window.alert('发送失败，请稍候重试')
+          }
+        }
+      }
+    }
+    </script>
+    ```
    
+16. 部署Strapi
+    
+    先部署Strapi、再部署Gridsome。Strapi部署环境依赖于node环境的服务器，而Gridsome只需要支持静态网页的服务器就行
+
+    (1). 配置Strapi后台服务配置的数据库位MySQL
+   Strapi项目 config/database.js
    
+    数据库配置文档：https://strapi.io/documentation/v3.x/concepts/configurations.html#example
    
+       ```base
+       module.exports = ({env}) => ({
+         defaultConnection: 'default',
+         connections: {
+           default: {
+             connector: 'bookshelf',
+             settings: {
+               client: 'mysql',
+               host: env('DATABASE_HOST', 'localhost'),
+               port: env.int('DATABASE_PORT', 3306),
+               database: env('DATABASE_NAME', 'blog'),
+               username: env('DATABASE_USERNAME', 'blog'),
+               password: env('DATABASE_PASSWORD', 'ofewRM452fgRD'),
+             },
+             options: {},
+           },
+         },
+       });
+       ```
+
+    安装MySQL依赖
+       ```base
+       npm install mysql
+       ```    
+
+    (2)将代码上传到gitee上
+       ```base
+       git init
+       touch README.md
+       git add README.md
+       git commit -m "first commit"
+       git remote add origin https://gitee.com/zyhua/blog-backend.git
+       git push -u origin master
+       ```
+    
+    (3)登录到服务器进行部署
+    
+    先进入MySQL
+       ```base
+       mysql -uroot -p
+       ```
+    
+    创建用户blog，和数据库blog，并且给该用户授权操作该数据库
+    
+       ````base
+       CREATE USER 'blog'@'%' IDENTIFIED BY 'ofewRM452fgRD';
+       CREATE DATABASE blog;
+       FLUSH PRIVILEGES;
+       GRANT ALL ON blog.* TO 'blog'@'%';
+       exit;
+       ````
    
+    然后回到存放代码的目录下，拉取gitee上的代码，并且安装项目依赖
    
+       ```base
+       git clone https://gitee.com/jiailing/blog-backend
+       cd blog-backend
+       npm config set sharp_binary_host "https://npm.taobao.org/mirrors/sharp"
+       npm config set sharp_libvips_binary_host "https://npm.taobao.org/mirrors/sharp-libvips"
+       npm install
+       npm run build
+       npm run start
+       ```
    
+    或者执行npm run develop也可以启动项目
    
+    如果执行build时命令行卡在了90%进度时，直接中断掉执行start就可以了
    
+    然后就可以通过 主机地址+1337端口号来访问页面了
    
+    start 此时命令行被占用，退出命令行服务就会停止，所以使用pm2守护进程，让一个node应用启动在后台
    
+       ```base
+       pm2 start --name blog-backend npm -- run start
+       ```
    
+    或者
    
+       ```base
+       pm2 start --name blog-backend npm -- run develop
+       ```
+
+    依旧是通过 主机地址+1337端口号来访问页面
    
+    登录后别忘了给用户分配权限
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
+17. 把本地服务联通远程Strapi
+    
+    grid.config.js中的strapi插件的配置中的URL接口要改为线上接口
+    
+    apiURL: process.env.GRIDSOME_API_URL
+    
+    为了区分开发接口和生产接口，可以配置环境变量
+    
+    .env.production
+    
+    ```base
+    GRIDSOME_API_URL=http://xxx.com:1337
+    ```
+    
+    .env.development
+    
+    ```base
+    GRIDSOME_API_URL=http://localhost:1337
+    ```
+    
+    在src/main.js中注入环境变量到页面模板中使用
+    
+    ```base
+    export default function (Vue, { router, head, isClient }) {
+      Vue.mixin({
+        data () {
+          return {
+            GRIDSOME_API_URL: process.env.GRIDSOME_API_URL
+          }
+        }
+      })
+      // Set default layout as a global component
+      Vue.component('Layout', DefaultLayout)
+    }
+    ```
+    
+    将页面中之前用到localhost:1337的路径都替换掉，如背景图片
+    
+    ```base
+    :style="{backgroundImage: `url(${GRIDSOME_API_URL+$page.post.cover.url})`}"
+    ```
+    
+18. 部署Gridsome应用
+    
+    vercel可以使得在Gridsome代码发生了改变，或者strapi的数据发生了改变时，都可以触发Gridsome的自动部署
+    
+    Vercel网址：https://vercel.com
+    
+    使用GitHub登录，GitHub的邮箱是QQ邮箱会出问题
+    
+    
+    
    
 ## 封装Vue.js组件库
 ### 一、组件库介绍
