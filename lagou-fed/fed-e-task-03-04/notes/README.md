@@ -2866,7 +2866,12 @@ renderer.renderToString(app, {
    </style>
    ```
    
+5. $attrs / $listeners
    
+    * $attrs
+        * 把父组件中非prop属性绑定到内容部组件
+    * $listeners
+        * 把父组件中DOM对象的原生事件绑定到内部组件
    
    
    
