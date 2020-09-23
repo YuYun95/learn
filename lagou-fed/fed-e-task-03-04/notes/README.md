@@ -2421,9 +2421,9 @@ renderer.renderToString(app, {
                client: 'mysql',
                host: env('DATABASE_HOST', 'localhost'),
                port: env.int('DATABASE_PORT', 3306),
-               database: env('DATABASE_NAME', 'blog'),
+               database: env('DATABASE_NAME', 'strapiblog'),
                username: env('DATABASE_USERNAME', 'blog'),
-               password: env('DATABASE_PASSWORD', 'ofewRM452fgRD'),
+               password: env('DATABASE_PASSWORD', 'ofew@RM452fgRD'),
              },
              options: {},
            },
@@ -2456,8 +2456,8 @@ renderer.renderToString(app, {
     创建用户blog，和数据库blog，并且给该用户授权操作该数据库
     
        ````base
-       CREATE USER 'blog'@'%' IDENTIFIED BY 'ofewRM452fgRD';
-       CREATE DATABASE blog;
+       CREATE USER 'blog'@'%' IDENTIFIED BY 'ofew@RM452fgRD';
+       CREATE DATABASE strapiblog;
        FLUSH PRIVILEGES;
        GRANT ALL ON blog.* TO 'blog'@'%';
        exit;
@@ -2466,7 +2466,7 @@ renderer.renderToString(app, {
     然后回到存放代码的目录下，拉取gitee上的代码，并且安装项目依赖
    
        ```base
-       git clone https://gitee.com/jiailing/blog-backend
+       git clone https://gitee.com/xxx/blog-backend
        cd blog-backend
        npm config set sharp_binary_host "https://npm.taobao.org/mirrors/sharp"
        npm config set sharp_libvips_binary_host "https://npm.taobao.org/mirrors/sharp-libvips"
@@ -2494,6 +2494,10 @@ renderer.renderToString(app, {
        ```
 
     依旧是通过 主机地址+1337端口号来访问页面
+    
+    ![](./img/30.jpg)
+    
+    ![](./img/31.jpg)
    
     登录后别忘了给用户分配权限
    
