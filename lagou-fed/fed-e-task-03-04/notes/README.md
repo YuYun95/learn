@@ -2551,9 +2551,30 @@ renderer.renderToString(app, {
     
     使用GitHub登录，GitHub的邮箱是QQ邮箱会出问题
     
+    把blog前端代码上传GitHub，Vercel导入blog前端仓库的地址
     
+    ![](./img/32.jpg)
     
-   
+    ![](./img/33.jpg)
+    
+    ![](./img/34.jpg)
+    
+    如果在Deploy报查询数据相关的错误，先在后头添加一些数据
+    
+    创建自动部署钩子
+    
+    先进入项目，点击头部的settings -> 左侧的Git Integration -> Deploy Hooks -> Create Hook
+    
+    ![](./img/35.jpg)
+    
+    新建钩子后复制钩子，在strapi的设置里添加webHook，请求地址为刚才复制的Vercel的里部署钩子地址
+    
+    ![](./img/36.jpg)
+    
+    修改代码提交或者是strapi数据变化都会触发Vercel里的项目重新部署
+    
+    ![](./img/37.jpg)
+
 ## 封装Vue.js组件库
 ### 一、组件库介绍
 1. 开源组件库
