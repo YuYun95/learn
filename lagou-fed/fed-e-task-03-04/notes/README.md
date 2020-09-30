@@ -2866,28 +2866,517 @@ renderer.renderToString(app, {
    </style>
    ```
    
-5. $attrs / $listeners
+### 三、$attrs / $listeners
+* $attrs：把父组件中非prop属性绑定到内容部组件
+* $listeners：把父组件中DOM对象的原生事件绑定到内部组件
+    
+01-parent.vue
+```base
+<template>
+  <div>
+    <!--<myinput required placeholder="Enter your username" class="theme-dark" data-test="test"></myinput>-->
+
+    <myinput
+      required
+      placeholder="Enter your username"
+      class="theme-dark"
+      @focus="onFocus"
+      @input="onInput"
+      data-test="test"
+    />
+    <button @click="handle">按钮</button>
+  </div>
+</template>
+
+<script>
+import myinput from './02-myinput'
+
+export default {
+  name: 'parent',
+
+  components: {
+    myinput
+  },
+
+  methods: {
+    onFocus(e) {
+      console.log(e)
+    },
+
+    onInput(e) {
+      console.log(e.target.value)
+    },
+
+    handle() {
+      console.log(this.value)
+    }
+  }
+}
+</script>
+
+```
+
+02-myinput.vue
+```base
+<template>
+  <!--
+    1. 从父组件传给自定义子组件的属性，
+      如果没有 prop 接收会自动设置到子组件内容的最外层标签上，
+      如果是 class 和 style 的话，会合并最外层标签的class 和 style
+  -->
+  <!--  <input type="text" class="form-control" :placeholder="placeholder">-->
+
+  <!--
+    2.如果子组件中不想继承父组件传入的非 prop 属性，
+      可以使用 inheritAttrs 禁用继承，
+      然后通过 v-bind="$attrs" 把外部传入的非 prop 属性设置给希望的标签上，
+      但是这不会改变 class 和 style，class 和 style 还是会设置到子组件内容的最外层标签上
+   -->
+  <!--    <div>-->
+  <!--      <input type="text" v-bind="$attrs" class="form-control">-->
+  <!--    </div>-->
+
+  <!--
+    3.注册事件
+  -->
+  <!--  <div>-->
+  <!--    <input-->
+  <!--      type="text"-->
+  <!--      v-bind="$attrs"-->
+  <!--      class="form-control"-->
+  <!--      @focus="$emit('focus', $event)"-->
+  <!--      @input="$emit('input', $event)"-->
+  <!--    >-->
+  <!--  </div>-->
+
+  <!--
+    4. $listeners
+  -->
+  <div>
+    <input
+      type="text"
+      v-bind="$attrs"
+      class="form-control"
+      v-on="$listeners"
+    >
+  </div>
+  <!--v-on="$listeners" 相当于 @focus="$emit('focus', $event)" @input="$emit('input', $event)" 这两句-->
+
+</template>
+
+<script>
+export default {
+  name: 'myinput',
+
+  // props: ['placeholder', 'style', 'class']
+  props: ['placeholder'],
+
+  inheritAttrs: false
+}
+</script>
+
+```
+
+### 四、快速原型开发
+* VueCLI 中提供了一个插件可以进行原型快速开发
+* 需要先额外安装一个全局的扩展（必须全局）：`npm install -g @vue/cli-service-global`
+* 使用 `vue serve` 快速查看组件的运行效果
+
+1. Vue serve
+   * vue serve 如果不指定参数默认会在当前目录找以下的入口文件
+     * main.js、index.js、App.vue、app.vue
+   * 可以指定要加载的组件
+     * vue serve ./src/login.vue
    
-    * $attrs
-        * 把父组件中非prop属性绑定到内容部组件
-    * $listeners
-        * 把父组件中DOM对象的原生事件绑定到内部组件
+   新建文件夹写一个vue组件 APP.vue
+   ```base
+   <template>
+     <div>Hello Vue</div>
+   </template>
+   
+   <script>
+   export default {}
+   </script>
+   ```
+   然后执行vue serve
+   
+   启动一个服务，打开终端生成的地址，可以看到这个组件页面了
+
+2. ElementUI
+   
+   安装ElementUI
+   * 初始化package.json： npm init -y
+   * 安装ElementUI： vue add element
+   * 加载ElementUI，使用Vue.use()安装插件
+
+### 五、组件开发
+
+1. 步骤条组件
+    * 组件分类
+        * 第三方组件
+        * 基础组件
+        * 业务组件
+
+Steps-test.vue
+```base
+<template>
+  <div>
+    <steps :count="count" :active="active"></steps>
+    <button @click="next">下一步</button>
+  </div>
+</template>
+
+<script>
+import Steps from './Steps'
+
+export default {
+  name: 'Step-test',
+
+  components: {
+    Steps
+  },
+
+  data() {
+    return {
+      count: 4,
+      active: 0
+    }
+  },
+
+  methods: {
+    next() {
+      this.active++
+    }
+  }
+}
+</script>
+```
+
+Steps.vue
+```base
+<template>
+  <div class="lg-steps">
+    <div class="lg-steps-line"></div>
+    <div
+      v-for="index in count"
+      :key="index"
+      :style="{ color: active >= index ? activeColor : defaultColor }"
+      class="lg-step"
+    >
+      {{ index }}
+    </div>
+  </div>
+</template>
+
+<script>
+import './steps.css'
+
+export default {
+  name: 'LgStep',
+
+  props: {
+    count: {
+      type: Number,
+      default: 3
+    },
+    active: {
+      type: Number,
+      default: 0
+    },
+    activeColor: {
+      type: String,
+      default: 'red'
+    },
+    defaultColor: {
+      type: String,
+      default: 'green'
+    }
+  }
+}
+</script>
+```
+
+steps.css
+```base
+.lg-steps {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+}
+
+.lg-steps-line {
+    position: absolute;
+    height: 2px;
+    top: 50%;
+    left: 24px;
+    right: 24px;
+    transform: translateY(-50%);
+    z-index: 1;
+    background: rgb(223, 231, 239);
+}
+
+.lg-step {
+    border: 2px solid;
+    border-radius: 50%;
+    height: 32px;
+    width: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    z-index: 2;
+    background-color: white;
+    box-sizing: border-box;
+}
+```
+
+2. 表单组件
+   
+   整体结构
+   * Form
+   * FormItem
+   * Input
+   * Button
+   
+   表单验证使用 async-validator 插件，安装 `npm install async-validaror`
+   
+   Input 组件验证
+   * Input 组件中触发自定义事件 validate
+   * FormItem 渲染完毕注册自定义事件 validate
+
+   Form-test.vue
+   ```base
+   <template>
+     <lg-form class="form" ref="form" :model="user" :rules="rules">
+       <lg-form-item label="用户名" prop="username">
+         <!-- <lg-input v-model="user.username"></lg-input> -->
+         <lg-input :value="user.username" @input="user.username=$event" placeholder="请输入用户名"></lg-input>
+       </lg-form-item>
+       <lg-form-item label="密码" prop="password">
+         <lg-input type="password" v-model="user.password"></lg-input>
+       </lg-form-item>
+       <lg-form-item>
+         <lg-button type="primary" @click="login">登 录</lg-button>
+       </lg-form-item>
+     </lg-form>
+   </template>
+   
+   <script>
+   import LgForm from './form/Form'
+   import LgFormItem from './form/FormItem'
+   import LgInput from './form/Input'
+   import LgButton from './form/Button'
+   export default {
+     components: {
+       LgForm,
+       LgFormItem,
+       LgInput,
+       LgButton
+     },
+     data () {
+       return {
+         user: {
+           username: '',
+           password: ''
+         },
+         rules: {
+           username: [
+             {
+               required: true,
+               message: '请输入用户名'
+             }
+           ],
+           password: [
+             {
+               required: true,
+               message: '请输入密码'
+             },
+             {
+               min: 6,
+               max: 12,
+               message: '请输入6-12位密码'
+             }
+           ]
+         }
+       }
+     },
+     methods: {
+       login () {
+         console.log('button')
+         this.$refs.form.validate(valid => {
+           if (valid) {
+             alert('验证成功')
+           } else {
+             alert('验证失败')
+             return false
+           }
+         })
+       }
+     }
+   }
+   </script>
+   
+   <style>
+   .form {
+     width: 30%;
+     margin: 150px auto;
+   }
+   </style>
+   ```
+   
+   form/Form.vue
+   ```base
+   <template>
+     <div>
+       <form>
+         <slot></slot>
+       </form>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     name: 'LgForm',
+     provide () {
+       return {
+         form: this
+       }
+     },
+     props: {
+       model: {
+         type: Object
+       },
+       rules: {
+         type: Object
+       }
+     },
+     methods: {
+       validate (cb) {
+         const tasks = this.$children
+           .filter(child => child.prop)
+           .map(child => child.validate())
+   
+         Promise.all(tasks)
+           .then(() => cb(true))
+           .catch(() => cb(false))
+       }
+     }
+   }
+   </script>
+   ```
+   
+   form/FormItem.vue
+   ```base
+   <template>
+     <div>
+       <label :for="prop">{{label}}</label>
+       <div>
+         <slot></slot>
+         <p v-if="errMessage">{{errMessage}}</p>
+       </div>
+     </div>
+   </template>
+   
+   <script>
+   import AsyncValidator from 'async-validator'
+   export default {
+     name: 'LgFormItem',
+     inject: ['form'],
+     props: {
+       label: {
+         type: String
+       },
+       prop: {
+         type: String
+       }
+     },
+     mounted () {
+       this.$on('validator', () => {
+         this.validate()
+       })
+     },
+     data () {
+       return {
+         errMessage: ''
+       }
+     },
+     methods: {
+       validate () {
+         if (!this.prop) return
+         const value = this.form.model[this.prop]
+         const rules = this.form.rules[this.prop]
+   
+         const descriptor = { [this.prop]: rules }
+   
+         const validator = new AsyncValidator(descriptor)
+         return validator.validate({ [this.prop]: value }, errors => {
+           console.log(errors)
+           if (errors) {
+             this.errMessage = errors[0].message
+           } else {
+             this.errMessage = ''
+           }
+         })
+       }
+     }
+   }
+   </script>
+   ```
+   
+   form/Button.vue
+   ```base
+   <template>
+     <div>
+       <button @click="handleClick">
+         <slot></slot>
+       </button>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     name: 'LgFButton',
+     methods: {
+       handleClick (event) {
+         this.$emit('click', event)
+         event.preventDefault()
+       }
+     }
+   }
+   </script>
+   ```
+
+### 六、Monorepo
+1. 两种项目的组织方式
+    * Multirepo（Multiple Repository）每一个包对应一个项目
+    * Monorepo（Monolithic Repository）一个项目仓库中管理多个模块/包
+
+2. Monorepo结构
     
+    ![](./img/38.jpg)
+
+### Storybook
+* 可视化的组件展示平台
+* 在隔离的开发环境中，以交互的方式展示组件
+* 独立开发组件
+* 支持的框架
+    * React、React Native、Vue、Angular
+    * Ember、HTML、Svelte、Mithril、Riot
+
+1. Storybook 安装
     
+    * 自动安装
+        * npx -p @storybook/cli sb init --type vue
+        * yarn add vue 使用yarn来安装依赖，因为后面会用到yarn的工作区
+        * yarn add vue-loader vue-template-compiler --dev
+    * 手动安装
     
+    自动安装完成之后，执行yarn storybook启动项目
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    还可以执行yarn build storybook进行打包，生成storybook-static静态文件目录
+
+
+
+
+
+
