@@ -3355,7 +3355,7 @@ steps.css
     
     ![](./img/38.jpg)
 
-### Storybook
+### 七、Storybook
 * 可视化的组件展示平台
 * 在隔离的开发环境中，以交互的方式展示组件
 * 独立开发组件
@@ -3375,8 +3375,437 @@ steps.css
     
     还可以执行yarn build storybook进行打包，生成storybook-static静态文件目录
 
+2. 使用Storybook写组件
+
+### 八、yarn workspaces
+1. 开启 yarn 的工作区
+   * 项目根目录的 package.json
+   ```base
+   "private": true,
+   "workspaces": [
+     "./packages/*"
+   ]
+   ```
+
+2. yarn workspaces 使用
+   * 给工作区根目录安装开发依赖，`yarn add jest -D-W`
+   * 给指定工作区安装依赖，`yarn workspace lg-button add lodash@4` 给 lg-button(package.json中的name属性) 包安装lodash4
+   * 给所有的工作区安装依赖，`yarn install`
+
+Monorepo项目都会结合workspaces来使用，workspaces可以方便管理依赖，将每个工作区中的依赖提升到根目录中的node_modules中。workspaces还可以管理scripts命令
 
 
+### 九、Lerna
+1. Lerna 介绍
+   * Lerna 是一个优化使用 git 和 npm 管理多包仓库的工作流工具
+   * 用于管理具有多个包的 Javascript 项目
+   * 它可以一键把代码提交到 git和 npm 仓库
+
+2. Lerna 使用
+    * 全局安装，`yarn global add lerna`
+    * 初始化，`lerna init`
+    * 发布，`lerna publish`
+
+    先执行：`yarn global add lerna`
+    
+    然后在项目中执行lerna init
+    
+    然后在package.json中scripts里增加: "lerna": "lerna publish"
+    
+    然后创建一个.gitignore，提交git初始化
+    
+    使用npm whoami查看当前登录npm的用户名
+    
+    使用npm config get registry 查看npm镜像源，如果是淘宝镜像要修改，npm config set registry http://registry.npmjs.org/
+    
+    执行yarn lerna
+    
+    去npm上查看有没有发布成功
+    
+    发现新注册的账号邮箱没有验证激活，验证激活后再执行yarn lerna
+    
+    发现没有发布成功，是因为lg-xxx这个名字已经被占用了，改个名字再次尝试一下，将每个组件里的package.json里面的name中的lg-xxx改为jal-xxx再试一次
+    
+    重新Git提交，再执行yarn lerna
+
+    终于成功了
+    
+    ![](./img/40.jpg)
+    
+    ![](./img/39.jpg)
+    
+
+### 十、Vue组件的单元测试
+使用单元测试工具对组件的状态和行为进行测试，确保组件发布之后，在项目中使用组件过程中不会出现错误
+
+1. 单元测试的好处
+   * 提供描述组件行为的文档
+   * 节省手动测试的时间
+   * 减少研发新特性是产生的bug
+   * 改进设计
+   * 促进重构
+
+2. 安装依赖
+    * Vue Test Utils
+    * Jest
+    * vue-jest
+    * 安装
+        * `yarn add jest @vue/test-utils vue-jest babel-jest -D -W`
+        * -D是开发依赖，-W是安装在项目根目录下
+
+3. 配置测试脚本
+    * package.json
+    ```base
+    "scripts": {
+       "test": "jest"
+    }
+    ```
+
+4. Jest 配置文件
+    * jest.config.js
+    ```base
+     module.exports = {
+       "testMatch": ["**/__tests__/**/*.[jt]s?(x)"],
+       "moduleFileExtensions": [
+          "js",
+          "json",
+          // 告诉 Jest 处理 `*.vue` 文件
+          "vue"
+        ],
+       "transform": {
+          // 用 `vue-jest` 处理 `*.vue` 文件
+          ".*\\.(vue)$": "vue-jest",
+          // 用 `babel-jest` 处理 js
+          ".*\\.(js)$": "babel-jest"
+        }
+     }
+    ```
+
+5. Babel 配置文件
+   * babel.config.js
+   ```base
+   module.exports = {
+     presets: [
+      '@babel/preset-env'
+     ]
+   }
+   ```
+   Babel 桥接
+   
+   yarn add babel-core@bridge -D -W
+
+### 十一、Vue组件的单元测试--Jest
+1. Jest常用API
+   * 全局函数
+       * describe(name, fn) 把相关测试组合在一起
+       * test(name, fun) 测试方法
+       * expect(value) 断言
+   * 匹配器
+       * toBe(value) 判断值是否相等
+       * toEqual(obj) 判断对象是否相等
+       * toContain(value) 判断数组或者字符串中是否包含
+   * 快照
+       * toMatchSnapshot()
+
+2. Vue Test Utils 常用API
+   * mount() 创建一个包含被挂载和渲染的Vue组件的Wrapper
+   * Wrapper
+       * vm Wrapper包裹的组件实例
+       * props() 返回Vue实例选项中的props对象
+       * html() 组件生成的HTML标签
+       * find() 通过选择器返回匹配到的组件中的DOM元素
+       * trigger() 触发DOM原生事件，自定义事件 wrapper.vm.$emit()
+
+执行yarn test进行测试
+
+测试通过
+
+![](./img/14.jpg)
+
+测试不通过
+
+![](./img/42.jpg)
+
+测试密码框
+```base
+test('input-password', () => {
+    const wrapper = mount(input, {
+      propsData: {
+        type: 'password'
+      }
+    })
+    expect(wrapper.html()).toContain('input type="password"')
+  })
+```
+
+测试属性
+```base
+test('input-password', () => {
+    const wrapper = mount(input, {
+      propsData: {
+        type: 'password',
+        value: 'admin'
+      }
+    })
+    expect(wrapper.props('value')).toBe('admin')
+  })
+```
+
+快照测试
+```base
+test('input-snapshot', () => {
+    const wrapper = mount(input, {
+      propsData: {
+        type: 'password',
+        value: 'admin'
+      }
+    })
+    expect(wrapper.vm.$el).toMatchSnapshot()
+  })
+```
+生成的快照会存到同级目录的__snapshots__/input.test.js.snap文件中
+
+![](./img/43.jpg)
+
+把快照中的type改为text，执行yarn test 此时将会进行快照对比
+
+![](./44.jpg)
+
+执行yarn test -u可以把快照文件删掉重新生成一个快照
+
+之前的快照是type="password"，现在就变成了type="text"了
+
+![](./img/45.jpg)
+
+### 十二、Rollup打包
+1. Rollup
+   * Rollup 是一个模块打包器
+   * Rollup 支持 Tree-shaking
+   * 打包的结果比 webpack 要小
+   * 开发框架、组件库的时候使用 Rollup 更合适
+
+2. 安装依赖
+   * Rollup
+   * rollup-plugin-terser
+   * rollup-plugin-vue@5.19
+   * vue-template-compiler
+
+   yarn add rollup rollup-plugin-terser rollup-plugin-vue@5.1.9 vue-template-compiler -D -W
+   
+   rollup.config.js 写在每个组件的目录下
+   ```base
+   import { terser } from 'rollup-plugin-terser'
+   import vue from 'rollup-plugin-vue'
+   module.exports = [
+     {
+       input: 'index.js',
+       output: [
+         {
+           file: 'dist/index.js',
+           format: 'es'
+         }
+       ],
+       plugins: [
+         vue({
+           css: true,
+           compileTemplate: true
+         }),
+         terser()
+       ]
+     }
+   ]
+   ```
+   
+   然后在每个组件的package.json中配置脚本命令"build": "rollup -c"
+
+   执行：
+   
+   yarn workspace zyh-button run build
+
+   发现打包失败，因为在组件目录下的index.js 文件中引入组件时没有写后缀名，在导入组件要添加后缀不能忽略后缀名
+   
+   重新执行打包，打包成功后再组件目录下生成一个dist目录
+
+   一个一个组件打包过于繁琐，可以通过配置一个命令打包所有的组件
+   
+   安装插件：`yarn add @rollup/plugin-json rollup-plugin-postcss @rollup/plugin-node-resolve -D -W`
+   
+   项目根目录创建rollup.config.js
+   ```base
+   import fs from 'fs'
+   import path from 'path'
+   import json from '@rollup/plugin-json'
+   import vue from 'rollup-plugin-vue'
+   import postcss from 'rollup-plugin-postcss'
+   import {terser} from 'rollup-plugin-terser'
+   import {nodeResolve} from '@rollup/plugin-node-resolve'
+   
+   const isDev = process.env.NODE_ENV !== 'production'
+   
+   // 公共配置
+   const plugins = [
+     vue({
+   
+       css: true,
+   
+       compileTemplate: true
+     }),
+     json(),
+     nodeResolve(),
+     postcss({
+       // 把css插入到style中
+       // inject: true,
+       // 把css放到和js同一级目录
+       extract: true
+     })
+   ]
+   
+   // 如果不是开发环境，开启压缩
+   isDev || plugins.push(terser())
+   
+   // pacakges 文件夹路径
+   const root = path.resolve(__dirname, 'packages')
+   
+   module.exports = fs.readdirSync(root)
+       // 过滤，只保留文件夹
+       .filter(item => fs.statSync(path.resolve(root, item)).isDirectory())
+       // 为每一个文件夹创建对应额配置
+       .map(item => {
+         const pkg = require(path.resolve(root, item, 'package.json'))
+         return {
+           input: path.resolve(root, item, 'index.js'),
+           output: [
+             {
+               exports: 'auto',
+               file: path.resolve(root, item, pkg.main),// 读取package.json中的main属性
+               format: 'cjs'
+             },
+             {
+               exports: 'auto',
+               file: path.resolve(root, item, pkg.module), // 读取package.json中的module属性
+               format: 'es'
+             }
+           ],
+           plugins: plugins
+         }
+       })
+   ```
+   
+   在项目package.json中配置脚本命令`"build": "rollup -c"`
+   
+   在每个组件的package.json里配置main和module属性
+   ```base
+   "main": "dist/cjs/index.js",
+   "module": "dist/es/index.js",
+   ```
+   
+   执行`yarn build`
+   
+   每个组件里的dist路径下生成了es文件夹和cjs文件夹
+
+   ![](./img/46.jpg)
+
+### 十三、设置环境变量
+
+安装cross-env，可以跨平台配置环境变量
+
+修改package.json中的打包命令
+
+```base
+"build:prod": "cross-env NODE_ENV=production rollup -c",
+"build:dev": "cross-env NODE_ENV=development rollup -c"
+```
+
+执行`yarn build:prod`生成的代码是压缩过的
+
+执行`yarn build:dev`生成的代码是没有压缩过的
+
+### 十四、清理
+在package.json中配置命令`"clean": "lerna clean"`
+
+可以删除组件中的node_modules
+
+![](./img/47.jpg)
+
+现在要来安装rimraf，来删除指定的目录，dist
+
+`yarn add rimraf -D -W`
+
+在每个组件的package.json中配置命令：`"del": "rimraf dist"`
+
+在终端中执行`yarn workspaces run del`来执行每个组件中的del命令
+
+### 十五、基于模板生成组件基本目录结构
+安装plop：`yarn add plop -W -D`
+
+配置模板目录：plop-template目录下的文件
+
+项目根目录创建plopfile.js
+```base
+module.exports = plop => {
+  plop.setGenerator('component', {
+    description: 'create a custom component',
+    prompts: [
+      {
+        type: 'input',
+        name: 'name',
+        message: 'component name',
+        default: 'MyComponent'
+      }
+    ],
+    actions: [
+      {
+        type: 'add',
+        path: 'packages/{{name}}/src/{{name}}.vue',
+        templateFile: 'plop-template/component/src/component.hbs'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/__tests__/{{name}}.test.js',
+        templateFile: 'plop-template/component/__tests__/component.test.hbs'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/stories/{{name}}.stories.js',
+        templateFile: 'plop-template/component/stories/component.stories.hbs'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/index.js',
+        templateFile: 'plop-template/component/index.hbs'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/LICENSE',
+        templateFile: 'plop-template/component/LICENSE'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/package.json',
+        templateFile: 'plop-template/component/package.hbs'
+      },
+      {
+        type: 'add',
+        path: 'packages/{{name}}/README.md',
+        templateFile: 'plop-template/component/README.hbs'
+      }
+    ]
+  })
+}
+
+```
+在项目package.json文件添加脚本"plop": "plop"
+
+执行命令 `yarn plop` 通过终端交互，输入组件名回车即可生成组件结构
+
+![](./img/48.jpg)
 
 
+### 十六、发布
+yarn build:prod
+npm whoami
+git add .
+git commit -m"最后发布"
+yarn lerna
 
+>> 备注：执行yarn lerna之前必须先commit才会发布成功，否则被视为代码没有更新，则不发布包

@@ -1,4 +1,4 @@
-import LgForm from './src/form'
+import LgForm from './src/form.vue'
 
 LgForm.install = Vue => {
   Vue.component(LgForm.name, LgForm)
