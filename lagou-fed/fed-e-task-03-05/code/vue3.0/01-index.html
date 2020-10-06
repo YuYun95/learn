@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div id="app">
+  x: {{x}} <br/>
+  y: {{y}}
+</div>
+<script type="module">
+import {createApp, reactive, onMounted, onUnmounted, toRefs} from './node_modules/vue/dist/vue.esm-browser.js'
+
+function useMousePosition() {
+  const position = reactive({
+    x: 0,
+    y: 0
+  })
+
+  const update = e => {
+    position.x = e.pageX
+    position.y = e.pageY
+  }
+
+  onMounted(() => {
+    window.addEventListener('mousemove', update)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('mousemove', update)
+  })
+
+  return toRefs(position)
+}
+
+const app = createApp({
+  setup() { // setup在props解析完毕，在组件实例创建之前执行，this获取不到组件实例
+    // 第一个参数 props，响应式对象，不能被解构
+    // 第二个参数 context，有三个成员attrs、emit、slots
+
+    // const position = useMousePosition()
+    const {x, y} = useMousePosition()
+    return {
+      x, y
+    }
+  }
+})
+console.log(app)
+
+app.mount('#app')
+</script>
+</body>
+</html>
