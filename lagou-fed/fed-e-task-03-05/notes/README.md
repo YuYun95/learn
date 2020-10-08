@@ -398,19 +398,230 @@ createApp({
 </script>
 ```
 
+### 七、ToDoList 功能演示
+1. ToDoList 功能列表
+    * 添加待办事项
+    * 删除待办事项
+    * 编辑待办事项
+    * 切换待办事项
+    * 存储待办事项
 
+2. 项目结构
 
+    使用vue脚手架创建项目，需要脚手架4.5以上，[Vue Cli安装、升级](https://cli.vuejs.org/zh/guide/installation.html)，创建项目时可以选择vue版本
+    
+    使用vue create 创建项目，选择vue 3.0版本
+    ```base
+    vue create todolist
+    ```
+    选择 Default (Vue 3 Preview) ([Vue 3] babel, eslint)
 
+3. 添加待办事项
+   
+   在输入框输入文本按下enter键提交待办事项
+   ```javascript
+   // 1. 添加待办事项
+   const useAdd = todos => {
+     const input = ref('')
+     // eslint-disable-next-line no-unused-vars
+     const addTodo = () => {
+       const text = input.value && input.value.trim()
+       if (text.length === 0) return
+       todos.value.unshift({
+         text,
+         completed: false
+       })
+       input.value = ''
+     }
+     return {
+       input,
+       addTodo
+     }
+   }
+   
+   export default {
+     name: 'App',
+     setup() {
+       const todos = ref([])
+   
+       return {
+         ...useAdd(todos),
+         todos
+       }
+     }
+   }
+   ```
 
+4. 删除待办事项
+   
+   点击待办事项右侧的按钮删除待办事项
+   ```javascript
+   // 2. 删除待办事项
+   const useRemove = todos => {
+     const remove = todo => {
+       const index = todos.value.indexOf(todo)
+       todos.value.splice(index, 1)
+     }
+     return { remove }
+   }
+   
+   export default {
+     name: 'App',
+     setup() {
+       const todos = ref([])
+   
+       return {
+         todos,
+         ...useAdd(todos),
+         ...useRemove(todos)
+       }
+     }
+   }
+   ```
+   
+5. 编辑待办事项
+   
+   * 双击待办事项显示编辑文本框
+   * 显示文本框的时候获取焦点
+   * 按esc退出编辑
+   * 按enter或者文本框失去焦点提交编辑
+   * 如果删光文本，则删除这一项
+   ```javascript
+   // 3、编辑待办事项
+   const useEdit = remove => {
+     let beforeEditingText = ''
+     const editingTodo = ref(null)
+     const editTodo = todo => {
+       beforeEditingText = todo.text
+       editingTodo.value = todo
+     }
+     const doneEdit = todo => {
+       if (!editingTodo.value) return
+       todo.text = todo.text.trim()
+       todo.text || remove(todo)
+       editingTodo.value = null
+     }
+     const cancelEdit = todo => {
+       editingTodo.value = null
+       todo.text = beforeEditingText
+     }
+   
+     return {
+       editingTodo,
+       editTodo,
+       doneEdit,
+       cancelEdit
+     }
+   }
+   
+   export default {
+     name: 'App',
+     setup() {
+       const todos = ref([])
+   
+       const { remove } = useRemove(todos)
+   
+       return {
+         todos,
+         remove,
+         ...useAdd(todos),
+         ...useEdit(remove)
+       }
+     }
+   }
+   ```
+   模板：
+   ```base
+   <ul class="todo-list">
+     <li v-for="todo in todos" :key="todo" :class="{editing: todo === editingTodo}">
+       <div class="view">
+         <input type="checkbox" class="toggle">
+         <label @dblclick="editTodo(todo)">{{ todo.text }}</label>
+         <button class="destroy" @click="remove(todo)"></button>
+       </div>
+       <input type="text" class="edit" v-model="todo.text" @keyup.enter="doneEdit(todo)" @blur="doneEdit(todo)" @keyup.esc="cancelEdit(todo)">
+     </li>
+   </ul>
+   ```
+   这里li的key值绑定 todo，如果绑定 todo.text，在编辑的时候 vue 在对比 VNode 的时候发现 newVNode 和 oldVNode 不同，重新渲染DOM，这时输入框会失去焦点
 
+6. 编辑文本框获取焦点--Vue3.0 自定义指令
+   
+   传对象形式：
+   * Vue 2.x
+   ```base
+   Vue.directive('editingFocus', {
+     bind(el, binding, vnode, prevVnode) {},
+     inserted() {},
+     update() {},
+     componentUpdated() {},
+     unbind() {}
+   })
+   ```
+   
+   * Vue 3.0
+   ```base
+   app.directive('editingFocus', {
+     beforeMount(el, binding, vnode, pervVnode) {},
+     mounted() {},
+     beforeUpdate() {},
+     updated() {},
+     beforeUnmount() {},
+     unmounted() {}
+   })
+   ```
+   
+   传函数形式
+   * Vue 2.x
+   ```base
+   Vue.directive('editingFocus', (el, binding) => {
+     binding.value && el.focus()
+   })
+   ```
+   
+   * Vue 3.0
+   ```base
+   app.directive('editingFocus', (el, binding) => {
+     binding.value && el.focus()
+   })
+   ```
+   
+   实现自定义指令，获取真正编辑的文本框焦点
+   ```base
+   export default {
+     name: 'App',
+     
+     // setup() {...},
+   
+     directives: {
+       editingFocus: (el, binding) => {
+         binding.value && el.focus()
+       }
+     }
+   }
+   ```
+   
+   模板中
+   ```base
+   <input
+     class="edit"
+     type="text"
+     v-editing-focus="todo === editingTodo"
+     v-model="todo.text"
+     @keyup.enter="doneEdit(todo)"
+     @blur="doneEdit(todo)"
+     @keyup.esc="cancelEdit(todo)"
+   >
+   ```
 
+7. 切换待办事项的状态
 
-
-
-
-
-
-
+   * 点击 CheckBox 可以改变所有代办项状态
+   * All/Active/Completed
+   * 其他
+       * 显示未完成代办项个数
+       * 移除所有完成的项目
+       * 如果没有待办项，隐藏 main 和 footer
 
 
 
