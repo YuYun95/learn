@@ -826,7 +826,7 @@ createApp({
 9. 完整代码
 
    APP.vue
-   ```javascript
+   ```base
    <template>
      <section id="app" class="todoapp">
        <header class="header">
@@ -1058,13 +1058,80 @@ createApp({
    
 ## Vue 3.0 响应式系统原理
 ### 一、介绍
-1. Vue.js 响应式回顾
+1. Vue3.0 响应式回顾
+   * Proxy 对象实现属性监听
+   * 多层属性嵌套，在访问属性过程中处理下一级属性
+   * 默认监听动态添加的属性
+   * 默认监听属性的删除操作
+   * 默认监听数组索引和 length 属性
+   * 可以作为单独的模块使用
 
+2. 核心方法
+   * reactive/ref/toRefs/computed
+   * effect
+   * track
+   * trigger
 
+### 二、Proxy对象回顾
+1. 在严格模式下，Proxy需要返回布尔类型的值，否则会报 TypeError
+   
+   > Uncaught TypeError: 'set' on proxy: trap returned falsish for property 'foo'
+   
+   ```base
+   'use strict'
+   // 问题1： set 和 deleteProperty 中需要返回布尔类型的值，
+   // 在严格模式下，如果返回 false 的话会出现 type Error 的异常
+   
+   const target = {
+     foo: 'xxx',
+     bar: 'yyy'
+   }
+   // Reflect.getPrototypeOf()
+   // Object.getPrototypeOf()
+   const proxy = new Proxy(target, {
+     get(target, key, receiver) {
+       // return target[key]
+       return Reflect.get(target, key, receiver)
+     },
+     set(target, key, value, receiver) {
+       // target[key] = value
+       return Reflect.set(target, key, value, receiver) // 这里要写 return
+     },
+     deleteProperty(target, key) {
+       // delete target[key]
+       return Reflect.deleteProperty(target, key) // 这里要写 return
+     }
+   })
+   
+   proxy.foo = 'zzz'
+   // delete proxy.foo
+   ```
 
+2. Proxy 和 Reflect 中使用receiver
 
+   Proxy 中 receiver：Proxy 或者继承 Proxy 的对象 Reflect 中 receiver：如果 target 对象中设置了 getter，getter 中的 this 指向 receiver
+   ```base
+   const obj = {
+     get foo() {
+       console.log(this)
+       return this.bar
+     }
+   }
+   
+   const proxy = new Proxy(obj,{
+     get(target, key, receiver) {
+       if (key === 'bar') {
+         return 'value - bar'
+       }
+       return Reflect.get(target, key, receiver) // 指向this.bar的时候，this指向代理对象，也就是获取target.bar
+     }
+   })
+   
+   console.log(proxy.foo) // value - bar
+   ```
 
-
-
-
+### 三、reactive
+* 接收一个参数，判断这个参数是否是对象
+* 创建拦截器对象handler，设置get/set/deleteProperty
+* 返回Proxy对象
 
