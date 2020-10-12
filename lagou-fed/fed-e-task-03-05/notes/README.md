@@ -1129,9 +1129,248 @@ createApp({
    
    console.log(proxy.foo) // value - bar
    ```
+   
+   如果`return Reflect.get(target, key, receiver)`写成`return Reflect.get(target, key)`的话，则响应式属性foo里面的this还是指向原本的对象obj，this.bar就是undefined，而传入了receiver之后，响应式属性里的this就指向新的响应式对象proxy，this.bar返回value - bar
 
 ### 三、reactive
-* 接收一个参数，判断这个参数是否是对象
+* 接收一个参数，判断这个参数是否是对象（reactive函数只能把对象转换为响应式对象）
 * 创建拦截器对象handler，设置get/set/deleteProperty
 * 返回Proxy对象
+
+实现reactive函数
+```javascript
+// 判断是否是对象
+const isObject = val => val !== null && typeof val === 'object'
+
+const convert = target => isObject(target) ? reactive(target) : target
+
+// 判断对象是否有某个属性
+const hasOwnProperty = Object.prototype.hasOwnProperty
+const hasOwn = (target, key) => hasOwnProperty.call(target, key)
+
+export function reactive(target) {
+  // reactive函数只能把对象转换为响应式对象
+  if (!isObject(target)) return target
+
+  const handler = {
+    get(target, key, receiver) {
+      // 收集依赖
+      // track(target, key) // 后面实现
+
+      console.log('get', key)
+      const result = Reflect.get(target, key, receiver)
+      // 如果返回值是对象，继续转换为响应式对象
+      return convert(result)
+    },
+    set(target, key, value, receiver) {
+      const oldValue = Reflect.get(target, key, receiver)
+      let result = true
+      if (oldValue !== value) {
+        result = Reflect.set(target, key, value, receiver)
+        // 触发更新
+        // trigger(target, key) // 后面实现
+        console.log('set', key, value)
+      }
+      return result
+    },
+    deleteProperty(target, key) {
+      const hadKey = hasOwn(target, key)
+      const result = Reflect.deleteProperty(target, key)
+      if (hadKey && result) {
+        // 触发更新
+        // trigger(target, key) // 后面实现
+        console.log('delete', key)
+      }
+      return result
+    }
+  }
+
+  return new Proxy(target, handler)
+}
+```
+
+使用
+```html
+<script type="module">
+  import { reactive } from './reactivity/index.js'
+  
+  const obj = reactive({
+    name: 'zs',
+    age: 18
+  })
+  obj.name = 'lise'
+  delete obj.age
+  console.log(obj)
+</script>
+```
+
+### 四、收集依赖
+
+![](./img/2.jpg)
+
+### 五、effect、track
+
+```javascript
+let activeEffect = null
+
+export function effect(callback) {
+  activeEffect = callback
+  callback() // callback会访问响应式对象属性，去收集依赖
+  activeEffect = null // 因为收集依赖如果有嵌套属性是一个递归过程
+}
+
+let targetMap = new WeakMap() // 字典
+
+export function track(target, key) { // 收集依赖
+  if (!activeEffect) return
+
+  let depsMap = targetMap.get(target) // 获取目标对象
+
+  // target添加到targetMap中
+  if (!depsMap) {
+    targetMap.set(target, (depsMap = new Map()))
+  }
+
+  let dep = depsMap.get(key) // 获取目标对象的属性值
+
+  // dep 添加到depsMap
+  if (!dep) {
+    depsMap.set(key, (dep = new Set()))
+  }
+
+  // 回调添加dep
+  dep.add(activeEffect)
+}
+```
+
+### 六、trigger
+
+```javascript
+export function trigger(target, key) { // 触发依赖
+  const depsMap = targetMap.get(target)
+  if (!depsMap) return
+  const dep = depsMap.get(key)
+  if (dep) {
+    dep.forEach(effect => {
+      effect()
+    })
+  }
+}
+```
+
+使用
+
+```html
+<script type="module">
+  import { reactive, effect } from './reactivity/index.js'
+
+  const product = reactive({
+    name: 'iPhone',
+    price: 5000,
+    count: 3
+  })
+  let total = 0
+  effect(() => {
+    total = product.price * product.count
+  })
+  console.log(total) // 15000
+
+  product.price = 4000
+  console.log(total) // 12000
+
+  product.count = 1
+  console.log(total) // 4000
+</script>
+```
+
+### 七、ref
+reactive VS ref
+* ref 可以把基本数据类型数据转换成响应式对象
+* ref 返回的对象，重新赋值成对象也是响应式的
+* reactive 返回的对象，重新赋值丢失响应式
+* reactive 返回的对象不可解构
+* reactive
+```javascript
+const product = reactive({
+  name: 'iPhone',
+  price: 5000,
+  count: 3
+})
+```
+
+* ref
+```javascript
+const price = ref(5000)
+const count = ref(3)
+```
+
+实现ref
+```javascript
+export function ref(raw) {
+  // 判断 raw 是否是 ref 创建的对象，如果是直接返回
+  if (isObject(raw) && raw.__v_isRef) return
+
+  let value = convert(raw) // raw 是对象就转为响应式对象，否则返回 raw 本身
+  const r = {
+    __v_isRef: true,
+    get value() {
+      track(r, 'value') // 收集依赖
+      return value
+    },
+    set value(newValue) {
+      if (newValue !== value) {
+        raw = newValue
+        value = convert(raw) // 重新赋值raw 对象就转换为响应式对象，否则返回 raw 本身
+        trigger(r, 'value') // 触发依赖
+      }
+    }
+  }
+  return r
+}
+```
+
+使用ref
+```html
+<script type="module">
+  import { effect, ref } from './reactivity/index.js'
+
+  const price = ref(5000)
+  const count = ref(3)
+
+  let total = 0
+  effect(() => {
+    total = price.value * count.value
+  })
+  console.log(total)
+
+  price.value = 4000
+  console.log(total)
+
+  count.value = 1
+  console.log(total)
+</script>
+```
+
+### 八、toRefs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
