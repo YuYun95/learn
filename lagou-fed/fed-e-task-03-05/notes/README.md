@@ -1353,6 +1353,210 @@ export function ref(raw) {
 
 ### 八、toRefs
 
+```javascript
+export function toRefs(proxy) {
+  const ret = proxy instanceof Array ? new Array(proxy.length) : {}
+
+  for (const key in proxy) {
+    ret[key] = toProxyRef(proxy, key)
+  }
+
+  return ret
+}
+
+function toProxyRef(proxy, key) {
+  const r = {
+    __v_isRef: true,
+    get value() {
+      // 这里不用收集依赖，因为这里访问的是响应式对象，
+      // 当访问属性的时候，内部的getter会去收集依赖(代理对象内容收集依赖)
+      return proxy[key]
+    },
+    set value(newValue) {
+      proxy[key] = newValue
+    }
+  }
+  return r
+}
+```
+
+使用
+```html
+<script type="module">
+    import { reactive, effect, toRefs } from './reactivity/index.js'
+    
+    function useProduct() {
+      const product = reactive({
+        name: 'iPhone',
+        price: 5000,
+        count: 3
+      })
+      return toRefs(product)
+    }
+    
+    const { price, count } = useProduct()
+    
+    let total = 0
+    effect(() => {
+      total = price.value * count.value
+    })
+    console.log(total)
+    
+    price.value = 4000
+    console.log(total)
+    
+    count.value = 1
+    console.log(total)
+</script>
+```
+
+### 九、computed
+
+```javascript
+export function computed(getter) {
+  const result = ref()
+
+  effect(() => (result.value = getter()))
+
+  return result
+}
+```
+
+使用
+```html
+<script type="module">
+    import { reactive, effect, computed } from './reactivity/index.js'
+    
+    const product = reactive({
+      name: 'iPhone',
+      price: 5000,
+      count: 3
+    })
+    let total = computed(() => {
+      return product.price * product.count
+    })
+    
+    console.log(total.value)
+    
+    product.price = 4000
+    console.log(total.value)
+    
+    product.count = 1
+    console.log(total.value)
+</script>
+```
+
+## Vite
+### 一、Vite 介绍
+1. Vite 概念
+    * Vite是一个面向现代浏览器的一个更轻、更快的 web 应用开发工具
+    * 它基于 ECMAScript 标准原生模块系统（ES Module）实现
+    * 解决 webpack 冷启动过长，webpack 热更新过慢的问题
+
+2. Vite 项目依赖
+    * Vite
+    * @vue/compiler-sfc
+    
+3. 基础使用
+    * vite serve
+    * vite build
+    
+    ![](./img/3.jpg)
+    
+    在运行 `vite serve` 的时候不需要打包，直接开启一个web服务，在开启服务的时候不需要编译所有的代码文件，当浏览器请求服务器，如请求一个单文件组件，这个时候在服务器编译单文件组件，然后把编译结果返回给浏览器，注意这里的编译是在服务器端，另外模块的处理是在请求到服务器端处理的
+    
+    vue-cli-service serve:
+    
+    ![](./img/4.jpg)
+    
+    当运行 vue-cli-service serve 的时候，它内部会使用webpack首先去打包所有的模块，如果模块比较多的话，打包速度会非常慢，把打包的结果存储到内存中，然后才开启开发的web服务器，浏览器请求web服务器把内存中打包的结果直接返回给浏览器，像webpack这种工具，它的做法是将所有的模块提前编译打包进bundle里，也就是不给模块是否被执行，是否使用，都要打包进bundle，随着项目越来越大，打包后的bundle也越来越大，打包的速度自然也越来越慢
+    
+    Vite利用现代浏览器原生支持的ESModule模块化的特性省略模块的打包，对于需要编译的文件，如单文件组件、样式模块等，Vite采用的另一种模式即时编译，也就是说只有具体去请求某个文件的时候，才会在服务端编译这个文件，所以这种即时编译的好处主要体现在按需编译，速度会更快
+
+4. HMR
+    * Vite HMR：立即编译当前所修改的文件
+    * webpack HMR：会自动以这个文件为入口重写build一次，所有的涉及到的依赖也都会被加载一遍
+
+5. Build
+    * vite build
+        * Rollup 使用rollup打包
+        * Dynamic import 代码切割
+            * Polyfill
+
+6. 打包 OR 不打包
+    * 使用 webpack 打包的两个原因
+        * 浏览器环境并不支持模块化（而现在大部分浏览器都支持ESM模块化了）
+        * 零散的模块文件会产生大量的 HTTP 请求（HTTP2可以长链接）
+
+7. 浏览器对ESModule的支持
+
+8. 开箱即用
+    * TypeScript - 内置支持
+    * less/sass/stylus/postcss - 内置支持（需要单独安装）
+    * JSX
+    * Web Assembly
+
+9. Vite特点
+    * 快速冷启动
+    * 模块热更新
+    * 按需编译
+    * 开箱即用
+
+### 二、Vite 实现原理 -- 静态 Web 服务器
+1. Vite 核心功能
+    * 静态 web 服务器
+    * 编译单文件组件，拦截浏览器不识别的模块，并处理
+    * HMR
+
+### 三、Vite 实现原理 -- 修改第三方模块的路径
+创建两个中间件，一个中间件是把加载第三方模块的import中的路径改变，改成加载@modules/模块文件名称，另一个中间件是当请求过来之后，判断请求路径中是否有 @modules/模块名称，如果有的话，去node_modules加载对应的模块
+
+### 四、Vite 实现原理 -- 加载第三方模块
+当请求过来之后，判断请求路径中是否以@modules开头，如果是的话，去node_modules加载对应的模块
+
+### 五、Vite 实现原理 -- 编译单文件组件
+发送两次请求，第一次请求是把单文件组件编译成一个对象，第二次请求是编译单文件组件的模块，返回一个render函数，并且把render函数挂载到对象的render方法上
+
+最终代码
+```javascript
+
+```
+使用时先将cli项目link到全局`npm link`
+
+然后在vue3项目中执行
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

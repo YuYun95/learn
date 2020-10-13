@@ -122,11 +122,21 @@ function toProxyRef(proxy, key) {
   const r = {
     __v_isRef: true,
     get value() {
-      return proxy[key] // 这里不用收集依赖，因为这里访问的是响应式对象，当访问属性的时候，内部的getter会去收集依赖(代理对象内容收集依赖)
+      // 这里不用收集依赖，因为这里访问的是响应式对象，
+      // 当访问属性的时候，内部的getter会去收集依赖(代理对象内容收集依赖)
+      return proxy[key]
     },
     set value(newValue) {
       proxy[key] = newValue
     }
   }
   return r
+}
+
+export function computed(getter) {
+  const result = ref()
+
+  effect(() => (result.value = getter()))
+
+  return result
 }
