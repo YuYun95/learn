@@ -54,3 +54,9 @@
 
 ### 五、Vue.js 3.0 响应式系统的实现原理
 
+Vue.js 3.0 中reactive函数创建响应式数据，reactive函数会先判断参数是否是对象，如果不是对象就直接返回，如果是对象使用 Proxy 对象转换为响应式对象
+
+在属性的get方法调用track方法收集依赖，track会先判断当前是否有要收集的依赖activeEffect，没有就直接return。然后检查对象是否已经收集过了（收集过的依赖存储在WeakMap
+中），如果不存在就先在WeakMap中创建一个该对象的位置，指向一个存放属性的Map，然后去WeakMap获取到该对象对应的Map，然后判断Map对象是否有值，如果没有就给Map创建一个Set对象，然后把activeEffect加入到Set
+
+在属性的set、deleteProperty方法中触发更新函数trigger，trigger会先在WeakMap中获取目标对象，如果没有就直接返回，如果有就获取目标对象的Map遍历触发Set监听函数activeEffect，执行更新
