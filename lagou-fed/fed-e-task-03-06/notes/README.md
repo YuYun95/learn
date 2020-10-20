@@ -439,6 +439,602 @@ export default Vue.extend({})
 
 ```
 
+### 十一、接口处理
+1. 配置接口文档
+
+   如果前端应用和后端API服务器没有运行在同一个主机上，需要在开发环境下将API请求代理到API服务器，这可以通过`vue.config.js`中的`devServer.proxy`选项来配置
+   ```base
+   devServer: {
+     proxy: {
+       '/boss': {
+         target: 'http://eduboss.lagou.com',
+           changeOrigin: true // 把请求头中的 host 配置为 target
+       },
+       '/front': {
+         target: 'http://edufront.lagou.com',
+           changeOrigin: true // 把请求头中的 host 配置为 target
+       }
+     }
+   }
+   ```
+
+2. 封装请求模块
+   ```base
+   yarn add axios
+   ```
+   创建`src/utils/request.ts`
+   ```base
+   import axiso from 'axios'
+   
+   const request = axiso.create({
+     // 配置选项
+     // baseURL
+     // timeout
+   })
+   
+   // 请求拦截器
+   
+   // 响应拦截器
+   
+   export default request
+   ```
+   测试接口
+   
+   ![](./img/7.jpg)
+
+### 十二、布局
+1. 初始化路由组件
+   
+   在src/views文件夹下创建对应的组件
+   
+   ![](./img/8.jpg)
+   
+   路由表配置：router/index.ts
+   
+   ```base
+   import Vue from 'vue'
+   import VueRouter, { RouteConfig } from 'vue-router'
+   
+   Vue.use(VueRouter)
+   
+   // 路由配置规则
+   const routes: Array<RouteConfig> = [
+     {
+       path: '/login',
+       name: 'login',
+       component: () => import(/* webpackChunkName: 'login' */'@/views/login/index.vue')
+     },
+     {
+       path: '/',
+       name: 'home',
+       component: () => import(/* webpackChunkName: 'home' */'@/views/home/index.vue')
+     },
+     {
+       path: '/role',
+       name: 'role',
+       component: () => import(/* webpackChunkName: 'role' */'@/views/role/index.vue')
+     },
+     {
+       path: '/menu',
+       name: 'menu',
+       component: () => import(/* webpackChunkName: 'menu' */'@/views/menu/index.vue')
+     },
+     {
+       path: '/resource',
+       name: 'resource',
+       component: () => import(/* webpackChunkName: 'resource' */'@/views/resource/index.vue')
+     },
+     {
+       path: '/course',
+       name: 'course',
+       component: () => import(/* webpackChunkName: 'course' */'@/views/course/index.vue')
+     },
+     {
+       path: '/user',
+       name: 'user',
+       component: () => import(/* webpackChunkName: 'user' */'@/views/user/index.vue')
+     },
+     {
+       path: '/advert',
+       name: 'advert',
+       component: () => import(/* webpackChunkName: 'advert' */'@/views/advert/index.vue')
+     },
+     {
+       path: '/advert-space',
+       name: 'advert-space',
+       component: () => import(/* webpackChunkName: 'advert-space' */'@/views/advert-space/index.vue')
+     },
+     {
+       path: '*',
+       name: '404',
+       component: () => import(/* webpackChunkName: '404' */'@/views/error-page/404.vue')
+     }
+   ]
+   
+   const router = new VueRouter({
+     routes
+   })
+   
+   export default router
+   ```
+
+2. 布局容器
+   
+   src/layout/index.vue
+   ```base
+   <template>
+     <el-container>
+       <el-aside width="200px">Aside</el-aside>
+       <el-container>
+         <el-header>Header</el-header>
+         <el-main>Main</el-main>
+       </el-container>
+     </el-container>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   
+   export default Vue.extend({
+     name: 'LayoutIndex'
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+     .el-container{
+       height: 100vh;
+       min-width: 980px;
+     }
+     .el-aside {
+       background-color: #d3dce6;
+     }
+     .el-header{
+       background-color: #b3c0d1;
+     }
+     .el-main{
+       background-color: #e9eef3;
+     }
+   </style>
+
+   ```
+   
+   路由配置修改 src/router/index.ts
+   ```base
+   import Vue from 'vue'
+   import VueRouter, { RouteConfig } from 'vue-router'
+   import Layout from '@/layout/index.vue'
+   
+   Vue.use(VueRouter)
+   
+   // 路由配置规则
+   const routes: Array<RouteConfig> = [
+     {
+       path: '/login',
+       name: 'login',
+       component: () => import(/* webpackChunkName: 'login' */'@/views/login/index.vue')
+     },
+     {
+       path: '/',
+       component: Layout,
+       children: [
+         {
+           path: '',
+           name: 'home',
+           component: () => import(/* webpackChunkName: 'home' */'@/views/home/index.vue')
+         },
+         {
+           path: '/role',
+           name: 'role',
+           component: () => import(/* webpackChunkName: 'role' */'@/views/role/index.vue')
+         },
+         {
+           path: '/menu',
+           name: 'menu',
+           component: () => import(/* webpackChunkName: 'menu' */'@/views/menu/index.vue')
+         },
+         {
+           path: '/resource',
+           name: 'resource',
+           component: () => import(/* webpackChunkName: 'resource' */'@/views/resource/index.vue')
+         },
+         {
+           path: '/course',
+           name: 'course',
+           component: () => import(/* webpackChunkName: 'course' */'@/views/course/index.vue')
+         },
+         {
+           path: '/user',
+           name: 'user',
+           component: () => import(/* webpackChunkName: 'user' */'@/views/user/index.vue')
+         },
+         {
+           path: '/advert',
+           name: 'advert',
+           component: () => import(/* webpackChunkName: 'advert' */'@/views/advert/index.vue')
+         },
+         {
+           path: '/advert-space',
+           name: 'advert-space',
+           component: () => import(/* webpackChunkName: 'advert-space' */'@/views/advert-space/index.vue')
+         },
+         {
+           path: '*',
+           name: '404',
+           component: () => import(/* webpackChunkName: '404' */'@/views/error-page/404.vue')
+         }
+       ]
+     }
+   ]
+   
+   const router = new VueRouter({
+     routes
+   })
+   
+   export default router
+
+   ```
+   
+   App.vue
+   ```base
+   <template>
+     <div id="app">
+       <!-- 跟路由出口 -->
+       <router-view/>
+     </div>
+   </template>
+   ```
+
+3. 侧边栏组件
+   
+   layout/components/app-aside.vue
+   ```base
+   <template>
+     <div class="aside">
+       <el-menu
+         default-active="2"
+         @open="handleOpen"
+         @close="handleClose"
+         background-color="#545c64"
+         text-color="#fff"
+         active-text-color="#ffd04b"
+         router
+       >
+         <el-submenu index="1">
+           <template slot="title">
+             <i class="el-icon-location"></i>
+             <span>权限管理</span>
+           </template>
+           <el-menu-item index="/role">
+             <i class="el-icon-setting"></i>
+             <span slot="title">角色管理</span>
+           </el-menu-item>
+           <el-menu-item index="/menu">
+             <i class="el-icon-setting"></i>
+             <span slot="title">菜单管理</span>
+           </el-menu-item>
+           <el-menu-item index="/resource">
+             <i class="el-icon-setting"></i>
+             <span slot="title">资源管理</span>
+           </el-menu-item>
+         </el-submenu>
+   
+         <el-menu-item index="/course">
+           <i class="el-icon-menu"></i>
+           <span slot="title">课程管理</span>
+         </el-menu-item>
+   
+         <el-menu-item index="/user">
+           <i class="el-icon-menu"></i>
+           <span slot="title">用户管理</span>
+         </el-menu-item>
+   
+         <el-submenu index="4">
+           <template slot="title">
+             <i class="el-icon-location"></i>
+             <span>广告管理</span>
+           </template>
+           <el-menu-item index="/advert">
+             <i class="el-icon-setting"></i>
+             <span slot="title">广告列表</span>
+           </el-menu-item>
+           <el-menu-item index="/advert-space">
+             <i class="el-icon-setting"></i>
+             <span slot="title">广告位列表</span>
+           </el-menu-item>
+         </el-submenu>
+       </el-menu>
+     </div>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   
+   export default Vue.extend({
+     name: 'AppAside',
+   
+     methods: {
+       handleOpen (key: string, keyPath: string): void {
+         console.log(key, keyPath)
+       },
+       handleClose (key: string, keyPath: string): void {
+         console.log(key, keyPath)
+       }
+     }
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+   .aside {
+     .el-menu {
+       min-height: 100vh;
+     }
+   }
+   </style>
+   ```
+   
+   el-menu添加router属性就是以index作为导航链接
+   
+   然后在layout/index.vue里面引入app-aside组件，然后将路由出口放在el-main里面
+   
+   layout/index.vue
+   ```base
+   <template>
+     <el-container>
+       <el-aside width="200px">
+         <app-aside/>
+       </el-aside>
+       <el-container>
+         <el-header>Header</el-header>
+         <el-main>
+           <!--子路由出口-->
+           <router-view/>
+         </el-main>
+       </el-container>
+     </el-container>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   import AppAside from './components/app-aside.vue'
+   
+   export default Vue.extend({
+     name: 'LayoutIndex',
+   
+     components: {
+       AppAside
+     }
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+   .el-container {
+     height: 100vh;
+     min-width: 980px;
+   }
+   
+   .el-aside {
+     background-color: #d3dce6;
+   }
+   
+   .el-header {
+     background-color: #b3c0d1;
+   }
+   
+   .el-main {
+     background-color: #e9eef3;
+   }
+   </style>
+
+   ```
+
+3. 头部Header
+
+   layout/components/app-header.vue
+   ```base
+   <template>
+     <div class="header">
+       <el-breadcrumb separator-class="el-icon-arrow-right">
+         <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+         <el-breadcrumb-item>活动管理</el-breadcrumb-item>
+         <el-breadcrumb-item>活动列表</el-breadcrumb-item>
+         <el-breadcrumb-item>活动详情</el-breadcrumb-item>
+       </el-breadcrumb>
+       <el-dropdown>
+         <span class="el-dropdown-link">
+           <el-avatar shape="square" :size="40" src="https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png"></el-avatar>
+           <i class="el-icon-arrow-down el-icon--right"></i>
+         </span>
+         <el-dropdown-menu slot="dropdown">
+           <el-dropdown-item>用户ID</el-dropdown-item>
+           <el-dropdown-item divided>退出</el-dropdown-item>
+         </el-dropdown-menu>
+       </el-dropdown>
+     </div>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   
+   export default Vue.extend({
+     name: 'AppHeader'
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+   .header{
+     height: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     .el-dropdown-link{
+       display: flex;
+       align-items: center;
+     }
+   }
+   </style>
+   ```
+   
+   layout/index.vue
+   ```base
+   <template>
+     <el-container>
+       <el-aside width="200px">
+         <app-aside/>
+       </el-aside>
+       <el-container>
+         <el-header>
+           <app-header/>
+         </el-header>
+         <el-main>
+           <!--子路由出口-->
+           <router-view/>
+         </el-main>
+       </el-container>
+     </el-container>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   import AppAside from './components/app-aside.vue'
+   import AppHeader from './components/app-header.vue'
+   
+   export default Vue.extend({
+     name: 'LayoutIndex',
+   
+     components: {
+       AppAside,
+       AppHeader
+     }
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+   .el-container {
+     height: 100vh;
+     min-width: 980px;
+   }
+   
+   .el-aside {
+     background-color: #d3dce6;
+   }
+   
+   .el-header {
+     background-color: #fff;
+   }
+   
+   .el-main {
+     background-color: #e9eef3;
+   }
+   </style>
+
+   ```
+
+### 十三、登录页面
+1. 登录页面布局
+   
+   views/login/index.vue
+   ```base
+   <template>
+     <div class="login">
+       <el-form
+         class="login-form"
+         ref="form"
+         :model="form"
+         label-width="80px"
+         label-position="top"
+       >
+         <el-form-item label="手机号">
+           <el-input v-model="form.name"></el-input>
+         </el-form-item>
+   
+         <el-form-item label="密码">
+           <el-input v-model="form.name"></el-input>
+         </el-form-item>
+   
+         <el-form-item>
+           <el-button class="login-btn" type="primary" @click="onSubmit">登录</el-button>
+         </el-form-item>
+       </el-form>
+     </div>
+   </template>
+   
+   <script>
+   export default {
+     name: 'LoginIndex',
+   
+     data () {
+       return {
+         form: {
+           name: '18201288771',
+           region: '111111',
+           date1: '',
+           date2: '',
+           delivery: false,
+           type: [],
+           resource: '',
+           desc: ''
+         }
+       }
+     },
+   
+     methods: {
+       onSubmit () {
+         console.log('submit!')
+       }
+     }
+   }
+   </script>
+   
+   <style lang="scss" scoped>
+   .login {
+     height: 100vh;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+   
+     .login-form {
+       width: 300px;
+       background-color: #fff;
+       padding: 20px;
+       border-radius: 4px;
+     }
+   
+     .login-btn {
+       width: 100%;
+     }
+   }
+   </style>
+   ```
+
+2. 登录接口测试
+   
+   PostMan测试接口工具
+   
+   创建接口集合
+   
+   ![](./img/9.jpg)
+   
+   创建文件夹
+   
+   ![](./img/10.jpg)
+   
+   将接口保存到刚才创建的用户接口文件夹，并且重命名这个接口为用户登录(点击save或者ctrl+s保存)
+   
+   创建集合变量
+   
+   ![](./img/11.jpg)
+   
+   变量名为URL，变量值为http://edufront.lagou.com
+   
+   ![](./img/12.jpg)
+   
+   然后在接口中就可以使用这个变量了，写成这样：{{URL}}/front/user/login
+   
+   ![](./img/13.jpg)
+   
+   
+   
+
 
 
 
