@@ -1032,8 +1032,252 @@ export default Vue.extend({})
    
    ![](./img/13.jpg)
    
+3. 请求登录
    
+   axios 默认的发送的数据格式是`application/json`，但是接口接收`application/x-www-form-urlencoded`的数据格式，可以借助第三库`qs`也可以使用[axios提供的方案](https://github.com/axios/axios#using-applicationx-www-form-urlencoded-format)
    
+   ```base
+   yarn add qs
+   ```
+   ```base
+   import request from '@/utils/request'
+   import qs from 'qs'
+   
+   async onSubmit () {
+     // 表单验证
+     // 验证通过 -> 提交表单
+     const { data } = await request({
+       method: 'POST',
+       url: '/front/user/login',
+       headers: { 'content-type': 'application/x-www-form-urlencoded' },
+       data: qs.stringify(this.form) // axios 默认发送的是 application/json 格式的数据
+     })
+     // 处理请求结果
+     //   成功:跳转到首页
+     //   失败:给出提示
+   }
+   ```
+
+4. 处理请求结果
+   ```base
+   // 3.处理请求结果
+   //   失败:给出提示
+   if (data.state !== 1) {
+     return this.$message.error(data.message)
+   }
+   //   成功:跳转到首页
+   this.$message.success('登录成功')
+   this.$router.push({
+     name: 'home'
+   })
+   ```
+
+5. 表单验证
+   
+   ```base
+   model="form"
+   :rules="rules"
+   ref="ruleForm"
+   el-form-item 绑定 prop 属性
+   ```
+
+   ```base
+   rules: {
+    phone: [
+      { required: true, message: '请输入手机号', trigger: 'blur' },
+      { pattern: /^1\d{10}$/, message: '请输入正确的手机号', trigger: 'blur' }
+    ],
+    password: [
+        { required: true, message: '请输入密码', trigger: 'blur' },
+        { min: 6, max: 18, message: '长度在 6 到 18 个字符', trigger: 'blur' }
+      ]
+    }
+   ```
+   指定类型
+   ```base
+   import { Form } from 'element-ui'
+   await (this.$refs.form as Form).validate()
+   ```
+
+6. 请求期间禁用按钮点击
+   
+   给el-button增加一个属性:loading="isLoginLoading"
+   
+   data里isLoginLoading默认为false，在表单通过验证时this.isLoginLoading = true，将按钮设为loading状态，在完成提交无论请求结果是成功还是失败，将表单loading状态去掉this.isLoginLoading = false
+
+7. 封装请求方法
+   
+   services/user.ts
+   ```base
+   /**
+    * 用户相关请求模块
+    */
+    import request from '@/utils/request'
+    import qs from 'qs'
+
+    interface User {
+        phone: string
+        password: string
+    }
+
+    export const login = (data: User) => {
+        return request({
+            method: 'POST',
+            url: '/front/user/login',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            data: qs.stringify(data) // axios 默认发送的是 application/json 格式的数据
+        })
+    }
+   ```
+
+   login/index.vue
+   ```base
+   <template>
+     <div class="login">
+       <el-form
+         class="login-form"
+         ref="form"
+         :model="form"
+         :rules="rules"
+         label-width="80px"
+         label-position="top"
+       >
+         <el-form-item label="手机号" prop="phone">
+           <el-input v-model="form.phone"></el-input>
+         </el-form-item>
+   
+         <el-form-item label="密码" prop="password">
+           <el-input type="password" v-model="form.password"></el-input>
+         </el-form-item>
+   
+         <el-form-item>
+           <el-button :loading="isLoginLoading " class="login-btn" type="primary" @click="onSubmit">登录</el-button>
+         </el-form-item>
+       </el-form>
+     </div>
+   </template>
+   
+   <script lang="ts">
+   import request from '@/utils/request'
+   import qs from 'qs'
+   import { Form } from 'element-ui'
+   import { login } from '@/services/user'
+   
+   export default {
+     name: 'LoginIndex',
+   
+     data () {
+       return {
+         isLoginLoading: false,
+         form: {
+           phone: '18201288771',
+           password: '111111'
+         },
+         rules: {
+           phone: [
+             { required: true, message: '请填写手机号', trigger: 'blur' },
+             { pattern: /^1\d{10}$/, message: '请输入正确的手机号', trigger: 'blur' }
+           ],
+           password: [
+             { required: true, message: '请输入密码', trigger: 'blur' },
+             { min: 6, max: 18, message: '长度在 6 到 18 个字符', trigger: 'blur' }
+           ]
+         }
+       }
+     },
+   
+     methods: {
+       async onSubmit () {
+         try {
+           // 1.表单验证
+           // await (this.$refs.form as Form).validate() // 如果验证不通过，会抛出一个 Promise 异常，阻断后面程序的运行
+           // 把this.$refs.form转为Form类型
+           await (this.$refs.form as Form).validate()
+   
+           this.isLoginLoading = true
+           // 2.验证通过 -> 提交表单
+           const { data } = await login(this.form)
+   
+           // 3.处理请求结果
+           //   失败:给出提示
+           if (data.state !== 1) {
+             return this.$message.error(data.message)
+           }
+           //   成功:跳转到首页
+           this.$message.success('登录成功')
+           this.$router.push({
+             name: 'home'
+           })
+         } catch (err) {
+           console.log('登录失败' + err)
+         }
+         this.isLoginLoading = false
+       }
+     }
+   }
+   </script>
+   
+   <style lang="scss" scoped>
+   .login {
+     height: 100vh;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+   
+     .login-form {
+       width: 300px;
+       background-color: #fff;
+       padding: 20px;
+       border-radius: 4px;
+     }
+   
+     .login-btn {
+       width: 100%;
+     }
+   }
+   </style>
+   ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
