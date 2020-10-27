@@ -1238,33 +1238,594 @@ export default Vue.extend({})
    </style>
    ```
 
+8. 关于请求体data和ContentType的问题
+   
+   如果 data 是普通对象，则 Content-Type 是 application/json
+   
+   如果 data 是 qs.stringify(data) 转换之后的数据：key=value&key=value，则 Content-Type 会被设置为 application/x-www-form-urlencoded
+   
+   如果 data 是 FormData 对象，则 Content-Type 是 multipart/form-data
+   
+### 十四、身份认证
+1. 把登录状态存储到Vuex容器中
+   
+   登录成功，记录登录状态，状态需要能够全局访问（放到vuex容器），然后在访问需要登录的页面的时候判断有没有登录状态(路由拦截器)
+   
+   容器的状态实现了数据共享，在组件里面访问方便，但是没有持久化的功能，为了防止页面刷新数据丢失，需要把 user 数据持久化
 
+    ```base
+    import Vue from 'vue'
+    import Vuex from 'vuex'
+    
+    Vue.use(Vuex)
+    
+    export default new Vuex.Store({
+      state: {
+        user: JSON.parse(window.localStorage.getItem('user') || 'null') // 当前登录用户状态
+      },
+      mutations: {
+        // 修改容器数据必须使用 mutation 函数
+        setUser (state, payload) {
+          state.user = JSON.parse(payload)
+          window.localStorage.setItem('user', payload)
+        }
+      },
+      actions: {
+      },
+      modules: {
+      }
+    })
+    ```
+   
+    login.vue
+    ```base
+    this.$store.commit('setUser', data.content)
+    ```
 
+2. 校验页面访问权限
+    
+    [前置路由守卫](https://router.vuejs.org/zh/guide/advanced/navigation-guards.html#%E5%85%A8%E5%B1%80%E5%89%8D%E7%BD%AE%E5%AE%88%E5%8D%AB)
+    
+    ```base
+    const router = new VueRouter({ ... })
+    
+    router.beforeEach((to, from, next) => {
+      // ...
+    })
+    ```
+    
+    在路由表中配置路由守卫
+    
+    router/index.ts
+    ```base
+    import Vue from 'vue'
+    import VueRouter, { RouteConfig } from 'vue-router'
+    import Layout from '@/layout/index.vue'
+    import store from '@/store'
+    
+    Vue.use(VueRouter)
+    
+    // 路由配置规则
+    const routes: Array<RouteConfig> = [
+      {
+        path: '/login',
+        name: 'login',
+        component: () => import(/* webpackChunkName: 'login' */'@/views/login/index.vue')
+      },
+      {
+        path: '/',
+        component: Layout,
+        meta: {
+          requiresAuth: true // 父路由需要权限访问，子路由也需要权限
+        },
+        children: [
+          {
+            path: '',
+            name: 'home',
+            component: () => import(/* webpackChunkName: 'home' */'@/views/home/index.vue')
+          },
+          {
+            path: '/role',
+            name: 'role',
+            component: () => import(/* webpackChunkName: 'role' */'@/views/role/index.vue')
+          },
+          {
+            path: '/menu',
+            name: 'menu',
+            component: () => import(/* webpackChunkName: 'menu' */'@/views/menu/index.vue')
+          },
+          {
+            path: '/resource',
+            name: 'resource',
+            component: () => import(/* webpackChunkName: 'resource' */'@/views/resource/index.vue')
+          },
+          {
+            path: '/course',
+            name: 'course',
+            component: () => import(/* webpackChunkName: 'course' */'@/views/course/index.vue')
+          },
+          {
+            path: '/user',
+            name: 'user',
+            component: () => import(/* webpackChunkName: 'user' */'@/views/user/index.vue')
+          },
+          {
+            path: '/advert',
+            name: 'advert',
+            component: () => import(/* webpackChunkName: 'advert' */'@/views/advert/index.vue')
+          },
+          {
+            path: '/advert-space',
+            name: 'advert-space',
+            component: () => import(/* webpackChunkName: 'advert-space' */'@/views/advert-space/index.vue')
+          }
+        ]
+      },
+      {
+        path: '*',
+        name: '404',
+        component: () => import(/* webpackChunkName: '404' */'@/views/error-page/404.vue')
+      }
+    ]
+    
+    const router = new VueRouter({
+      routes
+    })
+    
+    // 全局前置守卫：任何页面的访问都要经过这里
+    // to: 要去哪里的路由信息
+    // from: 从哪里来的路由信息
+    // next: 通行的标志（一定要调用，否则不加载页面）
+    router.beforeEach((to, from, next) => {
+      // to.matched 是一个数组（匹配到是路由记录）
+      if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!store.state.user) {
+          // 跳转登录页面
+          next({
+            name: 'login'
+          })
+        } else {
+          next() // 允许通过
+        }
+      } else {
+        next()
+      }
+      // if (to.path !== 'login') {
+      //   // 校验登录状态
+      // }
+      // 路由守卫中一定要调用 next，否则页面无法展示
+    })
+    
+    export default router
+    ```
 
+3. 登录成功跳转回原来页面
+    
+    在路由拦截器中的query参数中带着返回路由
+    ```base
+    next({
+      name: 'login',
+      query: {
+        redirect: to.fullPath
+      }
+    })
+    ```
+    在登录成功跳转时，跳转到query参数中的返回路由，没有的话，则进入首页
+    
+    login.vue
+    ```base
+    this.$router.push((this.$route.query.redirect as string) || '/')
+    ```
+    
+4. 测试获取当前登录用户信息接口
+    
+    在 Postman 接口集合设置同一 Authorization
+    
+    ![](./img/14.jpg)
+    
+    这样接口请求头就同一添加了Authorization，就不用每个接口都分别添加 Authorization 字段了
+    
+    ![](./img/15.jpg)
+    
+5. 展示当前登录用户信息
+   
+   layout/components/app-header.vue
+   ```base
+   :src="userInfo.portrait || require('../../assets/default-avatar.png')"
+   ```
+   使用require获取默认图片，动态src要用require方法获取，图片作为js模块解析
+   
+   ```base
+   <template>
+     <div class="header">
+       <el-breadcrumb separator-class="el-icon-arrow-right">
+         <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+         <el-breadcrumb-item>活动管理</el-breadcrumb-item>
+         <el-breadcrumb-item>活动列表</el-breadcrumb-item>
+         <el-breadcrumb-item>活动详情</el-breadcrumb-item>
+       </el-breadcrumb>
+       <el-dropdown>
+         <span class="el-dropdown-link">
+           <el-avatar shape="square" :size="40" :src="userInfo.portrait || require('../../assets/default-avatar.png')"></el-avatar>
+           <i class="el-icon-arrow-down el-icon--right"></i>
+         </span>
+         <el-dropdown-menu slot="dropdown">
+           <el-dropdown-item>{{userInfo.userName}}</el-dropdown-item>
+           <el-dropdown-item divided>退出</el-dropdown-item>
+         </el-dropdown-menu>
+       </el-dropdown>
+     </div>
+   </template>
+   
+   <script lang="ts">
+   import Vue from 'vue'
+   import { getUserInfo } from '@/services/user'
+   
+   export default Vue.extend({
+     name: 'AppHeader',
+   
+     data () {
+       return {
+         userInfo: {} // 当前登录用户的信息
+       }
+     },
+   
+     created () {
+       this.loadUserInfo()
+     },
+   
+     methods: {
+       async loadUserInfo () {
+         const { data } = await getUserInfo()
+         this.userInfo = data.content
+       }
+     }
+   })
+   </script>
+   
+   <style lang="scss" scoped>
+   .header{
+     height: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     .el-dropdown-link{
+       display: flex;
+       align-items: center;
+     }
+   }
+   </style>
+   ```
+   service/user.ts
+   ```base
+   import store from '@/store'
+   
+   export const getUserInfo = () => {
+     return request({
+       method: 'GET',
+       url: '/front/user/getInfo',
+       headers: {
+         Authorization: store.state.user.access_token
+       }
+     })
+   }
+   ```
+   
+6. 使用请求拦截器统一设置Token
+   
+   utils/request.ts
+   ```base
+   import axiso from 'axios'
+   import store from '@/store'
+   
+   const request = axiso.create({
+     // 配置选项
+     // baseURL
+     // timeout
+   })
+   
+   // 请求拦截器
+   request.interceptors.request.use(config => {
+     // 这里是拦截的接口
+     // 改写 config 对象
+     const { user } = store.state
+     if (user && user.access_token) {
+       config.headers.Authorization = user.access_token
+     }
+     // 注意：这里一定要返回 config，否则请求就发送不出去了
+     return config
+   }, error => {
+     return Promise.reject(error)
+   })
+   
+   // 响应拦截器
+   
+   export default request
+   ```
+   
+   service/user.ts 里面的接口中的Authorization请求头就可以去掉了
 
+7. 用户退出
+   
+   @click.native="handleLogout"，native修饰符给组件注册原生事件到组件内部的根元素上
+   ```base
+   <el-dropdown-item divided @click.native="handleLogout">退出</el-dropdown-item>
+   ```
+   
+   layout/components/app-header.vue
+   ```base
+   handleLogout () {
+     this.$confirm('确认退出吗?', '退出提示', {
+       confirmButtonText: '确定',
+       cancelButtonText: '取消',
+       type: 'warning'
+     }).then(() => { // 确认执行
+       // 清除登录状态
+       this.$store.commit('setUser', null) // 此时清空了容器中的数据，也清空了本地存储
+       // 跳转到登录页
+       this.$router.push({
+         name: 'login'
+       })
+       this.$message({
+         type: 'success',
+         message: '退出成功!'
+       })
+     }).catch(() => {
+       this.$message({
+         type: 'info',
+         message: '已取消退出'
+       })
+     })
+   }
+   ```
 
+### 十五、处理Token过期
 
+1. 概念介绍
+   
+   access_token：获取需要授权的接口数据
+   
+   expires_in：过期时间
+   
+   refresh_token：刷新获取新的 access_token
+   
+   为什么 access_token 需要有过期时间以及为什么比较短？为了安全。
 
+   方法一：在请求发起前拦截每个请求，判断token的有效时间是否已经过期，若过期，则将请求挂起，先刷新token后再继续请求
+   
+   优点：在请求前拦截，能节省请求，省流量
+   
+   缺点：需要后端额外提供一个token过期时间的字段；使用了本地时间判断，若本地时间被篡改，特别是本地时间比服务器慢，拦截会失败
+   
+   方法二：不再请求前拦截，而是拦截返回后的数据。先发起请求，接口返回过期后，先刷新token，在进行一次重试
+   
+   优点：不需要额外的token过期字段，不需要判断时间
+   
+   缺点：会消耗多一次请求，耗流量
+   
+   综上，方法一和二优缺点是互补的，方法一有校验失败的风险（本地时间被篡改时），方法二更简单粗暴，等知道服务器已经过期了再重试一次，只是会耗多一次请求。
+   
+   使用方式二处理刷新Token的操作
 
+2. 分析响应拦截器
+   
+   request/index.ts
+   ```base
+   function redirectLogin () {
+     router.push({
+       name: 'login',
+       query: {
+         redirect: router.currentRoute.fullPath
+       }
+     })
+   }
+   
+   // 响应拦截器
+   request.interceptors.response.use(response => { // 状态码为2xx 都会进入这里
+     // 如是自定义错误状态码，错误处理就写这里
+     return response
+   }, error => { // 超出 2xx 状态码都执行这里
+     // 如果是使用 HTTP 状态码，错误处理就写这里
+     console.dir(error)
+     return Promise.reject(error)
+   })
+   ```
 
+3. 处理Token过期-实现基本流程逻辑
 
+   无痛刷新：先请求接口，如果是401，判断容器中是否有user，如果没有的话，直接进入登录页，如果有user，则请求refresh_token接口，然后重新设置接口的返回值给容器的user，再重新请求接口把请求结果返回
+   
+   ```base
+   // 响应拦截器
+   request.interceptors.response.use(response => { // 状态码为2xx 都会进入这里
+                                                   // 如是自定义错误状态码，错误处理就写这里
+     return response
+   }, async error => { // 超出 2xx 状态码都执行这里
+     // 如果是使用 HTTP 状态码，错误处理就写这里
+     // console.dir(error)
+     if (error.response) { // 请求发出去收到响应了，但是状态码超出了2xx范围
+       const { status } = error.response
+       if (status === 400) {
+         Message.error('请求参数错误')
+       } else if (status === 401) {
+         // token 无效(没有提供token、token是无效的、token过期)
+         // 如果有 refresh_token 则尝试使用 refresh_token 获取新的 access_token
+         if (!store.state.user) {
+           redirectLogin()
+           return Promise.reject(error)
+         }
+   
+         // 尝试刷新获取新的 token
+         try {
+           // 创建一个新的 axios 实例发送请求，因为如果使用request会可能发生 401 死循环
+           const { data } = await axios.create()({
+             method: 'POST',
+             url: '/front/user/refresh_token',
+             data: qs.stringify({
+               refreshtoken: store.state.user.refresh_token
+             })
+           })
+           // 成功了 -> 把本次失败的请求重新发出去
+           // 把刷新拿到的新的access_token 更新到容器和本地存储中
+           store.commit('setUser', data.content)
+           // 把本次失败的请求重新发出去
+           console.log(error.config) // 失败请求的配置信息
+           return request(error.config) // 把请求结果return出去
+         } catch (err) {
+           // 把当前登录用户状态清除
+           store.commit('setUser', null)
+           // 失败了 -> 跳转登录页面重新登录获取新的 token
+           redirectLogin()
+           return Promise.reject(error)
+         }
+         // 如果没有，则直接跳转登录页
+       } else if (status === 403) {
+         Message.error('没有权限，请联系管理员')
+       } else if (status === 404) {
+         Message.error('请求资源不存在')
+       } else if (status >= 500) {
+         Message.error('服务端错误，请联系管理员')
+       }
+     } else if (error.request) { // 请求发出去没收到响应
+       Message.error('请求超时，请刷新重试')
+     } else { // 在设置请求是发生了一些事情，触发了一个错误
+       Message.error(`请求失败：${error.message}`)
+     }
+     // 把请求失败的错误对象继续抛出，扔给下一个调用者
+     return Promise.reject(error)
+   })
+   ```
 
+4. 关于多次请求问题
+   
+   多个接口并行发送，如果token过期了，返回结果都是 401，就会触发多次 refresh_token 方法刷新 token，第一个请求是成功的，但是后面的请求刷新 token 的就报错了，因为所有请求参数都是使用同一个refresh_token值，而这个值只能用一次，第一次用过，后面的请求就不能再使用了
+   
+   使用变量 isRefreshing 控制刷新 token 的状态。
+   
+   使用requests 存储刷新 token 期间过来的 401 请求。
+   
+   requests数组存储调用resolve的方法。
+   
+   在刷新token完毕后循环遍历requests方法。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   ```base
+   import axios from 'axios'
+   import store from '@/store'
+   import { Message } from 'element-ui'
+   import router from '@/router'
+   import qs from 'qs'
+   
+   function redirectLogin () {
+     router.push({
+       name: 'login',
+       query: {
+         redirect: router.currentRoute.fullPath
+       }
+     })
+   }
+   
+   function refreshToken () {
+     return axios.create()({ // 创建一个新的 axios 实例发送请求，因为如果使用request会可能发生 401 死循环
+       method: 'POST',
+       url: '/front/user/refresh_token',
+       data: qs.stringify({
+         // refreshtoken 只能使用一次
+         refreshtoken: store.state.user.refresh_token
+       })
+     })
+   }
+   
+   const request = axios.create({
+     // 配置选项
+     // baseURL
+     // timeout
+   })
+   
+   // 请求拦截器
+   request.interceptors.request.use(config => {
+     // 这里是拦截的接口
+     // 改写 config 对象
+     const { user } = store.state
+     if (user && user.access_token) {
+       config.headers.Authorization = user.access_token
+     }
+     // 注意：这里一定要返回 config，否则请求就发送不出去了
+     return config
+   }, error => {
+     return Promise.reject(error)
+   })
+   
+   // 响应拦截器
+   let isRefreshing = false // 控制刷新 token 的状态
+   let requests: (() => void)[] = [] // 存储刷新 token 期间过来的 401 请求
+   request.interceptors.response.use(response => { // 状态码为2xx 都会进入这里
+     // 如是自定义错误状态码，错误处理就写这里
+     return response
+   }, async error => { // 超出 2xx 状态码都执行这里
+     // 如果是使用 HTTP 状态码，错误处理就写这里
+     // console.dir(error)
+     if (error.response) { // 请求发出去收到响应了，但是状态码超出了2xx范围
+       const { status } = error.response
+       if (status === 400) {
+         Message.error('请求参数错误')
+       } else if (status === 401) {
+         // token 无效(没有提供token、token是无效的、token过期)
+         // 如果有 refresh_token 则尝试使用 refresh_token 获取新的 access_token
+         if (!store.state.user) {
+           redirectLogin()
+           return Promise.reject(error)
+         }
+   
+         // 尝试刷新获取新的 token
+         if (!isRefreshing) {
+           isRefreshing = true // 开启刷新状态
+           return refreshToken().then(res => {
+             if (!res.data.success) {
+               throw new Error('刷新 Token 失败')
+             }
+             // 成功了 -> 把本次失败的请求重新发出去
+             // 把刷新拿到的新的access_token 更新到容器和本地存储中
+             store.commit('setUser', res.data.content)
+             requests.forEach(cb => cb())
+             // 重置 requests 数组
+             requests = []
+             return request(error.config) // error.config 失败请求的配置信息
+           }).catch(err => {
+             console.log(err)
+             // 把当前登录用户状态清除
+             store.commit('setUser', null)
+             // 失败了 -> 跳转登录页面重新登录获取新的 token
+             redirectLogin()
+             return Promise.reject(error)
+           }).finally(() => {
+             isRefreshing = false // 重置刷新状态
+           })
+         }
+   
+         // 刷新状态下，把请求挂起，放到 requests 数组中
+         return new Promise(resolve => { // Promise 把请求挂起(pending状态)
+           requests.push(() => {
+             resolve(request(error.config)) // 把错误请求重新发送
+           })
+         })
+       } else if (status === 403) {
+         Message.error('没有权限，请联系管理员')
+       } else if (status === 404) {
+         Message.error('请求资源不存在')
+       } else if (status >= 500) {
+         Message.error('服务端错误，请联系管理员')
+       }
+     } else if (error.request) { // 请求发出去没收到响应
+       Message.error('请求超时，请刷新重试')
+     } else { // 在设置请求是发生了一些事情，触发了一个错误
+       Message.error(`请求失败：${error.message}`)
+     }
+     // 把请求失败的错误对象继续抛出，扔给下一个调用者
+     return Promise.reject(error)
+   })
+   
+   export default request
+   ```
 
 
 
