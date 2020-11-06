@@ -47,10 +47,10 @@ request.interceptors.request.use(config => {
 // 响应拦截器
 let isRefreshing = false // 控制刷新 token 的状态
 let requests: (() => void)[] = [] // 存储刷新 token 期间过来的 401 请求
-request.interceptors.response.use(response => { // 状态码为2xx 都会进入这里
-  // 如是自定义错误状态码，错误处理就写这里
+
+request.interceptors.response.use(function (response) {
   return response
-}, async error => { // 超出 2xx 状态码都执行这里
+}, async function (error) {
   // 如果是使用 HTTP 状态码，错误处理就写这里
   // console.dir(error)
   if (error.response) { // 请求发出去收到响应了，但是状态码超出了2xx范围
@@ -112,5 +112,6 @@ request.interceptors.response.use(response => { // 状态码为2xx 都会进入�
   // 把请求失败的错误对象继续抛出，扔给下一个调用者
   return Promise.reject(error)
 })
+
 
 export default request

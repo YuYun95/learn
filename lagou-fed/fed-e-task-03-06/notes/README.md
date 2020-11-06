@@ -1827,7 +1827,10 @@ export default Vue.extend({})
    export default request
    ```
 
-
+### 十六、菜单管理
+1. 添加菜单布局
+   
+   
 
 
 
