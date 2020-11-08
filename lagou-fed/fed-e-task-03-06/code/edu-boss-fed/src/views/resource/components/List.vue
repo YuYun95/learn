@@ -2,28 +2,46 @@
   <div class="resource-list">
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <el-form :inline="true" :model="form" class="demo-form-inline">
-          <el-form-item label="资源名称">
-            <el-input v-model="form.user" placeholder="审批人"></el-input>
+        <el-form ref="form" :inline="true" :model="form" class="demo-form-inline">
+          <el-form-item prop="name" label="资源名称">
+            <el-input v-model="form.name"></el-input>
           </el-form-item>
-          <el-form-item label="资源路径">
-            <el-input v-model="form.user" placeholder="审批人"></el-input>
+          <el-form-item prop="url" label="资源路径">
+            <el-input v-model="form.url"></el-input>
           </el-form-item>
-          <el-form-item label="资源分类">
-            <el-select v-model="form.region" placeholder="活动区域">
-              <el-option label="区域一" value="shanghai"></el-option>
-              <el-option label="区域二" value="beijing"></el-option>
+          <el-form-item prop="categoryId" label="资源分类">
+            <el-select v-model="form.categoryId" clearable>
+              <el-option
+                v-for="item in resourceCategories"
+                :label="item.name"
+                :value="item.id"
+                :key="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="onSubmit">查询搜索</el-button>
-            <el-button type="primary" @click="onSubmit">重置</el-button>
+            <el-button
+              :disabled="isLoading"
+              type="primary"
+              @click="onSubmit"
+            >
+              查询搜索
+            </el-button>
+            <el-button
+              :disabled="isLoading"
+              type="primary"
+              @click="onReset"
+            >
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
       <el-table
         :data="resources"
-        style="width: 100%">
+        style="width: 100%; margin-bottom: 20px;"
+        v-loading="isLoading"
+      >
         <el-table-column
           type="index"
           label="编号"
@@ -60,6 +78,7 @@
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
+        :disabled="isLoading"
         :current-page.sync="form.current"
         :page-sizes="[5, 10, 20]"
         :page-size="form.size"
@@ -73,7 +92,9 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { Form } from 'element-ui'
 import { getResourcePages } from '@/services/resource'
+import { getResourceCategories } from '@/services/resource-category'
 
 export default Vue.extend({
   name: 'ResourceList',
@@ -83,36 +104,45 @@ export default Vue.extend({
       resources: [],
       form: {
         name: '',
-        region: '',
-        date1: '',
-        date2: '',
-        delivery: false,
-        type: [],
-        resource: '',
-        desc: '',
+        url: '',
         current: 1, // 默认查询第1页数据
-        size: 5
+        size: 5,
+        categoryId: null
       },
-      totalCount: 0
+      totalCount: 0,
+      resourceCategories: [],
+      isLoading: true // 加载状态
     }
   },
 
   created () {
     this.loadResources()
+    this.loadResourceCategories()
   },
 
   methods: {
-    onSubmit () {
-      console.log('submit!')
+    async loadResourceCategories () {
+      const { data } = await getResourceCategories()
+      this.resourceCategories = data.data
     },
 
     async loadResources () {
-      const { data } = await getResourcePages({
-        current: this.form.current,
-        size: this.form.size
-      })
+      this.isLoading = true
+      const { data } = await getResourcePages(this.form)
       this.resources = data.data.records
       this.totalCount = data.data.total
+      this.isLoading = false
+    },
+
+    onSubmit () {
+      this.form.current = 1
+      this.loadResources()
+    },
+
+    onReset () {
+      (this.$refs.form as Form).resetFields()
+      this.form.current = 1
+      this.loadResources()
     },
 
     handleEdit (item: any) {
