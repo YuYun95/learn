@@ -78,7 +78,7 @@ request.interceptors.response.use(function (response) {
           requests.forEach(cb => cb())
           // 重置 requests 数组
           requests = []
-          return request(error.config) // error.config 失败请求的配置信息
+          return request(error.config) // error.config 失败请求的配置信息（把失败的请求重新发送）
         }).catch(err => {
           console.log(err)
           // 把当前登录用户状态清除
