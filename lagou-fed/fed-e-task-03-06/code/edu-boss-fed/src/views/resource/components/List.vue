@@ -36,6 +36,8 @@
             </el-button>
           </el-form-item>
         </el-form>
+        <el-button size="small" @click="handleAdd">添加</el-button>
+        <el-button size="small" @click="$router.push({ name: 'resourceCategory'})">资源分类</el-button>
       </div>
       <el-table
         :data="resources"
@@ -87,20 +89,28 @@
       </el-pagination>
     </el-card>
 
+    <add-resource :show-add.sync="showAdd" :resource-form-prop.sync="resourceForm" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import { Form } from 'element-ui'
-import { getResourcePages } from '@/services/resource'
+import { getResourcePages, deleteResource } from '@/services/resource'
 import { getResourceCategories } from '@/services/resource-category'
+import AddResource from './AddResource.vue'
 
 export default Vue.extend({
   name: 'ResourceList',
 
+  components: {
+    AddResource
+  },
+
   data () {
     return {
+      resourceForm: {},
+      showAdd: false,
       resources: [],
       form: {
         name: '',
@@ -146,11 +156,20 @@ export default Vue.extend({
     },
 
     handleEdit (item: any) {
-      console.log(item)
+      this.showAdd = true
+      this.resourceForm = item
     },
 
     handleDelete (item: any) {
-      console.log(item)
+      this.$confirm(`确定删除${item.name}吗?`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        await deleteResource(item.id)
+        this.$message.success('操作成功')
+        this.loadResources()
+      })
     },
 
     handleSizeChange (val: number) {
@@ -162,6 +181,10 @@ export default Vue.extend({
     handleCurrentChange (val: number) {
       this.form.current = val
       this.loadResources()
+    },
+
+    handleAdd () {
+      this.showAdd = true
     }
   }
 })

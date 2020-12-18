@@ -40,6 +40,11 @@ const routes: Array<RouteConfig> = [
         component: () => import(/* webpackChunkName: 'resource' */'@/views/resource/index.vue')
       },
       {
+        path: '/resourceCategory',
+        name: 'resourceCategory',
+        component: () => import(/* webpackChunkName: 'resource' */'@/views/resource/resourceCategory.vue')
+      },
+      {
         path: '/course',
         name: 'course',
         component: () => import(/* webpackChunkName: 'course' */'@/views/course/index.vue')
@@ -55,9 +60,24 @@ const routes: Array<RouteConfig> = [
         component: () => import(/* webpackChunkName: 'advert' */'@/views/advert/index.vue')
       },
       {
+        path: '/advert-create',
+        name: 'advert-create',
+        component: () => import(/* webpackChunkName: 'advert' */ '@/views/advert/createAdvert.vue')
+      },
+      {
         path: '/advert-space',
         name: 'advert-space',
         component: () => import(/* webpackChunkName: 'advert-space' */'@/views/advert-space/index.vue')
+      },
+      {
+        path: '/advert-space/create',
+        name: 'advert-space-create',
+        component: () => import(/* webpackChunkName: 'advert-create-create' */ '@/views/advert-space/create.vue')
+      },
+      {
+        path: '/advert-space/:id/edit',
+        name: 'advert-space-edit',
+        component: () => import(/* webpackChunkName: 'advert-create-edit' */ '@/views/advert-space/edit.vue')
       },
       {
         path: '/menu/create',
