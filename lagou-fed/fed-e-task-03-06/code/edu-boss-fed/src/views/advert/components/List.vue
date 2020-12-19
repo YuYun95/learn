@@ -54,7 +54,7 @@
           align="center"
           label="操作">
           <template slot-scope="scope">
-            <el-link href="#" @click="handleClick(scope.row.id)">编辑</el-link>
+            <el-link @click.prevent="handleClick(scope.row.id)">编辑</el-link>
           </template>
         </el-table-column>
       </el-table>

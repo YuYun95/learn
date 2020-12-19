@@ -46,3 +46,26 @@ export const updateStatus = (id: number, status: number) => {
     }
   })
 }
+
+export const getAllSpaces = () => {
+  return request({
+    method: 'GET',
+    url: '/front/ad/space/getAllSpaces'
+  })
+}
+
+export const adSaveOrUpdate = (data: any) => {
+  return request({
+    method: 'POST',
+    url: '/front/ad/saveOrUpdate',
+    data
+  })
+}
+
+export const getAdById = (params: any) => {
+  return request({
+    method: 'GET',
+    url: '/front/ad/getAdById',
+    params
+  })
+}
