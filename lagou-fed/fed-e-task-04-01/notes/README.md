@@ -100,14 +100,183 @@
     {/* 最后一个参数即是事件对象 不需要传递 */}
     <button onClick={this.eventHandler.bind(null, 'arg')}按钮</button>
     ```
+    第一种无法传参；第二种可以传参，先调用箭头函数再在箭头函数里面调用方法就可以传递参数；第三种可以传参，通过bind给方法传参
     
     ```react
     constructor() {
         this.eventHandler = this.eventHandler.bind(this)
+        // 这里给eventHandler重新赋值，改变this指向，指向实例
     }
-    eventHandler()
+    eventHandler() {} // 这里this是undefined
     <button onClick={this.eventHandler}>按钮</button>
     ```
 
 12. 样式
     * 行内样式
+    ```react
+    class App extends Component {
+        render() {
+            const style = { width: 200, height: 200, backgroundColor: 'red' }
+            return <div style={ style }></div>
+        }
+    }
+    ```
+    * 外链样式
+    ```react
+    import styles from './Button.css'
+    class Button extends Component {
+        render() {
+            return <button className={ styles.error}>Error Button</button>
+        }
+    }
+    ```
+    * 全局样式
+    ```react
+    import './styles.css'
+    ```
+
+13. ref 属性
+    通过 ref 可以获取元素对象、组件实例对象
+    * createRef
+    ```react
+    class Input extends Component {
+        constructor() {
+            super()
+            this.inputRef = React.createRef()
+        }
+        render() {
+            return (
+                <div>
+                    <input type="text" ref={this.inputRef} />
+                    <button onClick={() => console.log(this.inputRef.current)}>button</button>
+                </div>
+            )
+        }
+    }
+    ```
+    * 函数参数
+    ```react
+    class Input extends Component {
+        render() {
+            return (
+                <div>
+                    // 函数参数表示当前元素所对应的dom对象
+                    <input type="text" ref={input => (this.input = input)} />
+                    <button onClick={() => console.log(this.input)}>button</button>
+            )
+        }
+    }
+    ```
+    * ref 字符串
+    不推荐使用，在严格模式下报错
+    ```react
+    class Input extends Component {
+        render() {
+            <div>
+                <input type="text" ref="userName" />
+                <button onClick={() => console.log(this.refs.userName)}>button</button>
+            </div>
+        }
+    }
+    ```
+    * 获取组件实例
+    
+        点击按钮让input文本框获取焦点。
+        
+        input文本框以及让文本框获取焦点的方法定义在Input组件中，在App组件中引入Input组件，按钮定义在App组件中。
+        
+    ```react
+    // Input.js
+    class Input extends Components{
+        constructor() {
+            super()
+            this.inputRef = React.createRef()
+            this.focusInput = this.focusInput.bind(this)
+        }
+        focusInput() {
+            this.inputRef.current.focus()
+        }
+        render(){
+            return(
+                <div>
+                    <input type="text" ref={this.inputRef} />
+                </div>
+            )
+        }
+    }
+    ```
+    ```react
+    // App.js
+    class App extends Component{
+        constructor() {
+            super()
+            this.InputComponentRef = React.creactRef()
+        }
+        render() {
+            return(
+                <div>
+                    <Input ref={this.InputComponentRef} />
+                    <button onClick={() => this.InputComponentRef.current.focusInput()}>button</button>
+                </div>
+            )
+        }
+    }
+    ```
+        
+14. 组件
+
+    React 是基于组件的方式进行用户界面开发的，组件可理解为对页面中某一块区域的封装
+    * 创建类组件
+        ```react
+        import React, { Component } from 'react'
+        class App extends Component{
+            render(){
+                return(
+                    return <div>Hello,我是类组件</div>
+                )
+            }
+        }
+        ```
+    * 创建函数组件
+        ```react
+        const Person = () => {
+            return <div>Hello,我是函数组件</div>
+        }
+        ```
+        注意事项：
+            1. 组件名称首字母必须大写，用以区分组件和普通标签
+            2. jsx 语法外层必须有一个根元素
+    * 组件props传递数据
+    
+        在调用组件时可以向组件内部传递数据，在组件中可以通过props对象获取外部传递进来的数据
+       ```react
+       <Person name="乔治" age="20" />
+       Person name="玛丽" age="10" />
+       ```
+       ```react
+        // 类组件
+        class Person extends Component{
+            render(
+                return(
+                    <div>
+                        <h3>姓名：{this.props.name}</h3>
+                        <h4>年龄：{this.props.age}</h4>
+                    </div>
+                )
+            )
+        }
+       ```
+      ```react
+      // 函数组件
+      const Person = props => {
+        return (
+            <div>
+                <h3>姓名：{props.name}</h3>
+                <h4>年龄：{props.age}</h4>
+            </div>
+        )
+      }
+      ```
+      注意：
+        1. props对象中存储的数据是只读的，不能在组件内部被修改
+        2. 当 props 数据源中的数据被修改后，组件中接收到的 props 数据会被同步更新。（数据驱动DOM）
