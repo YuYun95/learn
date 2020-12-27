@@ -280,3 +280,118 @@
       注意：
         1. props对象中存储的数据是只读的，不能在组件内部被修改
         2. 当 props 数据源中的数据被修改后，组件中接收到的 props 数据会被同步更新。（数据驱动DOM）
+
+    * 设置props默认值
+    ```react
+    class App extends Component {
+        static defaultProps = {}
+    }
+    ```
+    ```react
+    function ThemedButton(props) {}
+    ThemedButton.defaultProps = {
+        theme: 'secondary',
+        label: 'Button Text'
+    }
+    ```
+    
+    * 组件children
+    
+        通过props.children属性可以获取到在调用组件时填充到组件标签内部的内容
+    ```react
+    <Preson>组件内容部的内容</Preson>
+    ```
+    ```react
+    const Preson = (props) => {
+        return (
+            <div>{ props.children }</div>
+        )
+    }
+    ```
+    
+    * 单向数据流
+    
+        1. 在React中，关于数据流动有一条原则，就是单向数据流动，自顶向下，从父组件到子组件
+        2. 单向数据流特性要求我们共享数据要放置在上层组件中
+        3. 子组件通过调用父组件传递过来的方法更改数据
+        4. 当数据发生更改时，React会重新渲染组件树
+        5. 单向数据流使组件之间的数据流动变得可预测，使得定位重新错误变得简单
+        
+        ![](./img/01.jpg)
+
+15. 类组件状态 state
+    * 定义组件状态：类组件除了外部(props)接收状态数据以外还可以拥有自己的状态(state),此状态在组件内部可以被更新，状态更新 DOM 更新。组件内部的状态数据被存储在组件类中state属性中，state属性值为对象类型，属性名称固定不可更改
+    ```react
+    class App extends Component {
+        constructor() {
+            super()
+            this.state = {
+                person: { name: '张三', age: 20 }
+            }
+        }
+        render() {
+            return(
+                <div>
+                    { this.state.person.name }
+                    { this.state.person.age }
+                </div>
+            )
+        }
+    }
+    ```
+    
+    * 更改组件状态：state 状态对象中的数据不可直接更改，如果直接更改 DOM 不会被更新，要更改 state 状态数据需要使用 setState 方法。
+    ```react
+    class App extends Component{
+        constructor(){
+            this.state = {
+                person: { name: '张三', age: 20 }
+            }
+            this.changePerson = this.changePerson.bind(this)
+        }
+        changePerson(){
+            this.setState({
+                person: { name: '李四', age: 15 }
+            })
+        }
+        render(){
+            return (
+                <div>
+                    { this.state.person.name }
+                    { this.state.person.age }
+                    <button onClick={this.changePerson}>按钮</button>
+                </div>
+            )
+        }
+    }
+    ```
+    
+    * 双向数据绑定：双向数据绑定是指，组件类中更新了状态，DOM 状态同步更新，DOM 更改了状态，组件类中同步更新。组件<=>视图。要实现双向数据绑定需要用到表单元素和state状态对象。
+    ```react
+    class App extends Component{
+        constructor(){
+            this.state = {
+                name: '张三'
+            }
+            this.nameChange = this.nameChange.bind(this)
+        }
+        nameChange(event){
+            this.setState({ name: event.target.value })
+        }
+        render() {
+            
+            return (
+                <div>
+                    <div> {this.state.name }</div>
+                    <Person name={this.state.name} changed={this.nameChange} />
+                </div>
+            )
+        }
+    }
+    ```
+    ```react
+    const Person = props =>{ return <input type="text" value={props.name} onChange={props.changed} />}
+    ```
+    
+16. 类组件生命周期函数
+    
