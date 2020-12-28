@@ -395,3 +395,258 @@
     
 16. 类组件生命周期函数
     
+    ![](./img/02.jpg)
+    
+    getDerivedStateFromProps:当前组件的状态取决于父组件状态，可以使用该生命周期，改生命周期有两个参数，参数一是通过props接收到父组件传递过来的state，参数二是当前组件的state
+    ；可以通过这个两个参数决定是否需要更新组件的状态，如果不需要更新返回null，如果需要改变则返回全新的状态对象，不允许什么都不返回
+    
+    在组件完成更新之前需要做某种逻辑或者计算，就需要用到快照
+    ```react
+    componentDidUpdate(prevProps, prevState, snapshot) {}
+    ```
+    getSnapshotBeforeUpdate 方法会在组件完成更新之前执行，用于执行某种逻辑或计算，返回可以在componentDidUpdate方法中的第三个参数中获取，就是说在组件更新之后可以拿到这个值再去做其他事情。
+    ```react
+    getSnapshotBeforeUpdate(prevProps, prevState) { return 'snapshot' }
+    ```
+
+17. Context
+    
+    通过 Context 可以跨层级传递数据
+    
+    ![](./img/03.jpg)
+    
+    ```react
+    // userContext.js
+    import React from 'react'
+    const userContext = React.creacteContext('default value')
+    const UserProvider = userContext.Provider
+    const UserConsumer = userContext.Consumer
+    export { UserProvider, UserConsumer }
+    ```
+    
+    ```react
+    // App.js
+    import { UserProvider } from './userContext'
+    class App extends Component {
+        render() {
+            return (
+                <UserProvider value='Hello React Context'>
+                    <A />
+                </UserProvider>
+            )
+        }
+    }
+    ```
+    
+    ```react
+    // c.js
+    import { UserConsumer } from './userContext'
+    export class C extends Component {
+        render() {
+            return(
+                <div>
+                    <UserConsumer>
+                        { username => {return <div>{username}</div>}}
+                    </UserConsumer>
+                </div>
+            )
+        }
+    }
+    ```
+    
+    context的另一种用法
+    ```react
+    // userContext.js
+    export default userContext
+    ```
+    
+    ```react
+    // c.js
+    import userContext from './userContext'
+    export class C extends Component {
+        static contextType = userContext
+        render() {
+            return (
+                <div> {this.context} </div>
+            )
+        }
+    }
+    ```
+
+18. 受控表单
+
+    表单控件中的值由组件的state对象来管理，state对象中存储的值和表单控件中的值是同步状态的
+    
+    ```react
+    class App extends Component {
+        constructor() {
+            this.state = { username: '' }
+            this.nameChange = this.nameChange.bind(this)
+        }
+    
+        nameChange(e) {
+            this.setState({ username: e.targent.value })
+        }
+    
+        render() {
+            return (
+                <form>
+                    <p>{this.state.username}</p>
+                    <input type="text" value={this.state.username} onChange={this.nameChange} />
+                </form>
+            )
+        }
+    }
+    ```
+
+19. 非受控表单
+    
+    表单元素的值由DOM元素本身管理（提交表单时，从DOM中获取表单值）
+    
+    ```react
+    class App extends Component {
+        constructor() {
+            this.onSubmit = this.onSubmit.bind(this)
+        }
+        
+        onSubmit(e) {
+            console.log(this.usernam.value)
+            e.preventDefault()
+        }
+    
+        render() {
+            return (
+                <form onSubmit={this.onSubmit}>
+                    <input type="text" ref={username => this.username = username} />
+                </form>
+            )
+        }
+    }
+    ```
+
+20. 路由
+    
+    url 地址与组件之间的对应关系，访问不同的url地址显示不同的组件
+    
+    下载：npm install react-router-dom
+
+21. 路由基本使用
+    
+    ```react
+    // App.js
+    import React from 'react'
+    import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
+    function Index() {
+        return <div>首页</div>
+    }
+    function News() {
+        return <div>新闻</div>
+    }
+    function App() {
+        return (
+            <Router>
+                <div>
+                    <Link to='/index'>首页</Link>
+                    <Link to='/news'>新闻</Link>
+                </div>
+                <div>
+                    <Route path='/index' component={Index} />
+                    <Route path='/news' component={News} />
+                </div>
+            </Router>
+        )
+    }
+    ```
+22. 路由嵌套
+    ```react
+    function News(props) {
+        return (
+            <div>
+                <div>
+                    <Link to={`${props.match.url}/company`}公司新闻</Link>
+                    <Link to={`${props.match.url}/industry`}行业新闻</Link>
+                </div>
+                <div>
+                    <Route path={`${props.match.path}/company` component={CompanyNews}} />
+                    <Route path={`${props.match.path}/industry` component={IndustryNews}} />
+                </div>
+            </div>
+        )       
+    }
+    
+    function CompanyNews() { return <div>公司新闻</div>}
+    
+    function IndustryNews() { return <div>行业新闻</div>}
+    ```
+
+23. 路由传参
+    ```react
+    import url from 'url'
+    class News extends Component {
+        constructor(props) {
+            super(props)
+            this.state = {
+                list: [
+                    { id: 1, title: '新闻1 },
+                    { id: 2, title: '新闻2 }
+                ]
+            }
+        }
+    
+        render() {
+            return(
+                <div>
+                    <div>新闻列表组件</div>
+                    <ul>
+                        this.state.list.map((item, index) => {
+                            return (
+                                <li key={index}>
+                                    <Link to={`/detail?id=${item.id}>{item.title}`}</Link>
+                                </li>
+                            )
+                        })
+                    </ul>
+                </div>
+            )
+        }
+    }
+    
+    class Detail extends Component {
+        constructor(props) {
+            super(props)
+        }
+        const { query } = url.parse(this.props.location.search, true)
+        console.log(query)
+        render() {
+            return <div>新闻详情</div>
+        }
+    }
+    ```
+
+24. 路由重定向
+    ```react
+    import { Redirect } from 'react-router-dom'
+    class Login extends Component {
+        render() {
+            if (this.sate.isLogin) {
+                return <Redirect to='/' />
+            }
+        }
+    }
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
