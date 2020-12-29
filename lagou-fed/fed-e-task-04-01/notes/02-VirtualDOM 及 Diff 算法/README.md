@@ -229,6 +229,372 @@ return {
 }
 ```
 
+### 6.渲染 Virtual DOM 对象为真实 DOM 对象
+通过调用render方法可以将Virtual DOM对象更新为真实DOM对象
+
+在更新之前需要确定是否存在旧的 Virtual DOM，如果存在需要比较差异，如果不存在可以直接将Virtual DOM 转为 DOM对象
+
+目前先只考虑不存在旧 Virtual DOM 的情况，就是说想直接将Virtual DOM对象更新为真实DOM对象
+
+```js
+// render.js
+import diff from './diff'
+
+export default function render(virtualDOM, container, oldDOM) {
+  diff(virtualDOM, container, oldDOM)
+}
+```
+
+```js
+// diff.js
+import mountElement from './mountElement'
+
+export default function diff(virtualDOM, container, oldDOM) {
+  // 判断 oldDOM 是否存在
+  if (!oldDOM) {
+    // 如果 oldDOM 不存在 不需要对比 直接将Virtual DOM 转换为真实DOM
+    mountElement(virtualDOM, container)
+  }
+}
+```
+
+在进行 Virtual DOM 转换之前还需要确定 Virtual DOM 的是普通的Virtual DOM对象还是组件形式的Virtual DOM（Component VS Native Element）
+
+类型不同需要做不同的处理，如果是Native Element直接转换
+
+如果是组件 还需要等到组件实例对象，通过组件实例对象获取组件返回的Virtual DOM然后再进行转换
+
+目前只考虑Native Element的情况
+```js
+// mountElement.js
+import mountNativeElement from './mountNativeElement'
+
+export default function mountElement(virtualDOM, container) {
+  // Component VS NativeElement
+  // 如果是普通的Virtual DOM对象，直接转换为DOM
+  mountNativeElement(virtualDOM, container)
+
+  // 如果是组件Virtual DOM
+}
+```
+
+```js
+// mountNativeElement.js
+import createDOMElement from './createDOMElement'
+
+export default function mountNativeElement(virtualDOM, container) {
+  let newElement = createDOMElement(virtualDOM) // 创建的新元素
+
+  // 将转换后的DOM对象放置页面（子节点添加到父节点，最外层的将添加到根节点root）
+  container.appendChild(newElement)
+}
+```
+
+```js
+// createDOMElement.js
+import mountElement from './mountElement'
+
+export default function createDOMElement(virtualDOM) {
+  let newElement = null // 创建的新元素
+  if (virtualDOM.type === 'text') {
+    // 文本节点
+    newElement = document.createTextNode(virtualDOM.props.textContent)
+  } else {
+    // 元素节点
+    newElement = document.createElement(virtualDOM.type)
+  }
+  // 递归创建子节点
+  virtualDOM.children.forEach(child => {
+    // 这里没有直接调用 mountNativeElement，是因为不知道virtualDOM 是 NativeElement 还是 Component
+    mountElement(child, newElement)
+  })
+
+  return newElement
+}
+```
+
+### 7. 为元素节点添加属性
+```js
+// createDOMElement.js
+import mountElement from './mountElement'
+import updateNodeElement from './updateNodeElement'
+
+export default function createDOMElement(virtualDOM) {
+  let newElement = null // 创建的新元素
+  if (virtualDOM.type === 'text') {
+    // 文本节点
+    newElement = document.createTextNode(virtualDOM.props.textContent)
+  } else {
+    // 元素节点
+    newElement = document.createElement(virtualDOM.type)
+    updateNodeElement(newElement, virtualDOM) // 为元素设置属性
+  }
+  // 递归创建子节点
+  virtualDOM.children.forEach(child => {
+    // 这里没有直接调用 mountNativeElement，是因为不知道virtualDOM 是 NativeElement 还是 Component
+    mountElement(child, newElement)
+  })
+
+  return newElement
+}
+```
+
+```js
+// updateNodeElement.js
+export default function updateNodeElement(newElement, virtualDOM) {
+  // 获取要解析的Virtual DOM节点对象的属性对象
+  const newProps = virtualDOM.props
+  // 将属性对象中的属性名称放到一个数组中并循环数组
+  Object.keys(newProps).forEach(propName => {
+    const newPropsValue = newProps[propName]
+    // 考虑属性名称是否以 on 开头，如果是就表示是个事件属性
+    // 判断属性是否是事件属性
+    if (propName.startsWith('on')) {
+      // 事件名称
+      const eventName = propName.toLowerCase().slice(2)
+      // 为元素添加事件
+      newElement.addEventListener(eventName, newPropsValue)
+      // 如果属性名称是 value 或者 checked 需要通过 [] 的形式添加
+    } else if (propName === 'value' || propName === 'checked') {
+      newElement[propName] = newPropsValue
+      // 刨除 children 因为他是子元素 不是属性
+    } else if (propName !== 'children') {
+      if (propName === 'className') {
+        // className 属性单独处理 不直接在元素上添加 class 属性是因为 class 是 javascript 中的关键字
+        newElement.setAttribute('class', newPropsValue)
+      } else {
+        // 普通属性
+        newElement.setAttribute(propName, newPropsValue)
+      }
+    }
+  })
+}
+```
+
+### 8.组件渲染
+#### 8.1函数组件
+在渲染组件之前首先要明确的是，组件的Virtual DOM 类型值为函数，函数组件和类组件都是这样的
+```base
+// 原始组件
+const Heart = () => <span>&hearts;</span>
+```
+```base
+<Heart />
+```
+```js
+// 组件的 Virtual DOM
+{
+  type: f function() {},
+  props: {},
+  children: []
+}
+```
+在渲染组件时，要先将Component 与 Native Element 区分开，如果是 Native Element 可以直接开始渲染，如果是组件，特别处理
+```js
+// mountElement.js
+import isFunction from './isFunction'
+
+export default mountElement(virtualDOM, container) {
+  // 无论是类组件还是函数组件，其实本质上都是函数
+  // 如果 Virtual DOM 的type 属性值为函数 就说明当前这个 Virtual DOM 为组件
+  if (isFunction(virtualDOM)) {
+    // 如果是组件 调用 mountComponent 方法进行组件渲染
+    mountComponent(virtualDOM, container)
+  } else {
+    mountNativeElement(virtualDOM, container)
+  }
+}
+```
+
+```js
+// isFunction.js
+// Virtual DOM 是否为函数类型
+export default function isFunction(virtualDOM) {
+  return virtualDOM && typeof virtualDOM.type === "function"
+}
+```
+
+在 mountComponent 方法中再进行函数组件和类型的区分，然后再分别进行处理
+```js
+// mountComponent.js
+import mountNativeElement from './mountNativeElement'
+import isFunctionComponent from './isFunctionComponent'
+
+export default function mountComponent(virtualDOM, container) {
+  // 存放组件调用后的 virtual DOM 的容器
+  let nextVirtualDOM = null
+  // 区分函数类型组件和类组件
+  if (isFunctionComponent(virtualDOM)) {
+    // 函数组件 调用 buildFunctionalComponent 方法处理函数组件
+    nextVirtualDOM = buildFunctionalComponent(virtualDOM)
+  } else {
+    // 类组件
+  }
+  // 判断得到的 Virtual DOM 是否是组件（组件调用组件的情况）
+  if (isFunction(nextVirtualDOM)) {
+    // 如果是组件 继续调用 mountComponent 解剖组件
+    mountComponent(nextVirtualDOM, container)
+  } else {
+    // 如果是Navtive Element 就去渲染
+    mountNativeElement(nextVirtualDOM, container)
+  }
+}
+
+/**
+ * 函数组件处理
+ * type: function Heart(props) {
+ *   return <div>&heart;{props.title}</div>
+ * }
+ * @param virtualDOM
+ * @returns {*}
+ */
+function buildFunctionalComponent(virtualDOM) {
+  // 通过 Virtual DOM 中的 type 属性获取到组件函数并调用
+  // 调用组件函数是将 Virtual DOM 对象中的 props 属性传递给组件函数 这样在组件中就可以通过 props 属性获取数据了
+  // 组件返回要渲染的 Virtual DOM
+  return virtualDOM && virtualDOM.type(virtualDOM.props || {})
+}
+```
+
+```js
+// isFunctionComponent.js
+// Virtual DOM 是否是函数型组件
+// 条件有两个：1. Virtual DOM 的 type 属性值为函数 2.函数的原型对象中不能有render方法
+// 只有类组件的原型对象中有render方法
+export default function isFunctionComponent(virtualDOM) {
+  const type = virtualDOM && virtualDOM.type
+  return (
+    type && isFunction(virtualDOM) && !(type.prototype && prototype.render)
+  )
+}
+```
+
+#### 8.2类组件
+类组件也是 Virtual DOM，可以通过 Virtual DOM 中的 type 属性确定当前需要渲染的组件时类组件还是函数组件
+
+在确定当前渲染的组件为类组件后，需要实例化类组件得到类组件实例对象，通过类组件实例对象调用类组件中的 render 方法，获取组件要渲染的 Virtual DOM。
+
+类组件需要基础Component父类，子类需要通过 super 方法将自身的 props 属性传递给 Component 父类，父类会将props属性挂载为父类属性，子类继承了父类，所以子类也就拥有了props属性。这样做的好处是当 props 发生更新后，父类可以根据更新后的props帮助子类更新视图
+```js
+class Alert extends TinyReact.Component{
+  constructor(props) {
+    super(props)
+  }
+  render() {
+    return (
+      <div>
+        {this.props.title}
+        {this.props.message}
+      </div>
+    )
+  }
+}
+```
+```js
+// Component.js
+export default class Component {
+  constructor(props) {
+    this.props = props
+  }
+}
+```
+在 mountComponent 方法中通过调用 buildStatefulComponent 方法得到类组件要渲染的 Virtual DOM
+```js
+import isFunctionComponent from './isFunctionComponent'
+import mountNativeElement from './mountNativeElement'
+import isFunction from './isFunction'
+
+export default function mountComponent(virtualDOM, container) {
+  // 存放组件调用后的 virtual DOM 的容器
+  let nextVirtualDOM = null
+  // 判断组件时类组件还是函数组件
+  if (isFunctionComponent(virtualDOM)) {
+    // 函数组件 调用 buildFunctionalComponent 方法处理函数组件
+    nextVirtualDOM = buildFunctionComponent(virtualDOM)
+  } else {
+    // 类组件
+    nextVirtualDOM = buildClassComponent(virtualDOM)
+  }
+
+  // 判断得到的 Virtual DOM 是否是组件(组件调用组件的情况【父子组件】)
+  if (isFunction(nextVirtualDOM)) {
+    // 如果是组件 继续调用 mountComponent 解剖组件
+    mountComponent(nextVirtualDOM, container)
+  } else {
+    // 如果是Navtive Element 就去渲染
+    mountNativeElement(nextVirtualDOM, container)
+  }
+}
+
+/**
+ * type: function Heart(props) {
+ *   return <div>&heart;{props.title}</div>
+ * }
+ * @param virtualDOM
+ * @returns {*}
+ */
+function buildFunctionComponent(virtualDOM) {
+  // 通过 Virtual DOM 中的 type 属性获取到组件函数并调用
+  // 调用组件函数是将 Virtual DOM 对象中的 props 属性传递给组件函数 这样在组件中就可以通过 props 属性获取数据了
+  // 组件返回要渲染的 Virtual DOM
+  return virtualDOM.type(virtualDOM.props || {})
+}
+
+// 处理类组件
+function buildClassComponent(virtualDOM) {
+  // 实例化类组件 得到类组件实例对象 并将 props 属性传递进类组件
+  const component = new virtualDOM.type(virtualDOM.props || {})
+  // 调用类组件中的render方法得到要渲染的 virtualDOM 并返回
+  return component.render()
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
