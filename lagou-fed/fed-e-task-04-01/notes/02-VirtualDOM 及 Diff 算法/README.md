@@ -121,7 +121,23 @@ const after = {
 ```
 
 ### 5. 创建 Virtual DOM
-在React代码执行前，JSX不被Babel转为React.createElement方法的调用，在调用从reactElement方法时会传入元素的类型，元素的属性，以及元素的子元素，createElement方法的返回值为构建好的Virtual DOM 对象
+在React代码执行前，JSX 会被Babel转为React.createElement方法的调用，在调用从reactElement方法时会传入元素的类型，元素的属性，以及元素的子元素，createElement方法的返回值为构建好的Virtual DOM 对象
+```js
+// .babelrc
+{
+  "presets": [
+    "@babel/preset-env",
+    [
+      "@babel/preset-react",
+      {
+        "pragma": "TinyReact.createElement"
+      }
+    ]
+  ]
+}
+```
+Babel配置，会将JSX语法调用 createElement 方法转换为 Virtual DOM 对象
+
 ```js
 {
   type: "div",
@@ -129,22 +145,39 @@ const after = {
   children: [{type: "text", props: {textContent: "Hello"}}]
 }
 ```
+
 ```js
 /**
+ * createElement.js
  * 创建 Virtual DOM
  * @param {string} type 类型
  * @param {object | null} props 属性
  * @param  {createElement[]} children 子元素
  * @return {object} Virtual DOM
  */
-function createElement (type, props, ...children) {
-	return {
+export default function createElement(type, props, ...children) {
+  // 由于 map 方法无法从数据中刨除元素, 所以此处将 map 方法更改为 reduce 方法
+  const childElements = [].concat(...children).reduce((result, child) => {
+    // 判断子元素类型 刨除 null true false
+    if (child !== null && child !== false && child !== true) {
+      if (child instanceof Object) {
+        result.push(child)
+      } else {
+        result.push(createElement("text", { textContent: child }))
+      }
+    }
+    // 将需要保留的 Virtual DOM 放入 result 数组
+    return result
+  }, [])
+  return {
     type,
-    props,
-    children
-  } 
+    props: Object.assign({ children: childElements }, props),
+    children: childElements
+  }
 }
+
 ```
+
 从createElement方法的第三个参数开始就都是子元素了，在定义createElement方法时，通过...children将所有的子元素放置到children数组中。
 ```js
 const virtualDOM = (
@@ -163,8 +196,10 @@ const virtualDOM = (
     2, 3
   </div>
 )
-console.log(virtualDOM)
+console.log(virtualDOM) 
+// 打印的是Virtual DOM对象，因为Bable调用createElement转换为Virtual DOM对象
 ```
+上面的代码会根据Babel的配置调用 createElement 方法转换为Virtual DOM对象
 通过以上代码测试，发现返回的 Virtual DOM 存在一些问题，第一个问题是文本节点被直接放入到了数组中
 
 ![](../img/05.jpg)
@@ -549,7 +584,23 @@ function buildClassComponent(virtualDOM) {
 }
 ```
 
+### 9.Virtual DOM 比对
+在进行 Virtual DOM 对比时，需要用到更新后的 Virtual DOM 和更新前的 Virtual DOM 目前我们可以通过 render 方法进行传递，现在的问题是更新前的 Virtual DOM 要如何获取
 
+对于更新前的 Virtual DOM ，对应的其实就是已经在页面中显示的真实 DOM 对象。既然是这样，那么我们在创建真实 DOM 对象时，就可以将 Virtual DOM 添加到真实 DOM 对象的属性中。在进行 Virtual
+ DOM对比之前，就可以通过真实 DOM 对象获取其对应的 Virtual DOM 对象了，其实就是通过render方法的第三个参数获取的，container.firstChild
+ 
+ 在创建真实 DOM 对象时为其添加对应的 Virtual DOM 对象
+ 
+ ```js
+// createDOMElement.js
+export default function createDOMElement(virtualDOM) {
+  // ...
+  // 将 Virtual DOM 挂载到真实 DOM 对象的属性中，方便在对比时获取其 Virtual DOM
+  newElement._virtualDOM = virtualDOM
+}
+```
+#### 9.1
 
 
 
