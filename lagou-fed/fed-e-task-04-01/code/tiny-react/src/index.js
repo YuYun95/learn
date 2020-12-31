@@ -40,7 +40,7 @@ const modifyDOM = (
 
 setTimeout(() => {
   TinyReact.render(modifyDOM, root)
-})
+}, 2000)
 
 
 // function Demo() {

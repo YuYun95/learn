@@ -590,6 +590,14 @@ function buildClassComponent(virtualDOM) {
 对于更新前的 Virtual DOM ，对应的其实就是已经在页面中显示的真实 DOM 对象。既然是这样，那么我们在创建真实 DOM 对象时，就可以将 Virtual DOM 添加到真实 DOM 对象的属性中。在进行 Virtual
  DOM对比之前，就可以通过真实 DOM 对象获取其对应的 Virtual DOM 对象了，其实就是通过render方法的第三个参数获取的，container.firstChild
  
+ ```js
+// render.js
+export default function render(virtualDOM, container, oldDOM = container.firstChild) {
+  console.log('old', oldDOM)
+  diff(virtualDOM, container, oldDOM)
+}
+```
+ 
  在创建真实 DOM 对象时为其添加对应的 Virtual DOM 对象
  
  ```js
@@ -600,17 +608,125 @@ export default function createDOMElement(virtualDOM) {
   newElement._virtualDOM = virtualDOM
 }
 ```
-#### 9.1
 
+![](../img/07.jpg)
 
+#### 9.1 Virtual DOM 类型相同
+Virtual DOM 类型相同，如果是元素节点，就对比元素节点属性是否发生变化，如果是文本节点就对比文本节点内容是否发生变化
 
+要实现对比，需要先从已存在的 DOM 对象中获取其对应 Virtual DOM 对象（即获取旧Virtual DOM 对象）
 
+```js
+// diff.js
+// 获取旧Virtual DOM
+const oldVirtualDOM = oldDOM && oldDOM._virtualDOM
+```
 
+判断 oldVirtualDOM 是否存在，如果存在则继续判断要对比的Virtual DOM 类型是否相同，如果类型相同判断节点类型是否是文本节点，如果是文本节点，调用 updateTextNode方法对比内容，如果内容不一致这更新内容和 __virtualDOM，如果是元素节点就调用 setAttributeForElement 方法对比更新，还需要循环遍历对比更新子元素
 
+```js
+if (!oldDOM) {
+} else if (oldVirtualDOM && virtualDOM.type === oldVirtualDOM.type) {
+  if (virtualDOM.type === 'text') {
+    // 更新文本内容
+    updateTextNode(virtualDOM, oldVirtualDOM, oldDOM)
+  } else {
+    // 元素节点 对比元素属性是否发生变化
+    setAttributeForElement(oldDOM, virtualDOM, oldVirtualDOM)
+  }
+}
+```
 
+updateTextNode 方法用于对比文本节点内容是否发生变化，如果发生变化则更新真实 DOM 对象中的内容，既然真实 DOM 对象发生了变化，还要将最新的 Virtual DOM 同步给真实 DOM 对象
 
+```js
+// updateTextNode.js
+export default function updateTextNode(virtualDOM, oldVirtualDOM, oldDOM) {
+  // 如果文本节点内容不同
+  if (virtualDOM.props.textContent !== oldVirtualDOM.props.textContent) {
+    // 更新真实 DOM 对象中的内容
+    oldDOM.textContent = virtualDOM.props.textContent
+    // 同步真实 DOM 对应的 Virtual DOM
+    oldDOM._virtualDOM = virtualDOM
+  }
+}
 
+```
 
+setAttributeForElement方法用于设置/更新元素节点属性
+
+思路是先分别获取更新后和更新前的 Virtual DOM 中的 props 属性，循环新 Virtual DOM 中的 props 属性，通过对比看一下新 Virtual DOM
+ 中的属性值是否发生了变化，如果发生变化需要将变化的值更新到真实 DOM 对象中
+ 
+ 再循环未更新前的 Virtual DOM 对象，通过对比看看新的 Virtual DOM中是否有被删除的属性，如果存在删除的属性，需要将 DOM 对象中对应的属性也删除掉
+ 
+ ```js
+// updateNodeElement.js
+export default function updateNodeElement(newElement, virtualDOM, oldVirtualDOM = {}) {
+  // 获取要解析的Virtual DOM节点对象的属性对象
+  const newProps = virtualDOM.props || {}
+  const oldProps = oldVirtualDOM.props || {}
+  // 将属性对象中的属性名称放到一个数组中并循环数组
+  Object.keys(newProps).forEach(propName => {
+    // 获取属性值
+    const newPropsValue = newProps[propName]
+    const oldPropsValue = oldProps[propName]
+    if (newPropsValue !== oldPropsValue) {
+      // 考虑属性名称是否以 on 开头，如果是就表示是个事件属性
+      // 判断属性是否是事件属性
+      if (propName.startsWith('on')) {
+        // 事件名称
+        const eventName = propName.toLowerCase().slice(2)
+        // 为元素添加事件
+        newElement.addEventListener(eventName, newPropsValue)
+        // 删除原有的事件处理函数
+        if (oldPropsValue) {
+          newElement.removeEventListener(eventName, oldPropsValue)
+        }
+        // 如果属性名称是 value 或者 checked 需要通过 [] 的形式添加
+      } else if (propName === 'value' || propName === 'checked') {
+        newElement[propName] = newPropsValue
+        // 刨除 children 因为他是子元素 不是属性
+      } else if (propName !== 'children') {
+        if (propName === 'className') {
+          // className 属性单独处理 不直接在元素上添加 class 属性是因为 class 是 javascript 中的关键字
+          newElement.setAttribute('class', newPropsValue)
+        } else {
+          // 普通属性
+          newElement.setAttribute(propName, newPropsValue)
+        }
+      }
+    }
+  })
+
+  // 判断属性被删除的情况
+  Object.keys(oldProps).forEach(propName => {
+    const newPropsValue = newProps[propName]
+    const oldPropsValue = oldProps[propName]
+    if (!newPropsValue) {
+      // 属性被删除了
+      if (propName.startsWith('on')) {
+        const eventName = propName.toLowerCase().slice(2)
+        newElement.removeEventListener(eventName, oldPropsValue)
+      } else if (propName !== 'children') {
+        newElement.removeAttribute(propName)
+      }
+    }
+  })
+}
+
+```
+
+以上对比的仅仅是最上层元素，上层元素对比完以后还需要递归对比子元素
+
+```js
+else if (oldVirtualDOM && virtualDOM.type === oldVirtualDOM.type) {
+  // 递归对比 virtual DOM 的子元素
+  virtualDOM.children.forEach((child, i) => {
+    diff(child, oldDOM, oldDOM.childNodes[i])
+  })
+}
+```
 
 
 
