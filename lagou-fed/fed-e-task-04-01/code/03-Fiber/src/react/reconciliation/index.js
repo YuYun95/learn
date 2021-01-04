@@ -61,10 +61,23 @@ const reconcileChildren = (fiber, children) => {
 const executeTask = fiber => {
   // 构建子级fiber对象
   reconcileChildren(fiber, fiber.props.children)
+
+  // 如果子级存在 返回子级，将这个子级当作父级，构建这个父级下的子级
   if (fiber.child) {
     // 返回子级作为父级，构建孙子fiber（构建节点树的左侧关系）
     return fiber.child
   }
+
+  let currentExecutelyFiber = fiber
+
+  while (currentExecutelyFiber.parent) {
+    if (currentExecutelyFiber.sibling) {
+      return currentExecutelyFiber.sibling
+    }
+    currentExecutelyFiber = currentExecutelyFiber.parent
+  }
+
+
   console.log(fiber)
 }
 
