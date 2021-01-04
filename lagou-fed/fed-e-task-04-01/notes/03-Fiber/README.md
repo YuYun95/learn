@@ -239,7 +239,7 @@ DOM 更新操作：newFiber vs oldFiber -< Fiber[] -> DOM
 
 ![](../img/12.jpg)
 
-
+第一个子节点，才是子节点，其他子节点，是第一个子节点 的兄弟节点
 
 
 
