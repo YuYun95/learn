@@ -241,8 +241,39 @@ DOM 更新操作：newFiber vs oldFiber -< Fiber[] -> DOM
 
 第一个子节点，才是子节点，其他子节点，是第一个子节点 的兄弟节点
 
+#### 类组件状态更新
+当类组件状态发生变化，要把它当作一个任务放在任务队列中，指定当浏览器空闲时执行任务，在执行任务时，要把组件状态更新任务和其他任务进行区分，所以在添加任务时可以添加一个字符串标识，在任务对象中还要添加组件实例对象和即将要更新的组件状态对象，因为我们要从组件的实例对象中获取原本的state对象，只有获取了原本state对象和即将要更新的组件状态对象才能更新state对象
 
+如何将state对象当中的数据更新到真实DOM对象中？要从根节点开始为每一个节点从新构建fiber对象，从而创建出执行更新操作的fiber对象，在进行到fiber的第二个阶段时，就可以将更新应用到真实DOM对象中
 
+怎样才能获取已经存在的根节点对象？因为组件状态发生改变时，根节点的fiber对象已经存在了，要根据已经存在的fiber对象构建新的根节点fiber对象，此时可以先将组件的fiber
+对象备份到组件的实例对象，因为组件状态更新时可以获取到组件的实例对象，通过组件的实例对象获取到组件的fiber对象，通过组件的fiber对象可以一层一层向上查找，最终获取最外层fiber对象
+```js
+// Component.js
+import { scheduleUpdate } from '../reconciliation'
+
+export class Component {
+  constructor(props) {
+    this.props = props
+  }
+  setState(partialState) {
+    scheduleUpdate(this, partialState)
+  }
+}
+```
+
+```js
+// reconciliation/index.js
+// ...略
+export const scheduleUpdate = (instance, partialState) => {
+  taskQueue.push({
+    from: 'class_component',
+    instance,
+    partialState
+  })
+  requestIdleCallback(performTask)
+}
+```
 
 
 

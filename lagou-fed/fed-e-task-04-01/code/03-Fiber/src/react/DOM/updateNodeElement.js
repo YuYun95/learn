@@ -2,6 +2,26 @@ export default function updateNodeElement(newElement, virtualDOM, oldVirtualDOM 
   // 获取要解析的Virtual DOM节点对象的属性对象
   const newProps = virtualDOM.props || {}
   const oldProps = oldVirtualDOM.props || {}
+
+  // 文本节点
+  if (virtualDOM.type === 'text') {
+    // 文本内容有变化
+    if (newProps.textContent !== oldProps.textContent) {
+      // 新旧父级节点不相同
+      if (virtualDOM.parent.type !== oldVirtualDOM.parent.type) {
+        // 把最新节点追加到父级节点中
+        virtualDOM.parent.stateNode.appendChild(document.createTextNode(newProps.textContent))
+      } else {
+        // 新旧父级节点相同
+        virtualDOM.parent.stateNode.replaceChild(
+          document.createTextNode(newProps.textContent),
+          oldVirtualDOM.stateNode
+        )
+      }
+    }
+    return
+  }
+
   // 将属性对象中的属性名称放到一个数组中并循环数组
   Object.keys(newProps).forEach(propName => {
     // 获取属性值
