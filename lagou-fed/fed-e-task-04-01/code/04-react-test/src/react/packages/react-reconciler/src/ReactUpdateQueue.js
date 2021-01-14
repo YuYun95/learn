@@ -214,7 +214,7 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
   // 获取待执行的 Update 任务
   // 初始渲染时没有待执行的任务
   const sharedQueue = updateQueue.shared;
-  const pending = sharedQueue.pending;
+  const pending = sharedQueue.pending; // 待执行的任务，初始化时为空
   // 如果没有待执行的 Update 任务
   if (pending === null) {
     // 这是第一次更新, 创建一个循环列表.

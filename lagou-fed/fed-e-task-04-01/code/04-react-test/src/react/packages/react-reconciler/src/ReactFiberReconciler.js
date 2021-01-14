@@ -300,7 +300,7 @@ export function updateContainer(
   }
 
   // 创建一个待执行任务
-  const update = createUpdate(expirationTime, suspenseConfig);
+  const update = createUpdate(expirationTime, suspenseConfig); // 仅仅创建返回一个对象
   // 将要更新的内容挂载到更新对象中的 payload 中
   // 将要更新的组件存储在 payload 对象中, 方便后期获取
   update.payload = {element};

@@ -393,7 +393,7 @@ export function scheduleUpdateOnFiber(
    * setState 方法时, 可能会发生这种情况, React 限制了嵌套更新的数量以防止无限循环
    * 限制的嵌套更新数量为 50, 可通过 NESTED_UPDATE_LIMIT 全局变量获取
    */
-  checkForNestedUpdates();
+  checkForNestedUpdates(); // 检查是否有嵌套更新（无限循环）
   // 开发环境下执行的代码 忽略
   warnAboutRenderPhaseUpdatesInDEV(fiber);
   // 遍历更新子节点的过期时间 返回 FiberRoot
@@ -413,7 +413,7 @@ export function scheduleUpdateOnFiber(
   // 获取当前调度任务的优先级 数值类型 从90开始 数值越大 优先级越高
   // 97 普通优先级任务
   const priorityLevel = getCurrentPriorityLevel();
-  // 判断任务是否是同步任务 Sync的值为: 1073741823
+  // 判断任务是否是同步任务 Sync的值为: 1073741823，expirationTime的值为：1073741823
   if (expirationTime === Sync) {
     if (
       // 检查是否处于非批量更新模式
@@ -1002,7 +1002,7 @@ function finishConcurrentRender(
 
 // 进入 render 阶段, 构建 workInProgress Fiber 树
 function performSyncWorkOnRoot(root) {
-  // 参数 root 为 fiberRoot 对象
+  // 参数 root 为 fiberRoot 对象（current fiber树中的fiberRoot对象）
 
   // 检查是否有过期的任务
   // 如果没有过期的任务 值为 0
