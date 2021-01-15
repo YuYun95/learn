@@ -881,7 +881,7 @@ function ChildReconciler(shouldTrackSideEffects) {
         if (previousNewFiber === null) {
           // 存储第一个子 Fiber 发生在第一次循环时
           resultingFirstChild = newFiber;
-        } else {
+        } else {// 不是第一次循环
           // 为节点设置下一个兄弟 Fiber
           previousNewFiber.sibling = newFiber;
         }

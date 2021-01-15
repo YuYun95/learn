@@ -221,11 +221,12 @@ export function reconcileChildren(
 ) {
   /**
    * 为什么要传递 current ?
-   * 如果不是初始渲染的情况, 要进行新旧 Fiber 对比
+   * 如果不是初始渲染的情况, 要进行新旧 Fiber 对比，所以要传current参数
    * 初始渲染时则用不到 current
    */
   // 如果就 Fiber 为 null 表示初始渲染
   if (current === null) {
+    // 构建nextChildren的fiber对象
     workInProgress.child = mountChildFibers(
       workInProgress,
       null,
