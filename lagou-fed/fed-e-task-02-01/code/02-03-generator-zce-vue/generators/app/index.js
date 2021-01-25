@@ -47,4 +47,12 @@ module.exports = class extends Generator{
       this.fs.copyTpl(this.templatePath(item), this.destinationPath(item), this.answers)
     })
   }
+  
+  // 安装依赖
+  install () {
+    this.installDependencies({
+      bower: false,
+      npm: true
+    })
+  }
 }
