@@ -44,12 +44,14 @@ module.exports = class extends Generator{
       'src/views/Home.vue'
     ]
     templates.forEach(item => {
-      this.fs.copyTpl(this.templatePath(item), this.destinationPath(item), this.answers)
+      this.fs.copyTpl(this.templatePath(item), this.destinationPath(this.answers.name + '/' + item), this.answers)
     })
   }
   
-  // 安装依赖
+  // cd到项目然后安装依赖
   install () {
+    var npmdir = process.cwd() + '/' + this.answers.name
+    process.chdir(npmdir)
     this.installDependencies({
       bower: false,
       npm: true
