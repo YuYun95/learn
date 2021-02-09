@@ -621,4 +621,4 @@ const mapStateToProps = state => ({
 
 ![](./images/3.jpg)
 
-
+##### 3.3 开发 Redux 中间件
