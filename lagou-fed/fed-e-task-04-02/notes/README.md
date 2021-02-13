@@ -592,6 +592,7 @@ export default function reducer(state = initialState, action) {
 ```
 
 创建store时传入的reducer则来自于我们刚才定义的root.reducer.js
+
 ```js
 // src/store/index.js
 import { createStore } from 'redux'
@@ -622,3 +623,341 @@ const mapStateToProps = state => ({
 ![](./images/3.jpg)
 
 ##### 3.3 开发 Redux 中间件
+
+开发中间件的模板代码
+```js
+export default store => next => action => { }
+```
+
+##### 3.4 注册中间件
+
+中间件在开发完成以后只有被注册才能在Redux的工作流程中生效
+```js
+// src/store/index.js
+import { createStore, applyMiddleware } from 'redux'
+import logger from './middleware/logger'
+
+createStore(reducer, applyMiddleware(logger))
+```
+
+```js
+// src/store/middleware/logger.js
+
+const logger = store => next => action => {
+    console.log(store)
+    console.log(action)
+    next(action) // 一定要调用next方法，action才能把结果传递给下一个中间件(reducer)，否则卡在这了
+}
+
+export default logger
+```
+
+中间件的执行顺序就是中间件的注册顺序，先注册的先执行
+```js
+export const store = createStore(RootReducer, applyMiddleware(logger, test))
+```
+**如果中间件中的结尾不调用next(action)，则整个流程就会卡在此处不会再往后执行**
+
+##### 3.5 中间件开发实例 thunk(异步中间件)
+1. 当前这个中间件函数不关心你想执行什么样的异步操作，只关心你执行的是不是异步操作
+2. 如果你执行的是异步操作，你在触发action的时候 给我传递一个函数，如果执行的是同步操作就传递action对象
+3. 异步操作代码要写在你传递进来的函数中
+4. 当前这个中间件函数在调用你传递进来的函数时，要将dispatch方法传递过去
+
+```js
+// src/store/middleware/thunk.js
+const thunk = ({ dispatch }) => next => action => {
+  // action是你传递的
+
+  if (typeof action === 'function') {
+    return action(dispatch) // action 方法内部会发起新的 dispatch 
+  }
+  next(action)
+}
+
+export default thunk
+```
+在action文件中定义异步函数action
+
+```js
+// src/store/action/counter.count.js
+
+import { DECREMENT, INCREMENT } from "../const/counter.count"
+
+export const increment = payload => ({ type: INCREMENT, payload })
+
+export const decrement = payload => ({ type: DECREMENT, payload })
+
+// action
+export const increment_async = paylog => dispatch => {
+    setTimeout(() => {
+        dispatch(increment(paylog))
+    }, 2000)
+}
+```
+原本使用increment的地方，现在改用increment_async,实现了异步的功能
+
+#### 4. Redux 常用中间件
+
+##### 4.1 redux-thunk
+
+###### 4.1.1 redux-thunk 下载
+
+```base
+npm install redux-thunk
+```
+ 
+###### 4.1.2 引入 redux-thunk
+
+```js
+import thunk from 'redux-thunk'
+```
+
+###### 4.1.3 注册 redux-thunk
+
+```js
+import { applyMiddleware } from 'redux'
+createStore(rootReducer, applyMiddleware(thunk))
+```
+
+###### 4.1.4 使用redux-thunk
+
+```js
+const loadPosts = () => async dispatch => {
+  const posts = await axios.get('/api/posts/').then(response => response.data)
+  dispatch({ type: LOADPOSTSSUCCESS, payload: posts })
+}
+```
+
+##### 4.2 Redux-saga
+
+###### 4.2.1 redux-saga 解决的问题
+redux-saga可以将异步操作从 Action Creator 文件中抽离出来，放在一个单独的文件中
+
+###### 4.2.2 redux-sage下载
+
+```js
+npm install redux-saga
+```
+
+###### 4.2.3创建redux-saga 中间件
+
+```js
+// src/store/index.js
+import createSagaMiddleware from 'redux-saga'
+const sagaMiddleware = createSagaMiddleware()
+```
+
+###### 4.2.4 注册sagaMiddleware
+```js
+// src/store/index.js
+createStore(reducer, applyMiddleware(sagaMiddleware))
+```
+
+###### 4.2.5 使用saga接收action执行异步操作
+```js
+// src/store/sagas/counter.saga.js
+import { takeEvery, put, delay } from "redux-saga/effects";
+import { increment } from "../actions/counter.actions";
+import { INCREMENT_ASYNC } from "../const/counter.count";
+// takeEvery接收action
+// put触发 action
+// delay 延迟
+
+// 不可以用定时器做延迟，要使用saga提供的delay方法做延迟
+function* increment_async_fn(action) {
+    yield delay(2000)
+    yield put(increment(action.payload))
+}
+
+export default function* counterSaga() {
+    // 接收action
+    yield takeEvery(INCREMENT_ASYNC, increment_async_fn)// // 第二个函数形参会接受一个 action 函数
+}
+```
+
+```js
+// src/store/actions/counter.action.js
+export const increment_async = payload => ({ type: INCREMENT_ASYNC, payload })
+
+```
+
+```js
+// src/store/const/counter.count.js
+export const INCREMENT_ASYNC = 'increment_async'
+```
+
+```js
+// src/components/Counter.js
+<button onClick={() => increment_async(20)}>+</button>
+```
+
+###### 4.2.6 启动saga
+
+```js
+// src/store/index.js
+import postSaga from './store/sagas/post.saga'
+sagaMiddleware.run(postSaga)
+```
+
+###### 4.2.7 合并saga
+
+```js
+// src/sagas/root.saga.js
+
+import { all } from "redux-saga/effects";
+import counterSaga from "./counter.saga";
+import modalSaga from "./modal.saga";
+
+export default function* rootSaga() {
+    yield all([counterSaga(), modalSaga()])
+}
+```
+
+```js
+// src/sagas/modal.saga.js
+import { takeEvery, put, delay } from "redux-saga/effects";
+import { SHOWMODAL_ASYNC } from "../const/modal.count";
+import { show } from "../actions/modal.actions";
+
+// takeEvery 接收 action 
+// put 触发 action 
+
+function* showModal_async_fn() {
+    yield delay(2000)
+    yield put(show())
+}
+
+export default function* modalSaga() {
+    // 接收 action
+    yield takeEvery(SHOWMODAL_ASYNC, showModal_async_fn)
+}
+
+```
+counter.saga.js 文件没有改变
+
+store 入口文件中的 saga 中间件启动 root.saga
+
+```js
+// src/store/index.js
+import rootSaga from './sagas/root.saga'
+
+sagaMiddleware.run(rootSaga)
+```
+
+##### 4.3 redux-actions
+
+###### 4.3.1 redux-actions 解决的问题
+
+redux流程中大量的样板代码读写很痛苦，使用redux-actions可以简化Action和Reducer的处理
+
+###### 4.3.2 redux-actions 下载
+
+```base
+npm install redux-actions
+```
+
+###### 4.3.3 创建Action
+
+```js
+// src/store/actions/counter.action.js
+import { createAction } from 'redux-actions'
+
+const increment_action = createAction('increment')
+const decrement_action = createAction('decrement')
+```
+
+###### 4.3.4 创建Reducer
+
+```js
+// src/store/reducer/counter.reducer.js
+import { handleActions as createReducer } from 'redux-actions'
+import { increment_action, decrement_action } from '../actions/counter.action'
+
+const initialState = { count: 0 }
+
+const handleIncrement = (state, action) => {
+  return { count: state + action.payload } // payload是中间件自动添加的
+}
+
+const handleDecrement = (state, actoin) => {
+  return { count: state - action.payload }
+}
+
+const counterReducer = createReducer({
+  [increment_action]:(state, action) => ({ count: state.count + 1 }),
+  [decrement_action]:(state, action) => ({ count: state.count - 1 })
+}, initialState)
+
+export default counterReducer
+```
+
+```js
+// src/component/Counter.js
+
+<button onClick={() => increment(5)}>+</button>
+<button onClick={() => decrement(5)}>-</button>
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

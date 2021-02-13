@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import * as modalActions from "../store/actions/modal.actions";
 
-function Modal({showStatus, show, hide }) {
+function Modal({showStatus, show, hide, show_async }) {
     const styles = {
         width: 200,
         height: 200,

@@ -1,5 +1,6 @@
-import { DECREMENT, INCREMENT } from "../const/counter.count"
+import { createAction } from "redux-actions";
 
-export const increment = payload => ({ type: INCREMENT, payload })
+export const increment = createAction('increment')
 
-export const decrement = payload => ({ type: DECREMENT, payload })
+export const decrement = createAction('decrement')
+
