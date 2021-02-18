@@ -899,7 +899,7 @@ export default counterReducer
 <button onClick={() => decrement(5)}>-</button>
 ```
 
-
+redux-actions 也可以结合在 redux-saga 中使用
 
 
 
