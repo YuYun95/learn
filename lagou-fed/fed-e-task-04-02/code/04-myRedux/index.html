@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button id="increment">+</button>
+
+    <span id="box">0</span>
+
+    <button id="decrement">-</button>
+
+    <script src="./myRedux.js"></script>
+
+    <script>
+      function reducer(state, action) {
+        switch (action.type) {
+          case 'increment':
+            return state + 1
+          case 'decrement':
+            return state - 1
+          default:
+            return state
+        }
+      }
+
+      // 创建store
+      var store = createStore(reducer, 0)
+
+      store.subscribe(() => {
+        // 获取最新的状态
+        document.getElementById('box').innerHTML = store.getState()
+      })
+
+      // 获取加按钮
+      document.getElementById('increment').onclick = function () {
+        // 触发action 让数值加1
+        store.dispatch({ type: 'increment' })
+      }
+
+      // 获取减按钮
+      document.getElementById('decrement').onclick = function () {
+        // 触发action 让数值减1
+        store.dispatch({ type: 'decrement' })
+      }
+    </script>
+  </body>
+</html>
