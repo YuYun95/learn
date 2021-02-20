@@ -1062,27 +1062,546 @@ function isPlainObject(obj) {
 
 ```
 
+##### 5.3 Enhancer
+
+通过enhancer参数可以让createStore的调用这对返回的对象进行功能上的增强，规定enhancer参数必须为函数，参数有createStore的调用者传递进来。
+
+我们在createStore方法内部调用enhancer函数，在调用enhancer函数的时候传递一些必要的参数，如传递createStore函数本身、reducer、preloadedState，这样enhancer就可以创建store了然后对store对象进行增强
+
+```js
+function createStore(reducer, preloadedState, enhancer) {
+  // 约束reducer参数类型
+  if (typeof reducer !== 'function') throw new Error('reducer必须为函数')
+
+  // 判断enhancer参数有没有传递
+  if (typeof enhancer !== 'undefined'){
+    // 判断enhancer是不是一个函数
+    if (typeof enhancer !== 'function') {
+      throw new Error('enhancer必须是函数')
+    }
+
+    // 要求enhancer返回一个函数，然后传参进去
+    return enhancer(createStore)(reducer, preloadedState)
+  }
+  // .......
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button id="increment">+</button>
+
+    <span id="box">0</span>
+
+    <button id="decrement">-</button>
+
+    <script src="./myRedux.js"></script>
+
+    <script>
+      function enhancer(createStore) {
+        return function(reducer, preloadedState) {
+          var store = createStore(reducer, preloadedState)
+          var dispatch = store.dispatch
+          function _dispatch(action) {
+            if (typeof action === 'function') {
+              return action(dispatch)
+            }
+            dispatch(dispatch)
+          }
+          return {
+            ...store, // 保留原有store方法
+            dispatch: _dispatch // 修改dispatch
+          }
+        }
+      }
+
+      function reducer(state, action) {
+        switch (action.type) {
+          case 'increment':
+            return state + 1
+          case 'decrement':
+            return state - 1
+          default:
+            return state
+        }
+      }
+
+      // 创建store
+      var store = createStore(reducer, 0, enhancer)
+
+      console.log('增强', store);
+
+      store.subscribe(() => {
+        // 获取最新的状态
+        document.getElementById('box').innerHTML = store.getState()
+      })
+
+      // 获取加按钮
+      document.getElementById('increment').onclick = function () {
+        // 触发action 让数值加1
+        //store.dispatch({ type: 'increment' })
+        store.dispatch(function(dispatch) {
+          setTimeout(function() {
+            dispatch({ type: 'increment' })
+          }, 1000)
+        })
+      }
+
+      // 获取减按钮
+      document.getElementById('decrement').onclick = function () {
+        // 触发action 让数值减1
+        store.dispatch({ type: 'decrement' })
+      }
+    </script>
+  </body>
+</html>
+
+```
+
+##### 5.4 applyMiddleware
+
+1. 中间件允许我们在action发出之后，reducer接收action之前让我们做一些事情，本质上中间件就是对dispatch方法进行增强
+
+2. 在redux中给我们提供一个核心API，这个API叫做applyMiddleware
+
+3. 在applyMiddleware方法当中做的核心事情就是对dispatch方法进行增强，通过增强dispatch方法让多个中间件进行组合，以达到我们出发action的时候让多个中间件按照顺序进行执行
+
+4. 中间件函数需要返回一个函数，返回的函数要返回另一个函数，注册后中间件执行的是最后返回的函数，外面的两层函数作用是接收参数的；这个三个函数有参数，分别为store、next、action
+
+  ```js
+  function logger(store) {
+    return function (next){
+      return function (action) { // 中间件注册后，执行的是这个函数
+        next(action) // next方法执行下一个中间件
+      }
+    }
+  }
+  ```
+
+5. applyMiddleware最为createStore函数的第三个参数，可以理解为applyMiddleware是enhancer演变来的
+
+6. applyMiddleware接收中间件函数作为参数，后续会按顺序执行
+
+7. 注册了中间件后，代码执行顺序是 action -> 中间件-> 中间件 -> ... -> reducer
+
+```js
+/**
+ * createStore(reducer, preloadedState, enhancer)
+ * { getState, dispatch, subscribe }
+ */
+
+function createStore(reducer, preloadedState, enhancer) {
+  // 约束reducer参数类型
+  if (typeof reducer !== 'function') throw new Error('reducer必须为函数')
+
+  // 判断enhancer参数有没有传递
+  if (typeof enhancer !== 'undefined') {
+    // 判断enhancer是不是一个函数
+    if (typeof enhancer !== 'function') {
+      throw new Error('enhancer必须是函数')
+    }
+
+    // 要求enhancer返回一个函数，然后传参进去
+    return enhancer(createStore)(reducer, preloadedState)
+  }
+
+  // store 对象中存储的状态
+  var currentState = preloadedState
+  // 存放订阅者函数
+  var currenListeners = []
+
+  /**
+   * currentState是createStore函数的局部变量，当createStore函数运行后，变量currentState会被释放，
+   * 但是在我们实际功能中状态要一直存在的，所以用闭包让currentState长久驻存在内存中
+   */
+
+  // 获取状态
+  function getState() {
+    return currentState
+  }
+
+  // 触发action
+  function dispatch(action) {
+    // 判断action是否是对象
+    if (!isPlainObject(action)) throw new Error('action必须是对象')
+
+    // 判断对象中是否具有type属性
+    if (typeof action.type === 'undefined') throw new Error('action对象中必须要有type属性')
+
+    /**
+     * 1. dispatch拿到action后，内部要调用传递进来的reducer函数，
+     * reducer函数要返回最新的状态，我们要把reducer返回的最新状态去替换原有的currentState状态，达到更新状态的目的
+     *
+     * 2. reducer函数有两个参数，第一个参数是当前状态，第二个参数是action，在reducer函数中要判断action对象的type属性值
+     * 根据type属性值的不同，对状态进行不同的处理，最后返回一个新的状态替换原有的状态
+     */
+    currentState = reducer(currentState, action)
+
+    // 循环数组 调用订阅者（调用订阅者更新视图）
+    for (var i = 0; i < currenListeners.length; i++) {
+      // 获取订阅者
+      var listener = currenListeners[i]
+      // 调用订阅者
+      listener()
+    }
+  }
+
+  /**
+   * subscribe可以被多个地方订阅，当状态改变所有的订阅者都要被执行，可以使用数组把订阅者存储，当状态改变时再调用订阅者
+   */
+  // 订阅状态
+  function subscribe(listener) {
+    currenListeners.push(listener)
+  }
+
+  return {
+    getState,
+    dispatch,
+    subscribe
+  }
+}
+
+// 判断obj是否是对象
+function isPlainObject(obj) {
+  // 排除基本数据类型和null
+  if (typeof obj !== 'object' || obj === null) return false
+  // 区分数组和对象 原型对象对比的方式
+  var proto = obj
+  while (Object.getPrototypeOf(proto) != null) {
+    proto = Object.getPrototypeOf(proto)
+  }
+
+  return Object.getPrototypeOf(obj) === proto
+}
+
+function applyMiddleware(...middlewares) {
+  return function (createStore) {
+    return function (reducer, preloadedState) {
+      // 创建 store
+      var store = createStore(reducer, preloadedState)
+      // 阉割版的 store
+      var middlewareAPI = {
+        getState: store.getState,
+        dispatch: store.dispatch
+      }
+
+      // 调用中间件的第一层函数 传递阉割版的store对象
+      var chain = middlewares.map(middleware => middleware(middlewareAPI))
+
+      var dispatch = compose(...chain)(store.dispatch)
+
+      // 返回增强版store
+      return {
+        ...store,
+        dispatch
+      }
+    }
+  }
+}
+
+function compose() {
+  var funcs = [...arguments]
+  return function (dispatch) {
+    for (var i = funcs.length - 1; i >= 0; i--) {
+      dispatch = funcs[i](dispatch)
+    }
+    return dispatch
+  }
+}
+
+```
+
+```js
+function logger(store) {
+  return function(next) {
+    return function(action) {
+      console.log('logger');
+      next(action)
+    }
+  }
+}
+
+```
+
+```js
+function thunk(store) {
+  return function(next) {
+    return function(action) {
+      console.log('thunk');
+      next(action)
+    }
+  }
+}
+
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button id="increment">+</button>
+
+    <span id="box">0</span>
+
+    <button id="decrement">-</button>
+
+    <script src="./myRedux.js"></script>
+    <script src="./applyMiddlewares/logger.js"></script>
+    <script src="./applyMiddlewares//thunk.js"></script>
+
+    <script>
+      function enhancer(createStore) {
+        return function(reducer, preloadedState) {
+          var store = createStore(reducer, preloadedState)
+          var dispatch = store.dispatch
+          function _dispatch(action) {
+            if (typeof action === 'function') {
+              return action(dispatch)
+            }
+            dispatch(dispatch)
+          }
+          return {
+            ...store, // 保留原有store方法
+            dispatch: _dispatch // 修改dispatch
+          }
+        }
+      }
+
+      function reducer(state, action) {
+        switch (action.type) {
+          case 'increment':
+            return state + 1
+          case 'decrement':
+            return state - 1
+          default:
+            return state
+        }
+      }
+
+      // 创建store
+      var store = createStore(reducer, 0, applyMiddleware(logger, thunk))
+
+      console.log('增强', store);
+
+      store.subscribe(() => {
+        // 获取最新的状态
+        document.getElementById('box').innerHTML = store.getState()
+      })
+
+      // 获取加按钮
+      document.getElementById('increment').onclick = function () {
+        // 触发action 让数值加1
+        store.dispatch({ type: 'increment' })
+        // store.dispatch(function(dispatch) {
+        //   setTimeout(function() {
+        //     dispatch({ type: 'increment' })
+        //   }, 1000)
+        // })
+      }
+
+      // 获取减按钮
+      document.getElementById('decrement').onclick = function () {
+        // 触发action 让数值减1
+        store.dispatch({ type: 'decrement' })
+      }
+    </script>
+  </body>
+</html>
+
+```
 
 
+##### 5.5 bindActionCreators
 
+bindActionCreators方法是将actionCreator函数转换为能够触发action的函数
 
+bindActionCreators函数的第一个参数为一个对象，这个对象中存储的就是actionCreator函数
 
+```js
+// myRedux.js
+function bindActionCreators(actionCreators, dispatch) {
+  var boundActionCreators = {}
+  for (var key in actionCreators) {
+    ;(function (key) {
+      boundActionCreators[key] = function () {
+        dispatch(actionCreators[key]())
+      }
+    })(key)
+  }
 
+  return boundActionCreators
+}
+```
 
+```js
+// index.html
 
+var actions = bindActionCreators({ increment, decrement }, store.dispatch)
 
+function increment() {
+  return { type: 'increment' }
+}
 
+function decrement() {
+  return { type: 'decrement' }
+}
 
+document.getElementById('increment').onclick = function () {
+  actions.increment()
+}
 
+document.getElementById('increment').onclick = function () {
+  actions.decrement()
+}
+```
 
+###### 5.6 combineReducers
 
+combineReducers把多个小的reducer组合为一个大的reducer
 
+combineReducers要求传递一个对象进来，对象的属性是我们向store当中存储的状态，属性对应的值就是处理状态所对应的reducer函数
 
+combineReducers返回值是一个reducer函数，返回的函数有两个参数，一个是state，另一个是action
 
+combineReducers中第一我们要循环参数对象，拿到reducer，看看reducer是否是函数类型，如果不是就报错；第二循环参数对象，调用一个个小的reducer，一个个小的reducer会返回新的状态，我们再把新的状态赋值给参数对象
 
+最终在调用完一个个小的reducer后，要把没一个小reducer返回的新的状态存储到一个新的大的对象中作为返回值，这样在调用createStore的时候才能获取到最新的状态
 
+```js
+// myRedux.js
 
+function combineReducers(reducers) {
+  // 1. 检查reducer类型 它必须是函数
+  var reducerKeys = Object.keys(reducers)
+  for (var i = 0; i < reducerKeys.length; i++) {
+    var key = reducerKeys[i]
+    if (typeof reducers[key] !== 'function') throw new Error('reducer必须为函数')
+  }
 
+  // 2. 调用一个个小的reducer 将每个小的reducer中返回的状态存储在一个新的大的对象中
+  return function(state, action) {
+    var nextState = {}
+    for (var i = 0; i < reducerKeys.length; i++) {
+      var key = reducerKeys[i]
+      var reducer = reducers[key]
+      var previousStateForKey = state[key]
+
+      nextState[key] = reducer(previousStateForKey, action)
+    }
+    console.log(nextState);
+    return nextState
+  }
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button id="increment">+</button>
+
+    <span id="box">0</span>
+
+    <button id="decrement">-</button>
+
+    <script src="./myRedux.js"></script>
+    <script src="./applyMiddlewares/logger.js"></script>
+    <script src="./applyMiddlewares//thunk.js"></script>
+
+    <script>
+      function enhancer(createStore) {
+        return function (reducer, preloadedState) {
+          var store = createStore(reducer, preloadedState)
+          var dispatch = store.dispatch
+          function _dispatch(action) {
+            if (typeof action === 'function') {
+              return action(dispatch)
+            }
+            dispatch(dispatch)
+          }
+          return {
+            ...store, // 保留原有store方法
+            dispatch: _dispatch // 修改dispatch
+          }
+        }
+      }
+
+      function countReducer(state, action) {
+        switch (action.type) {
+          case 'increment':
+            return state + 1
+          case 'decrement':
+            return state - 1
+          default:
+            return state
+        }
+      }
+
+      var rootReducer = combineReducers({ counter: countReducer })
+
+      // 创建store
+      var store = createStore(rootReducer, { counter: 100 }, applyMiddleware(logger, thunk))
+
+      store.subscribe(() => {
+        // 获取最新的状态
+        document.getElementById('box').innerHTML = store.getState().counter
+      })
+
+      var actions = bindActionCreators({ increment, decrement }, store.dispatch)
+
+      function increment() {
+        return { type: 'increment' }
+      }
+
+      function decrement() {
+        return { type: 'decrement' }
+      }
+
+      // 获取加按钮
+      document.getElementById('increment').onclick = function () {
+        // 触发action 让数值加1
+        //store.dispatch({ type: 'increment' })
+        // store.dispatch(function(dispatch) {
+        //   setTimeout(function() {
+        //     dispatch({ type: 'increment' })
+        //   }, 1000)
+        // })
+        actions.increment()
+      }
+
+      // 获取减按钮
+      document.getElementById('decrement').onclick = function () {
+        // 触发action 让数值减1
+        //store.dispatch({ type: 'decrement' })
+        actions.decrement()
+      }
+    </script>
+  </body>
+</html>
+
+```
+
+### MobX
 
 
 

@@ -14,9 +14,28 @@
     <button id="decrement">-</button>
 
     <script src="./myRedux.js"></script>
+    <script src="./applyMiddlewares/logger.js"></script>
+    <script src="./applyMiddlewares//thunk.js"></script>
 
     <script>
-      function reducer(state, action) {
+      function enhancer(createStore) {
+        return function (reducer, preloadedState) {
+          var store = createStore(reducer, preloadedState)
+          var dispatch = store.dispatch
+          function _dispatch(action) {
+            if (typeof action === 'function') {
+              return action(dispatch)
+            }
+            dispatch(dispatch)
+          }
+          return {
+            ...store, // 保留原有store方法
+            dispatch: _dispatch // 修改dispatch
+          }
+        }
+      }
+
+      function countReducer(state, action) {
         switch (action.type) {
           case 'increment':
             return state + 1
@@ -27,24 +46,43 @@
         }
       }
 
+      var rootReducer = combineReducers({ counter: countReducer })
+
       // 创建store
-      var store = createStore(reducer, 0)
+      var store = createStore(rootReducer, { counter: 100 }, applyMiddleware(logger, thunk))
 
       store.subscribe(() => {
         // 获取最新的状态
-        document.getElementById('box').innerHTML = store.getState()
+        document.getElementById('box').innerHTML = store.getState().counter
       })
+
+      var actions = bindActionCreators({ increment, decrement }, store.dispatch)
+
+      function increment() {
+        return { type: 'increment' }
+      }
+
+      function decrement() {
+        return { type: 'decrement' }
+      }
 
       // 获取加按钮
       document.getElementById('increment').onclick = function () {
         // 触发action 让数值加1
-        store.dispatch({ type: 'increment' })
+        //store.dispatch({ type: 'increment' })
+        // store.dispatch(function(dispatch) {
+        //   setTimeout(function() {
+        //     dispatch({ type: 'increment' })
+        //   }, 1000)
+        // })
+        actions.increment()
       }
 
       // 获取减按钮
       document.getElementById('decrement').onclick = function () {
         // 触发action 让数值减1
-        store.dispatch({ type: 'decrement' })
+        //store.dispatch({ type: 'decrement' })
+        actions.decrement()
       }
     </script>
   </body>
