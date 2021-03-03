@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * 闭包是将函数与其周围状态（词法环境）的引用捆绑在一起（封闭）的组合，
+       * 闭包使你可以从内部函数访问外部函数的的作用域。每次创建函数都会创建闭包
+       */
+
+      // var a = 1
+      // function foo() {
+      //   console.log(a)
+      // }
+      // foo()
+
+      /**
+       * ECMAScript中，闭包是指：
+       * 1. 从理论角度：所有的函数。因为他们都在创建的时候就将上层上下文的数据保存起来了。哪怕是简单的全局变量也是如此，
+       *    因为函数中访问全局变量就相当于是在访问自由变量，这个时候使用最外层的作用域
+       *
+       * 2. 从实践角度：以下函数才算是闭包：
+       *    i. 即使创建它的上下文已经销毁，它任然存在（比如，内部函数从父函数中返回）
+       *    ii. 在代码中引用了自由变量（自由变量：在函数中使用，但既不是函数参数也不是函数的局部变量的变量）
+       */
+
+      // var scope = 'global scope'
+      // function checkscope() {
+      //   var scope = 'local scope'
+      //   function f() {
+      //     return scope
+      //   }
+      //   return f
+      // }
+
+      // var foo = checkscope()
+      // foo()
+
+      /**
+       * 执行过程：
+       * 1. 进入全局代码，创建全局执行上下文，全局执行上下文压入执行上下文栈
+       * 2. 全局执行上下文初始化
+       * 3. 执行checkscope函数，创建checkscope函数执行上下文，checkscope执行上下文被压入执行上下文栈
+       * 4. checkscope执行上下文初始化，创建变量对象、作用域、this等
+       * 5. checkscope函数执行完毕，checkscope执行上下文从执行上下文栈弹窗
+       * 6. 执行f函数，创建f函数执行上下文，f执行上下文被压入执行上下文栈
+       * 7. f执行上下文初始化，创建变量对象、作用域链、this等
+       * 8. f函数执行完毕，f函数上下文从执行上下文栈弹窗
+       *
+       * f函数能获取到变量scope值，是因为f函数执行上下文维护了一个作用域链：fContext = { Scope: [AO, checkscopeContext.AO, globalContext.VO]}
+       * 说明当f函数引用了checkscopeContext.AO中的值的时候，即使checkscopeContext被销毁了，但是javascript依然会让checkscopeContext.AO活在内存，
+       * f函数依然可以通过f函数的作用域链找到它，正是因为javascript做到了这点，从而实现了闭包这个概念
+       */
+
+      var data = []
+
+      for (var i = 0; i < 3; i++) {
+        data[i] = (function (i) {
+          return function () {
+            console.log(i)
+          }
+        })(i)
+      }
+
+      data[0]()
+      data[1]()
+      data[2]()
+      /**
+       * 当执行到data[0]函数之前，此时全局上下文的VO为
+       * globalContext = {
+       *    VO: {
+       *      data: [...],
+       *      i:3
+       *    }
+       * }
+       *
+       * 当执行data[0]函数的时候，data[0]函数的作用域链发生变化
+       * data[0]Context = {
+       *    Scope:[AO, 匿名函数Context.AO, globalContext.VO]
+       * }
+       *
+       * 匿名函数执行上下文的AO为
+       * 匿名函数Context = {
+       *    AO: {
+       *      arguments: {
+       *        0: 0,
+       *        length: 1
+       *      },
+       *      i: 0
+       *    }
+       * }
+       */
+    </script>
+  </body>
+</html>

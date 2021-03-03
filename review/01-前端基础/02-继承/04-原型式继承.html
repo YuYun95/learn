@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    /**
+     * 原理：类似Object.create，用一个函数包装一个对象，然后返回这个函数的调用，
+     *      这个函数就变成了个可以随意增添属性的实例或对象，结果是将子对象的__proto__指向父对象
+     * 缺点：共享引用类型
+     */
+
+     function createObj(o) {
+       function F() {}
+       F.prototype = o
+       return new F()
+     }
+
+
+     var person = {
+       name: 'zyh',
+       friends: ['daisy', 'kelly']
+     }
+
+     var person1 = createObj(person)
+     var person2 = createObj(person)
+     
+     person1.name = 'person1' // 这里是给person1添加name属性，而不是修改原型上的name属性
+     console.log(person2.name); // zyh
+
+     person1.friends.push('taylor')
+     console.log(person2.friends); // ["daisy", "kelly", "taylor"]
+
+  </script>
+</body>
+</html>

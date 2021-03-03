@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    /**
+     * 综合原型链继承和构造函数继承
+     * 优点：可继承父类原型上的属性，且可以传参
+     *      每个实例引入的构造函数是私有的
+     * 
+     * 缺点：会执行两次父类构造函数，消耗较大内存
+     *      子类的构造函数会代替原型上的那个父类构造函数
+     */
+
+     function Parent(name) {
+       this.name = name
+       this.colors = ['red', 'blur', 'green']
+     }
+
+     Parent.prototype.getName = function() {
+       console.log('getName', this.name)
+     }
+
+    // 关键实现
+     function Child(name, age) {
+       Parent.call(this, name)
+       this.age = age
+     }
+     Child.prototype = new Parent()
+     Child.prototype.constructor = Child
+
+
+
+     var child1 = new Child('zyh', 18)
+     child1.colors.push('black')
+
+     console.log(child1.name)
+     console.log(child1.age)
+     console.log(child1.colors)
+     child1.getName()
+
+     var child2 = new Child('zeng', 19)
+
+     console.log(child2.name);
+     console.log(child2.age);
+     console.log(child2.colors);
+     child2.getName()
+  </script>
+</body>
+</html>

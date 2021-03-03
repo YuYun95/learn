@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      // 1. 构造函数创建对象，使用new创建一个实例对象person
+      function Persion1() {}
+      var person1 = new Persion1()
+      person1.name = 'zyh'
+      console.log('person1.name', person1.name)
+      console.log('----------------------------------------------------------')
+
+      /**
+       * 2. prototype
+       * 每个函数都有一个prototype属性，prototype是函数才会有的属性
+       * 构造函数prototype属性，指向实例对象的原型对象，即 Persion.prototype === persion.__proto__
+       */
+      function Persion2() {}
+      Persion2.prototype.name = 'zeng'
+      var person2 = new Persion2()
+      var person3 = new Persion2()
+
+      // console.log('原型对象是否相等', (person2 instanceof Persion2) === (person3 instanceof Persion2))
+      console.log('person2.name', person2.name)
+      console.log('person3.name', person3.name)
+      console.log('----------------------------------------------------------')
+
+      /**
+       * 3. __proto__
+       * 每一个javascript对象（除了null）都具有的属性，改属性会指向该对象的原型
+       * 构造函数prototype属性，指向实例对象的原型对象，即 Persion.prototype === persion.__proto__
+       */
+      function Persion3() {}
+      var persion4 = new Persion3()
+      console.log('构造函数prototype等于实例对象__proto__', Persion3.prototype === persion4.__proto__)
+      console.log('----------------------------------------------------------')
+
+      /**
+       * 4. constructor
+       * 每个原型对象都有一个constructor属性指向构造函数
+       * ES6获取对象的原型对象的方法 Object.getPrototypeOf()
+       * 实例对象没有constructor，当获取实例对象的constructor时查找不到会向父级查找
+       */
+      function Persion4() {}
+      var persion5 = new Persion4()
+      console.log('构造函数等于构造函数的原型的constructor', Persion4 === Persion4.prototype.constructor)
+      console.log('getPrototypeOf获取对象的原型', Object.getPrototypeOf(persion5))
+      console.log('实例对象原型', persion5.__proto__)
+
+      console.log('实例对象的constructor', persion5)
+      console.log('----------------------------------------------------------')
+
+      /**
+       * 5. 实例与原型
+       * 当读取实例的属性时，如果找不到，就会查找与对象关联的原型对象中的属性，如果还查不到，就去找原型的原型，一直到最顶层为止(null)
+       */
+
+      function Persion5() {}
+      var person6 = new Persion5()
+      person6.name = 'zyh'
+      console.log('查找对象name属性', person6.name)
+
+      delete person6.name
+      console.log('查找对象name属性', person6.name)
+      console.log('----------------------------------------------------------')
+
+      /**
+       * 6. 原型的原型
+       * 原型对象也是对象，既然是对象我们就可以用最原始的方式创建它
+       * 其实原型对象就是通过Object构造函数生成的，实例的__proto__指向构造函数的prototype
+       */
+      var obj = new Object()
+      obj.name = 'zyh'
+
+      console.log(obj.name)
+
+      /**
+       * 7. 原型链
+       * 由__proto__相互关联组成的链状结构就是原型链
+       */
+    </script>
+  </body>
+</html>
