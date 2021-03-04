@@ -1,14 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  <script>
-    
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * ECMAScript的类型分为语言类型和规范类型
+       * ECMAScript语言类型是开发者直接使用 ECMAScript 可以操作的，
+       * 就是常说的Undefined、Boolean、String、Number、Object
+       *
+       * 规范类型相当于 meta-values，是用来用算法描述 ECMAScript 语言结构和 ECMAScript 语言类型的。
+       * 规范类型包括：Reference、List、Completion、Property Descriptor、Property Identifier、Lexical Environment、EnvironmentRecord
+       *
+       * ECMAScript 将 Reference 定义为“被解析的命名绑定”，它由三部分组件：base value、name value(referenced name)、strict flag
+       * base value：属性所在的对象或者就是EnvironmentRecord，
+       *             他的值只可能是undefined、Object、Boolean、String、Number、Environment Record
+       * name value(referenced name): 就是属性的名称
+       *
+       * Reference 类型就是用来解析诸如 delete、typeof 以及赋值等操作的行为的。
+       */
+
+      var foo = 1
+
+      // 对应的Reference是：
+      var fooReference = {
+        base: EnvironmentRecord,
+        name: 'foo',
+        strict: false
+      }
+
+      var foo = {
+        bar: function () {
+          return this
+        }
+      }
+      foo.bar()
+
+      // bar对应的Reference是:
+      var BarReference = {
+        base: foo,
+        propertyName: 'bar',
+        strict: false
+      }
+
+      /**
+       * 规范中提供了获取Reference组成部分的方法，比如GetBase和IsPropertyReference
+       * GetBase：返回reference的base value，GetBase返回对象属性真正的值，而不是一个Reference（重要、重要）
+       * IsPropertyReference：如果 base value是一个对象，就返回true
+       */
+
+      // 模拟GetValue的使用：
+      var foo = 1
+      var fooReference = {
+        base: EnvironmentRecord,
+        name: 'foo',
+        strict: false
+      }
+      GetValue(fooReference) // 1
+
+      /**
+       * 两种创建Reference的途径：标识符解析、属性访问
+       * 
+       * 如何确定this的值
+       * 1. 计算MemberExpression 的结果赋值给ref
+       * 2. 判断 ref 是不是一个 Reference 类型
+       *    2.1 如果 ref 是 Reference，并且 IsPropertyReference(ref) 是 true，那么this的值为GetBase(ref)
+       *    2.2 如果 ref 是 Reference，并且 base value 值是 EnvironmentRecord，那么 this 的值为 ImplicitThisValue(ref)
+       *    2.3 如果 ref 不是 Reference，那么 this 的值为 undefined
+       */
+
+      /**
+       * 什么是 MemberExpression：
+       * 1. PrimaryExpression // 原始表达式 可以参见《JavaScript权威指南第四章》
+       * 2. FunctionExpression // 函数定义表达式
+       * 3. MemberExpression [ Expression ] // 属性访问表达式
+       * 4. MemberExpression . IdentifierName // 属性访问表达式
+       * 5. new MemberExpression Arguments // 对象创建表达式
+       */
+      // 例子
+      function foo() {
+        console.log(this)
+      }
+      foo() // MemberExpression 是 foo
+
+      function foo() {
+        return function () { console.log(this) }
+      }
+      foo()() // MemberExpression 是 foo()
+
+      var foo = {
+        bar: function() { return this }
+      }
+      foo.bar() // MemberExpression 是 foo.bar
+      // 所以简单理解 MemberExpression 其实就是()左边的部分
+    </script>
+  </body>
 </html>
