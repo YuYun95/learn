@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * call：第一个参数是对象，Function的调用者将会指向这个对象，不传默认为window；第二个参数开始，接收任意个参数
+       * apply：第一个参数和call一样，第二个参数是数组或类数组，他们会被转换成类数组映射到Function对应的参数上
+       */
+
+      // call 的使用场景
+      //1. 对象的继承
+      function superClass() {
+        this.a = 1
+        this.print = function () {
+          console.log(this.a)
+        }
+      }
+
+      function subClass() {
+        superClass.call(this) // subClass继承了superClass的属性和方法
+        this.print()
+      }
+      subClass() // 1
+
+      // 2. 借用方法
+      let domNodes = Array.prototype.slice.call(document.getElementsByTagName('*'))
+
+      // apply 的一些用法
+      // 1. Math.max  Math.min
+      let max = Math.max.apply(null, [1, 2, 3])
+
+      // 2. 实现两个数组的合并
+      let arr1 = [1, 2, 3]
+      let arr2 = [4, 5, 6]
+      Array.prototype.push.apply(arr1, arr2)
+      console.log(arr1)
+    </script>
+  </body>
+</html>
