@@ -1,18 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  <script>
-    /**
-     * new 操作符创建一个用户定义的对象类型的实例或具有构造函数的内置对象类型之一
-     * 
-     * 
-     */
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * new 操作符创建一个用户定义的对象类型的实例或具有构造函数的内置对象类型之一
+       *
+       * new 操作符做了哪些事情
+       * 1. 创建一个空对象
+       * 2. 链接到原型（把新创建的空对象__proto__链接到构造函数的prototype）
+       * 3. 绑定this指向，执行构造函数
+       * 4. 确保返回的是对象
+       */
+
+      // function Otaku(name, age) {
+      //   this.name = name
+      //   this.age = age
+      //   this.habit = 'Games'
+      // }
+
+      // Otaku.prototype.strength = 60
+      // Otaku.prototype.sayYourName = function () {
+      //   console.log(`I am ${this.name}`)
+      // }
+
+      // var person = new Otaku('kevin', 18)
+
+      // console.log(person.name)
+      // console.log(person.habit)
+      // console.log(person.strength)
+
+      // person.sayYourName()
+
+      // person 可以访问到Otaku构造函数里面的属性、以及Otaku.prototype中的属性
+
+      /**
+       * 模拟实现new
+       *
+       * function Otaku() {}
+       *
+       * 使用 new
+       * var person = new Otaku()
+       *
+       * 使用模拟new
+       * var person = objectFactory(Otaku)
+       */
+
+      /**
+       * 因为new的结果是一个新对象，所以在模拟实现的时候，我们也要建立一个新对象，假设这个对象叫obj，因为obj会
+       * 具有Otaku构造函数里的属性，可以使用Otaku.apply(obj, arguments)继承来给obj添加新的属性
+       *
+       * 实例的__proto__属性会指向构造函数的prototype，也正是因为建立起这样的关系，实例可以访问原型上的属性
+       */
+      function objectFactory() {
+        var obj = new Object()
+        Constructor = [].shift.call(arguments)
+
+        obj.__proto__ = Constructor.prototype
+
+        Constructor.apply(obj, arguments)
+
+        return obj
+      }
+
+      function Otaku(name, age) {
+        this.name = name
+        this.age = age
+        this.habit = 'Games'
+      }
+
+      Otaku.prototype.strength = 60
+      Otaku.prototype.sayYourName = function () {
+        console.log(`I am ${this.name}`)
+      }
+
+      var person = objectFactory(Otaku, 'Kevin', '18')
+
+      console.log(person.name) // Kevin
+      console.log(person.habit) // Games
+      console.log(person.strength) // 60
+
+      person.sayYourName()
+
+      console.log('--------------------------------------------------------')
+
+      function Otaku1(name, age) {
+        this.strength = 60
+        this.age = age
+
+        return {
+          name: name,
+          habit: 'Games'
+        }
+      }
+
+      var person = new Otaku1('Kevin', '18')
+
+      console.log(person.name) // Kevin
+      console.log(person.habit) // Games
+      console.log(person.strength) // undefined
+      console.log(person.age) // undefined
+
+      console.log('---------------------------------------------------------')
+
+      function Otaku2(name, age) {
+        this.strength = 60
+        this.age = age
+
+        return 'handsome boy'
+      }
+
+      var person = new Otaku2('Kevin', '18')
+
+      console.log(person.name) // undefined
+      console.log(person.habit) // undefined
+      console.log(person.strength) // 60
+      console.log(person.age)
+
+
+      console.log('最终版-----------------------------------------------')
+
+      // 模拟 new 还需要判断返回的值是不是一个对象，如果是一个对象，就返回这个对象，如果不是，就返回新创建的对象
+      function objectFactory1() {
+        // 1. 创建了一个空对象
+        var obj = new Object()
+
+        // 2. 空对象的原型指向了构造函数的prototype
+        var Constructor = [].shift.call(arguments)
+        obj.__proto__ = Constructor.prototype
+
+        // 3. 将obj的this改为新创建对象
+        var ret = Constructor.apply(obj, arguments)
+
+        // 判断返回值是对象，就返回该对象，否则返回新创建的对象
+        return typeof ret === 'object' ? ret : obj
+      }
+
+      function Otaku4(name, age) {
+        this.name = name
+        this.age = age
+        this.habit = 'Games'
+      }
+
+      Otaku4.prototype.strength = 60
+      Otaku4.prototype.sayYourName = function () {
+        console.log(`I am ${this.name}`)
+      }
+
+      var person4 = objectFactory1(Otaku4, 'Kevin', '18')
+
+      console.log(person4.name) // Kevin
+      console.log(person4.habit) // Games
+      console.log(person4.strength) // 60
+    </script>
+  </body>
 </html>
