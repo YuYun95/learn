@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * bind()方法会创建一个新函数。当这个新函数被调用时，bind()的第一个参数将作为它运行时的this，
+       * 之后的一序列参数将会在传递的实参前传入作为它的参数。
+       * 两个特点：返回一个函数、可以传入参数
+       *
+       * 一个绑定函数也能使用new操作符创建对象：这种行为就像把原函数当成构造器。提供的this值被忽略，同时
+       * 调用时的参数被提供给模拟函数
+       * 也就是说，当bind返回的函数作为构造函数的时候，bind是指定的值会失效，单传入的参数依然生效
+       */
+      var foo = {
+        value: 1
+      }
+      function bar() {
+        console.log(this.value)
+      }
+
+      var bindFoo = bar.bind(foo)
+      bindFoo()
+
+      // 返回函数模拟实现
+      Function.prototype.bind2 = function (context) {
+        var self = this
+        return function () {
+          return self.apply(context) // 考虑到绑定函数可能是有返回值
+        }
+      }
+      console.log('-------------------------------------------------------------------------')
+      /**
+       * 传参的模拟实现
+       * 执行bind是否可以传入参数、执行bind返回的函数是否可以传入参数
+       */
+      var foo = {
+        value: 1
+      }
+      function bar(name, age) {
+        console.log(this.value)
+        console.log(name)
+        console.log(age)
+      }
+
+      var bindFoo = bar.bind(foo, 'zyh') // 1 zyh
+      bindFoo(21) // 21
+
+      // 传参的模拟实现
+      Function.prototype.bind2 = function (context) {
+        var self = this
+        // 获取bind2函数从第二个参数到最后一个参数
+        var args = Array.prototype.slice.call(arguments, 1)
+
+        return function () {
+          console.log('con', context)
+          // 这个时候的arguments是指bind返回的函数传入的参数
+          var bindArgs = Array.prototype.slice.call(arguments)
+          return self.apply(context, args.concat(bindArgs))
+        }
+      }
+
+      var bindFoo = bar.bind2(foo, 'yan') // 1 yan
+      bindFoo('22') // 22
+
+      console.log('-------------------------------------------------------------------------')
+      // 构造函数效果的模拟实现
+      var value = 2
+      var foo = {
+        value: 1
+      }
+
+      function bar(name, age) {
+        this.habit = 'shopping'
+        console.log(this.value)
+        console.log(name)
+        console.log(age)
+      }
+
+      bar.prototype.friend = 'kenvi'
+
+      var bindFoo = bar.bind(foo, 'daisy')
+
+      var obj = new bindFoo('18') // undefined、daisy、18
+
+      console.log(obj.habit) // shopping
+      console.log(obj.friend) // kenvi
+
+      /**
+       * 构造函数效果的模拟实现
+       *
+       * 当bind返回的函数作为构造函数的时候，bind时指定的this值会失效，但传入的参数依然生效
+       */
+
+      Function.prototype.bind3 = function (context) {
+        var self = this
+        var args = Array.prototype.slice.call(arguments, 1)
+
+        var fBound = function () {
+          var bindArgs = Array.prototype.slice.call(arguments)
+          // 当作为构造函数时，this 指向实例，此时结果为true，将绑定函数的this指向该实例，可以让实例获得来自绑定函数的值
+          // 以上面 demo 为例，如果改为 this instanceof fBound ? null : context，实例只是一个空对象，将null改为this，实例会具有habit属性
+          // 当作为普通函数时，this指向window，此时结果为false，将绑定函数的this指向context
+          // instanceof 用于检测构造函数的prototype属性是否出现在某个实例对象的原型链上
+          return self.apply(this instanceof fBound ? this : context, args.concat(bindArgs))
+        }
+
+        fBound.prototype = this.prototype
+        return fBound
+      }
+
+      var bindFoo = bar.bind3(foo, 'hua')
+      var obj = new bindFoo(20)
+      console.log(obj instanceof bindFoo)
+
+      console.log('-------------------------------------------------------------------------')
+
+      //  构造函数效果的优化实现
+      // fBound.prototype = this.prototype，直接修改fBound.prototype的时候，也会直接修改绑定函数的prototype
+      // 可以通过一个空函数来进行中转
+      Function.prototype.bind4 = function (context) {
+        
+        if (typeof this !== 'function'){
+          throw new Error('Function.prototype.bind - what is trying to be bound is not callable')
+        }
+
+        var self = this
+        var args = Array.prototype.slice.call(arguments, 1)
+
+        var fNOP = function () {}
+
+        var fBound = function () {
+          var bindArgs = Array.prototype.slice.call(arguments)
+          return self.apply(this instanceof fNOP ? this : context, args.concat(bindArgs))
+        }
+
+        fNOP.prototype = this.prototype
+        fBound.prototype = new fNOP()
+        return fBound
+      }
+    </script>
+  </body>
+</html>
