@@ -1603,6 +1603,195 @@ function combineReducers(reducers) {
 
 ### MobX
 
+#### 1. Mobx简介 
+
+##### 1.1 Mobx介绍
+简单，可扩展的状态管理库
+
+Mobx 是由 Mendix（代码开发平台），Coinbase(比特币公司)，Facebook开源和众多个人赞助商所赞助的
+
+React和Mobx是一对强力组合，React 负责渲染应用的状态，Mobx负责管理应用状态供React使用
+
+##### 1.2 Mobx浏览器支持
+Mobx 5 版本运行在任何支持ES6 proxy 的浏览器，不支持IE11,Node.js 6
+
+Mobx 4 可以运行在任何支持 ES5 的浏览器上
+
+Mobx 4 和 5的API是相同的
+#### 2. 开发前的准备
+
+##### 2.1 启用装饰器语法支持（方式一）
+1. 弹射项目底层配置：`npm run eject`
+2. 下载装饰器语法babel插件：`npm install @babel/plugin-proposal-decorators`
+3. 在package.json文件中加入配置
+```base
+"babel": {
+  "plugins": [
+    [
+      "@babel/plugin-proposal-decorators",
+      {
+        "legacy": true
+      }
+    ]
+  ]
+}
+```
+##### 2.1 启用装饰器语法支持（方式二）
+1. `npm install react-app-rewired customize-cra @babel/plugin-proposal-decorators`
+2. 在项目根目录下创建config-overrides.js并加入配置
+```js
+const { override, addDecoratorsLegacy } = require("customize-cra")
+module.exports = override(addDecoratorsLegacy())
+```
+3. package.json
+```base
+"scripts": {
+  "start": "react-app-rewired start",
+  "build": "react-app-rewired build",
+  "test": "react-app-rewired test"
+}
+```
+
+##### 2.2 解决vscode编辑器关于装饰器语法的警告
+在vscode按ctrl+ 逗号，然后在输入框中输入`javascript.implicitProjectConfig.experimentalDecorators`修改配置：`"javascript.implicitProjectConfig.experimentalDecorators": true`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
