@@ -1656,9 +1656,39 @@ module.exports = override(addDecoratorsLegacy())
 在vscode按ctrl+ 逗号，然后在输入框中输入`javascript.implicitProjectConfig.experimentalDecorators`修改配置：`"javascript.implicitProjectConfig.experimentalDecorators": true`
 
 
+#### 3. Mobx + React
+##### 3.1 下载Mobx
+```base
+npm install mobx mobx-react
+```
 
+##### 3.2 Mobx 工作流程
+Action -> state -> Views
 
+#### 5. Mobx 数据监测
 
+##### 5.1 computed 计算值
+计算值是可以根据现有的状态或其它计算值衍生出的值
+
+将复杂的业务逻辑从模板中进行抽离的时候使用计算值
+
+```js
+import { observable, action, computed } from 'mobx'
+
+class BirdStore {
+  @observable count = 10
+  @observable price = 25
+
+  @computed get totalPrice() {
+    return this.count * this.price
+  }
+}
+```
+
+##### 5.2 autorun 方法
+当监测的状态发生变化时，你想根据状态产生‘效果’，请使用autorun
+
+autorun会在初始化的时候执行一次，会在每次状态发生变化时执行
 
 
 
