@@ -90,6 +90,19 @@
        *    执行的时间存在一定的延迟和误差，这是不可避免的。node会在可以执行timer回调的第一时间去执行你所设定的任务。
        * 
        * 3. setImmediate() 方法从意义上将是立刻执行的意思，但是实际上它却是在一个固定的阶段才会执行回调，即poll阶段之后。
+       * 
+       * 当setTimeout时间为零是，setTimeout和setImmediate的执行顺序很难确定，因为这取决于运行环境的影响，
+       * 但是在一个I/O事件的回调中，setImmediate会先于setTimeout执行
+       * const fs = require('fs')
+       * fs.readFile(__filename, () => {
+       *  setTimeout(() => {
+       *    console.log('setTimeout')
+       *  },0)
+       *  
+       *  setImmediate(() => {
+       *    console.log('setImmediate')
+       *  })
+       * })
        */
 
   </script>
