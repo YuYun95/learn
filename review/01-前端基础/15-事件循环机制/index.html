@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    /**
+     * 浏览器环境
+     * 
+     * 1. 当调用一个方法的时候，javascript会生成一个与这个方法对应的执行上下文
+     *    这个执行上下文中存在着这个方法的私有作用域、上层作用域的指向、方法的参数、作用域中定义的变量、作用域的this
+     * 
+     * 2. 当一个脚本第一次执行的时候，javascript引擎会解析这段代码，并将其中的同步代码按照执行顺序加入执行栈中，然后从头开始执行，
+     *    如果当前执行的是一个函数，javascript会向执行栈添加这个函数的执行上下文，然后进入这个执行上下文继续执行其中的代码。
+     *    当这个执行上下文的代码执行完毕并返回结果后，javascript会退出这个执行上下文并把这个执行上下文销毁，回到上一个函数的还行上下文
+     * 
+     * 3. javascript引擎遇到一个异步事件后并不会一直等待其返回结果，而是将这个事件挂起，继续执行执行栈中的其他任务。
+     *    当一个异步事件返回结果后，javascript会将这个事件加入与当前执行栈不同的另一个队列（事件队列）。
+     *    被放入事件队列不会立即执行其回调，而是等待当前执行栈中的所有任务都执行完毕，主线程处于空闲状态时，
+     *    主线程会去查找事件队列是否有任务，有就从中取出第一位的事件，并把这个事件对应的回调放入执行栈，然后执行其中的同步代码
+     * 
+     * 4. 异步任务分为微任务和宏任务，异步任务会根据不同的异步事件类型，放到宏任务队列和微任务队列。
+     *    并且在当前执行栈为空的时候，主线程会查看微任务是否有事件存在，如果不存在，再去宏任务队列中取出一个事件并把对应的回调加入当前执行栈，
+     *    如果存在微任务，则会依次执行队列中事件对应的回调，直到微任务队列为空，然后去宏任务队列中取出最前面的一个事件，
+     *    把对应的回调加入当前执行栈，如此反复
+     * 
+     * 5. 当当前执行栈执行完毕时会立即先处理所有的微任务队列中的事件，然后再去宏任务队列中取出一个事件
+     */
+
+     /**
+      * node环境
+      * 
+      * 1. node中，事件循环表现出的状态与浏览器中大致相同。node中事件循环的实现是依靠libuv引擎。node选择chrome v8引擎作为javascript解析器，
+      *    v8 引擎将javascript代码分析后去调用对应的node api，而这些api最后则由libuv引擎驱动，执行对应的任务，并把不同的事件放在不同的队列中
+      *    等待主线程执行。
+      * 
+      * 2. 事件循环顺序：外部数据输入 --> 轮询阶段(poll) --> 检查阶段(check) --> 关闭事件回调阶段(close callbacks) --> 定时器检测阶段(timers)
+      *    --> I/O事件回调阶段(I/O callbacks) --> 闲置阶段(idle, prepare) --> 轮询阶段 ...
+      * 
+      * 3. timers：这个阶段执行定时器队列中的回调如setTimeout和setInterval
+      *    I/O callbacks：这个阶段执行几乎所有的回调。但是不包括close事件、定时器和setImmediate的回调
+      *    idle,prepare：这个阶段仅在内部使用，可以不理会
+      *    poll：等待新的I/O事件，node在一些特殊情况下会阻塞在这里
+      *    check：setImmediate的回调会在这个阶段执行
+      *    close callbacks：例如 socket.on('close', ...) 这种close事件的回调
+      * 
+      * 4. poll阶段
+      *    当v8引擎将js代码解析后传入libuv引擎后，循环首先进入pool阶段。poll阶段的执行逻辑如下：
+      *    先查看poll queue中是否有事件，有任务就按先进先出的顺序依次执行回调。当queue为空时，会检查是否有setImmediate的callback，
+      *    如果有，就进入check阶段执行这些callback。但同时也会检查是否有到期的timer，如果有，就把这些到期的timer的callback安装调用顺序放到timer
+      *    queue中，之后循环会进入timer阶段执行queue中的callback。这两者的顺序是不固定的，受到代码运行的环境影响。如果两者的queue都是空的，
+      *    那么loop会在poll阶段停留，直到有一个I/O事件返回，循环会进入I/O callback阶段并立即执行这个事件的callback
+      * 
+      *    poll阶段在执行poll queue中的回调时实际上不会无限的执行下去。两种情况poll阶段会终止执行poll queue中的下一个回调：
+      *    1. 所有的回调执行完毕
+      *    2. 执行数超过了node的限制
+      * 
+      * 5. check阶段
+      *    check阶段专门用来执行setImmediate方法的回调，当poll阶段进入空闲状态，并且setImmediate queue中有callback时，事件循环进入这个状态
+      * 
+      * 6. close阶段
+      *    当一个socket连接或者一个handle被突然关闭时（例如调用了socket.destroy()方法），close事件会被发送到这个阶段执行回调。
+      *    否则事件会用process.nextTick()方法发送出去
+      * 
+      * 7. timer阶段
+      *    这个阶段以先进先出的方式执行所有到期的timer加入timer队列里面的callback，
+      *    一个timer callback指的是一个通过setTimeout或者setInterval函数设置的回调函数
+      * 
+      * 8. I/O callback阶段
+      *    这个阶段主要执行大部分I/O事件的回调，包括一些为操作系统执行的回调。
+      *    例如一个TCP连接发生错误时，系统需要执行回调来获得这个错误的报告
+      * 
+      */
+
+      /**
+       * process.nextTick setTimeout setImmediate 的区别与使用场景
+       * 
+       * 1. process.nextTick() ：node中存在着一个特殊的队列，即nextTick queue。
+       *    这个队列中的回调执行虽然没有被表示为一个阶段，当时这些事件却会在每一个阶段执行完毕准备进入下一个阶段时优先执行。
+       *    当事件循环准备进入下一个阶段之前，会先检查nextTick queue中是否有任务，如果有，那么会先清空这个队列。
+       *    与执行poll queue中的任务不同的是，这个操作在队列清空前是不会停止的。
+       *    这也就意味着，错误的使用process.nextTick()方法会导致node进入一个死循环直到内存泄漏。
+       * 
+       * 2. setTimeout() 方法是定义一个回调，并且希望这个回调在我们所指定的时间间隔后第一时间去执行。
+       *    注意这个“第一时间执行”，这意味着，受到操作系统和当前执行任务的诸多影响，该回调并不会在我们预期的时间间隔后精准的执行。
+       *    执行的时间存在一定的延迟和误差，这是不可避免的。node会在可以执行timer回调的第一时间去执行你所设定的任务。
+       * 
+       * 3. setImmediate() 方法从意义上将是立刻执行的意思，但是实际上它却是在一个固定的阶段才会执行回调，即poll阶段之后。
+       */
+
+  </script>
+</body>
+</html>
