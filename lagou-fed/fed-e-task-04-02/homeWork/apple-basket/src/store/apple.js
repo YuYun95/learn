@@ -33,7 +33,7 @@ class Apple {
     this.isPicking = true
     this.buttonText = '正在采摘...'
     let weight = Math.floor(200 + Math.random() * 50)
-    setTimeout(() => {
+    fetch('./apple.json').then(() => {
       this.isPicking = false
       this.buttonText = '摘苹果'
       this.apples.push({
@@ -41,7 +41,16 @@ class Apple {
         weight: weight,
         isEaten: false
       })
-    }, weight)
+    })
+    // setTimeout(() => {
+    //   this.isPicking = false
+    //   this.buttonText = '摘苹果'
+    //   this.apples.push({
+    //     id: this.newAppleId++,
+    //     weight: weight,
+    //     isEaten: false
+    //   })
+    // }, weight)
   }
 
   @action.bound eatApple(appleId) {
