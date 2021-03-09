@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .top {
+        width: 100px;
+        height: 100px;
+        background-color: aqua;
+        margin-bottom: 20px;
+      }
+      .bottom {
+        width: 100px;
+        height: 100px;
+        background-color: aquamarine;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 
+      1. 基本概念：标准模型 + IE模型
+         盒模型包含了元素内容(content)、内边框(padding)、边框(border)、外边框(margin)
+
+      2. 标准模型和IE模型的区别
+         唯一的区别是内容计算方式的不同：
+         IE模型元素宽 width = content + padding + border，高度同理
+         标准模型元素宽 width = content，高度同理
+
+      3. css如何设置获取这两种模型的宽高
+         通过css3新增的属性box-sizing: content-box | border-box 分别设置模型为标准模型(content-box)和IE模型(border-box)
+
+      4. javascript如何设置获取盒模型对应的宽和高
+         dom.style.width/height 只能取到行内样式，style标签中和link外链的样式取不到
+         dom.currentStyle.width/height 取到的是最终渲染后的宽和高，只有IE支持此属性
+         window.getComputedStyle(dom).width/height 同上，但是多浏览器支持，IE9以上支持
+         dom.getBoundingClientRect().windth/height 也是渲染后的宽和高，大多数浏览器支持。IE9以上支持，
+         除此还可以取到相对于视窗的上下左右距离
+
+      5. 外边距重叠
+         当两个垂直外边距相遇时，他们将形成一个外边距，合并后的外边距高度等于两个发生合并的外边距的高度中的较大者。
+         注意：只要普通文档流中块框的垂直外边距才会发生外边距合并，行内框、浮动框或绝对定位之间的外边距不会合并
+   -->
+    <div class="top"></div>
+    <div class="bottom"></div>
+
+    <!-- 
+      6. BFC(Block Formatting Context)：块级格式化上下文
+         BFC决定了元素如何对其内容进行定位，以及与其他元素的关系和相互作用。当涉及到可视化布局的时候，BFC提供了一个环境，
+         HTML元素在这个环境中按照一定的规则进行布局。一个环境中的元素不会影响到其他环境中的布局
+
+         BFC的原理
+         1. BFC元素垂直方向的边距会发生重叠。属于不同BFC外边距不会发生重叠
+         2. BFC的区域不会与浮动元素的布局重叠
+         3. BFC元素是一个独立的容器，外面的元素不会影响里面的元素。里面的元素也不会影响外面的元素
+         4. 计算BFC高度的时候，浮动元素也会参与计算
+
+         如何创建BFC
+         1. overflow不为visible
+         2. float的值不为none
+         3. position的值不为static或relative
+         4. display属性为inline-blocks、table、table-cell、table-caption、flex、inline-flex
+    -->
+    <section id="layout">
+      <style media="screen">
+        #layout {
+          background: red;
+        }
+        #layout .left {
+          float: left;
+          width: 100px;
+          height: 100px;
+          background: pink;
+        }
+        #layout .right {
+          height: 110px;
+          background: #ccc;
+          overflow: hidden; /* 这样left 和 right 就不会重叠了(相对于清除了浮动) */
+        }
+      </style>
+      <div class="left"></div>
+      <div class="right"></div>
+      <div>ee</div>
+    </section>
+  </body>
+</html>
