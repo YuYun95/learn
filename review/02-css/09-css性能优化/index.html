@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- 
+      1. 合并css文件，减少http请求
+      2. 减少css嵌套，三层以下
+      3. 不要在ID选择器前面进行嵌套，ID本来是唯一的而且权重值大，嵌套是浪费性能
+      4. 建立公共样式类，把相同样式提取出来作为公共类使用
+      5. 减少通配符或者属性选择器的使用
+      6. 巧妙使用css继承机制，如果父节点定义了，子节点就无需定义
+      7. 拆分出公共css文件
+      8. 少用css表达式
+      9. 少用css rest，可以选择normolize.css
+      10. cssSprite，合成所有icon图片，减少http请求
+      11. css压缩
+      12. GZIP压缩
+    -->
+
+    <!-- 
+      1. 避免使用@import，外部的css文件中使用@import会是的页面在加载时增加额外的延迟
+      2. 避免重排
+          浏览器为了重新渲染部分或整个页面，重新计算页面元素位置和几何结构的进程叫做reflow
+          浏览器根据定义好的样式来计算，并将元素放到该出现的位置上，这个过程叫做reflow
+          页面上任何一个节点触发来reflow，会导致他的子节点和祖先节点重新渲染
+
+          导致reflow发生的情况
+            改变窗口的大小
+            改变文字的大小
+            添加 删除样式表
+            内容的改变 输入框输入内容
+            伪类的激活
+            操作class属性
+            脚本操作dom js改变css类
+            计算offsetWidth和offsetHeight
+            设置style属性
+            改变元素的内外边距
+
+      3. 重绘
+          当一个元素的外观被改变，但是布局没有改变的情况
+          当元素改变的时候，不影响元素在页面中的位置，浏览器仅仅会用新的样式重绘此元素
+      
+      4. css动画
+          css动画启用GPU加速，应用GPU的图形性能对浏览器中的一些图形操作交给GUP完成。canvas2D、css3转换、css3d变换、webGL、视频
+          2d加速
+          3d加速
+
+      5. 文件压缩
+
+      6. 去除无用css
+     -->
+  </body>
+</html>

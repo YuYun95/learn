@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      span {
+        font-size: 2em;
+      }
+
+      /*
+      1. grid-template-columns属性
+          repeat(2, 100px 50px 80px); 
+          表示重复两次，第一个为100px 第二个为50px 第三个为80px，
+          然后重复，第四个100px 第五个为50px 第六个为 80px
+          这样一行就显示六个item
+
+          repeat(auto-fill, 100px)
+          每个item的宽度一样，自动根据container宽度设置每一行显示多少item
+
+          fr
+          表示比例关系fraction
+          如果两列的宽度分包为1fr 2fr，就表示后者是前者的两倍
+          fr 可以与绝对长度的单位结合使用 repeat(2, 150px 1fr 2fr)
+          repeat(auto-fill, ..fr ..fr) 一行显示一个item
+
+          minmax()
+          minmax()函数产生一个长度范围，表示长度就在这个范围之中，接收两个参数，
+          第一个参数为最小值，第二个参数为最大值，
+          grid-template-columns: 1fr 1fr minmax(1fr, 100px) 当最小值fr时，一行只显示一个item占满整行
+
+          auto
+          表示由浏览器自己决定长度
+      
+      2. grid-row-gap grid-column-gap
+          分别设置行与行 列与列的间距
+          grid-gap 是这两个的缩写，如果grid-gap省略第二个值，浏览器认为第二个值等于第一个值
+          
+      3. grid-template-areas
+          网格布局允许指定“区域”，一个区域由单个或多个单元格组成
+      
+      4. grid-auto-flow
+          可以设置item是“先行后列”还是“先列后行”(item先放满一行再换行，还是item先放满一列再换列表)
+
+      */
+      #container {
+        display: grid;
+        grid-template-columns: 100px 100px 100px;
+        grid-template-rows: 100px 100px 100px;
+        grid-template-areas:
+          'a . c'
+          'd . f'
+          'g . i';
+      }
+
+      .item {
+        font-size: 2em;
+        text-align: center;
+        border: 1px solid #e5e4e9;
+      }
+
+      .item-1 {
+        background-color: #ef342a;
+        grid-area: a;
+      }
+
+      .item-2 {
+        background-color: #f68f26;
+        grid-area: b;
+      }
+
+      .item-3 {
+        background-color: #4ba946;
+        grid-area: c;
+      }
+
+      .item-4 {
+        background-color: #0376c2;
+        grid-area: d;
+      }
+
+      .item-5 {
+        background-color: #c077af;
+        grid-area: e;
+      }
+
+      .item-6 {
+        background-color: #f8d29d;
+        grid-area: f;
+      }
+
+      .item-7 {
+        background-color: #b5a87f;
+        grid-area: g;
+      }
+
+      .item-8 {
+        background-color: #d0e4a9;
+        grid-area: h;
+      }
+
+      .item-9 {
+        background-color: #4dc7ec;
+        grid-area: i;
+      }
+    </style>
+  </head>
+  <body>
+    <span>foo</span>
+    <div id="container">
+      <div class="item item-1">1</div>
+      <div class="item item-2">2</div>
+      <div class="item item-3">3</div>
+      <div class="item item-4">4</div>
+      <div class="item item-5">5</div>
+      <div class="item item-6">6</div>
+      <div class="item item-7">7</div>
+      <div class="item item-8">8</div>
+      <div class="item item-9">9</div>
+    </div>
+    <span>bar</span>
+  </body>
+</html>

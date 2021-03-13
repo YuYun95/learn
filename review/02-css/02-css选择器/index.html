@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #wrapper {
+        background-color: red !important;
+      }
+
+      .main {
+        width: 100px;
+        height: 100px;
+        background-color: azure;
+      }
+
+      .main {
+        background-color: royalblue;
+      }
+      [title] {
+        background-color: bisque;
+      }
+      div {
+        background-color: rosybrown;
+      }
+
+      .p {
+        width: 100px;
+        height: 100px;
+        background: red !important;
+      }
+      p {
+        width: 100px;
+        height: 100px;
+        background-color: green !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 
+    口诀：从0开始，!important 无限大，一个行内样式 +1000，一个id选择器 +100，一个属性选择器、class或者伪类 +10，一个元素选择器、伪元素 +1，通配符 +0
+    !important > 行内样式 > id选择器 > 后代选择器 > 类选择器 = 属性选择器 > 元素选择器
+
+    如果 !important被用于一个简写的样式属性，那么这条简写的样式属性所代表的子属性都会被作用上 !important
+    如 background: red !important; 这时background-color、background-origin等样式都会作用上 !important
+
+    内联样式权重并不一定比外联样式高，当内联样式在前 外联样式在后，外联会覆盖内联
+   -->
+    <div class="box">
+      <div class="main" title="标题"></div>
+    </div>
+
+    <p class="p">dd </p>
+  </body>
+</html>

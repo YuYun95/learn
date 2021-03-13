@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- 
+      @import 缺点
+        导入样式只能放在style标签的第一行，放其他行则会无效
+        @import声明的样式表不能充分利用浏览器并发请求资源的行为，其加载行为往往会延后触发或被其他资源加载挂起
+        由于@import样式表的延后加载，可能导致页面样式闪烁
+
+      
+      BEM命名规范
+        BEM的意思就是块(block)、元素(element)、修饰符(modifier)
+        BEM命名规范
+          块即是通常所说的 web 应用开发的组件或模块。每个块在逻辑上和功能上都是相互独立的
+          .block {}
+
+          元素是块中的组成部分。元素不能离开块来使用。BEM 不推荐在元素中嵌套其他元素
+          .block__element {}
+
+          修饰符用来定义块或元素的外观和行为。同样的块在应用不同的修饰符之后，会有不同的外观
+          .block--modifier {}
+     -->
+  </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .box {
+        width: 300px;
+        height: 300px;
+        background-color: red;
+        display: table-cell;
+        vertical-align: middle;
+      }
+      .box .a {
+        margin-left: 100px;
+        width: 100px;
+        height: 100px;
+        background-color: blue;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="a">love</div>
+    </div>
+
+
+    <!--
+      div 垂直居中
+        1. flex布局，align-item: center;
+        2. position，父级设置position: relative，子级设置position: absolute; top: 50%; left:50%
+           已知宽高可以使用：margin: -50px 0 0 -50px
+           已知宽高可以使用：top: 0; right: 0; bottom: 0; left: 0;
+           未知宽高可以使用：transform: translate(-50%, -50%)
+        3. 父元素设置display: table-cell; vertical-align: middle;
+
+      内容水平居中
+        1. 行元素text-align: center; 块元素已知宽度 margin: 0 auto
+
+    -->
+
+  </body>
+</html>
