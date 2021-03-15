@@ -12,10 +12,22 @@
     <script>
       /**
        * 同源页面间的跨页面通信
-       *  1. new BroadcastChannel
-       *  2. Service Worker
+       *  广播模式：一个页面将消息通知给一个‘中央站’通知给各个页面
+       *    1. new BroadcastChannel
+       *    2. serviceWorker
+       *    3. localStorage
+       *  共享存储 + 轮询模式
+       *    4. Shared Worker 无法主动通知所有页面，使用轮询的方式来拉取最新的数据
+       *    5. IndexedDB、cookie
+       *  口口相传模式
+       *    6. window.open + window.open 问题：如果页面不是通过页面内的window.open打开的（在地址栏输入），这个联系就被打破了
+       *    7. WebSocket
        *
+       * 非同源页面之间的通信
+       *    1. iframe
        */
+
+      // 1. new BroadcastChannel
       const bc = new BroadcastChannel('AlienZHOU')
 
       bc.onmessage = function (e) {
@@ -25,11 +37,16 @@
         console.log('message', text)
       }
 
-      document.getElementById('button').addEventListener('click', function () {
-        bc.postMessage({
-          msg: 'aaa',
-          from: 'from'
-        })
+      // document.getElementById('button').addEventListener('click', function () {
+      //   bc.postMessage({
+      //     msg: 'aaa',
+      //     from: 'from'
+      //   })
+      // })
+
+      // 2. serviceWorker
+      navigator.serviceWorker.register('./utils.sw.js').then(() => {
+        console.log('注册成功')
       })
 
       navigator.serviceWorker.addEventListener('message', function (e) {
@@ -37,6 +54,176 @@
         const text = '[receive] ' + data.msg + ' —— tab ' + data.from
         console.log('[Service Worker] receive message:', text)
       })
+
+      // document.getElementById('button').addEventListener('click', function () {
+      //   navigator.serviceWorker.controller.postMessage({ data: { from: 'from', msg: 'msg' }})
+      // })
+
+      // 3.localStorage
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'ctc-msg') {
+          const data = JSON.parse(e.newValue)
+          const text = '[receive] ' + data.msg + ' —— tab ' + data.from
+          console.log('[Storage I] receive message:', text)
+        }
+      })
+      var mydata = {
+        msg: 'msg',
+        from: 'form',
+        st: +new Date()
+      }
+      window.localStorage.setItem('ctc-msg', JSON.stringify(mydata))
+
+      // 4. Shared Worker
+      const sharedWorker = new SharedWorker('./utils.shared.js')
+      setInterval(function () {
+        sharedWorker.port.postMessage({ get: true })
+      }, 1000)
+
+      sharedWorker.port.addEventListener(
+        'message',
+        e => {
+          const data = e.data
+          const text = '[receive] ' + data.msg + ' —— tab ' + data.from
+          console.log('[Shared Worker] receive message:', text)
+        },
+        false
+      )
+
+      sharedWorker.port.start()
+
+      // document.getElementById('button').addEventListener('click', function () {
+      //   sharedWorker.port.postMessage(mydata)
+      // })
+
+      // 5. IndexedDB
+      // 打开数据库连接
+      function openStore() {
+        const storeName = 'ctc_aleinzhou'
+        return new Promise(function (resolve, reject) {
+          if (!('indexedDB' in window)) {
+            return reject("don't support indexedDB")
+          }
+
+          const request = indexedDB.open('CTC_DB', 1)
+          request.onerror = reject
+          request.onsuccess = e => resolve(e.target.result)
+          request.onupgradeneeded = function (e) {
+            const db = e.srcElement.result
+            if (e.oldVersion === 0 && !db.objectStoreNames.contains(storeName)) {
+              const store = db.createObjectStore(storeName, { keyPath: 'tag' })
+              store.createIndex(storeName + 'Index', 'tag', { unique: false })
+            }
+          }
+        })
+      }
+
+      // 存储数据
+      function saveData(db, data) {
+        return new Promise(function (resolve, reject) {
+          const STORE_NAME = 'ctc_aleinzhou'
+          const tx = db.transaction(STORE_NAME, 'readwrite')
+          const store = tx.objectStore(STORE_NAME)
+          const request = store.put({ tag: 'ctc_data', data })
+          request.onsuccess = () => resolve(db)
+          request.onerror = reject
+        })
+      }
+
+      // 查询/读取数据
+      function query(db) {
+        const STORE_NAME = 'ctc_aleinzhou'
+        return new Promise(function (resolve, reject) {
+          try {
+            const tx = db.transaction(STORE_NAME, 'readonly')
+            const store = tx.objectStore(STORE_NAME)
+            const dbRequest = store.get('ctc_data')
+            dbRequest.onsuccess = e => resolve(e.target.result)
+            dbRequest.onerror = reject
+          } catch (err) {
+            reject(err)
+          }
+        })
+      }
+
+      // 打开数据连接，并初始化数据
+      openStore().then(db => saveData(db, null))
+
+      // 连接和初始化后轮询读取消息
+      // 页面可以监听 visibilitychange 这样的事件，来做一次消息同步
+      openStore()
+        .then(db => saveData(db, null))
+        .then(function (db) {
+          setInterval(function () {
+            query(db).then(function (res) {
+              if (!res || !res.data) {
+                return
+              }
+              const data = res.data
+              const text = '[receive] ' + data.msg + ' —— tab ' + data.from
+              console.log('11[Storage I] receive message:', text)
+            })
+          }, 1000)
+        })
+
+      // 发送消息 只需向IndexedDB存储数据即可
+      // document.getElementById('button').addEventListener('click', function () {
+      //   openStore()
+      //     .then(db => saveData(db, null))
+      //     .then(function (db) {
+      //       // …… 省略上面的轮询代码
+      //       // 触发 saveData 的方法可以放在用户操作的事件监听内
+      //       saveData(db, mydata)
+      //     })
+      // })
+
+      // 6. window.open + window.open
+      // 使用window.open打开页面，方法会返回一个被打开页面window的引用。而在未显示指定noopener时，
+      // 被打开的页面可以通过window.open获取到打开它的页面的应用
+
+      // a. 将window.open打开的页面的window对象收集起来
+      let childWins = []
+      // document.getElementById('button').addEventListener('click', function () {
+      //   const win = window.open('./some/sample')
+      //   childWins.push(win)
+      // })
+
+      childWins = childWins.filter(w => !w.closed)
+      if (childWins.length > 0) {
+        mydata.fromOpenner = false
+        childWins.forEach(w => w.postMessage(mydata))
+      }
+
+      if (window.opener && !window.opener.closed) {
+        mydata.fromOpenner = true
+        window.opener.postMessage(mydata)
+      }
+
+      // 消息接收，除了展示接收到的信息，还要发送给其他 他知道的页面
+      window.addEventListener('message', function (e) {
+        const data = e.data
+        const text = '[receive] ' + data.msg + ' —— tab ' + data.from
+        console.log('[Cross-document Messaging] receive message:', text)
+        // 避免消息回传
+        if (window.opener && !window.opener.closed && data.fromOpenner) {
+          window.opener.postMessage(data)
+        }
+        // 过滤掉已经关闭的窗口
+        childWins = childWins.filter(w => !w.closed)
+        // 避免消息回传
+        if (childWins && !data.fromOpenner) {
+          childWins.forEach(w => w.postMessage(data))
+        }
+      })
+
+      // 非同源页面之间的通信 iframe
+      // iframe 与父页面间可以通过指定origin来忽略同源限制，因此可以在每个页面嵌入一个iframe，
+      // 而这些iframe由于使用的是一个url，因此属于同源页面
+      window.addEventListener('message', function (e) {
+        console.log(e)
+      })
+      window.frames[0].window.postMessage(mydata, '*')
+      
     </script>
   </body>
 </html>
