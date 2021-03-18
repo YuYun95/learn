@@ -1,0 +1,11 @@
+{
+  "name": "cwj-page",
+  "version": "1.0.0",
+  "main": "./bin/cwj-page.js",
+  "license": "MIT",
+  "bin": "./bin/cwj-page.js",
+  "lib": "./lib/index.js",
+  "dependencies": {
+    "webpack": "^5.26.3"
+  }
+}
