@@ -61,12 +61,59 @@ export default App
     })
   ```
 
+5. 设置状态值方法的参数可以是一个值也可以是一个函数；设置状态值方法的方法本身是异步的，如果代码依赖状态值，那要写在回调函数中
+  ```js
+  function handleCount() {
+    setCount(count => {
+      const newCount = count + 1
+      document.title = newCount
+      return newCount
+    })  
+  }
+  <button onClick={handleCount}>+1</button>
+  ```
 
+##### 2.2 useReducer
+useReducer是另一种让函数组件保存状态的方法，可以将dispatch传给子组件使用
 
+第一个参数是reducer函数；第二个参数是状态的初始值
 
+返回值是数组，第一个元素是存储的状态，第二个参数是触发action的dispatch方法
 
+useReducer相对于useState的好处：子组件想修改count值，就不需要传递多个修改数据的方法，
+可以直接把dispatch方法传递给子组件，子组件调用dispatch方法就可以触发任意action对状态进行修改
 
+```jsx
+import React, { useReducer } from 'react'
 
+function App(props) {
+  function reducer(state, action) {
+    switch (action.type) {
+      case 'increment':
+        return state + 1
+      case 'decrement':
+        return state - 1
+      default:
+        return state
+    }
+  }
+  const [count, dispatch] = useReducer(reducer, 0)
+  return (
+    <div className="App">
+      <button onClick={() => dispatch({ type: 'decrement' })}>-1</button>
+      <span>{count}</span>
+      <button onClick={() => dispatch({ type: 'increment' })}>+1</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+##### 2.3 钩子函数useContext
+
+在跨组件层级获取数据时简化获取数据的代码
 
 
 
