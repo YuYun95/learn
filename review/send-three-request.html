@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        height: 200vh;
+      }
+      .main {
+        margin-top: 300px;
+        /* transform: translateY(-1px); */
+        /* filter: grayscale(100%); */
+      }
+      .child {
+        position: fixed;
+        top: 100px;
+      }
+      span {
+        width: 300px;
+        height: 300px;
+        background-color: aqua;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="main">
+        <div class="child">promises</div>
+        <span>ss</span>
+      </div>
+
+      <iframe src="iframe.html" frameborder="0" width="500px" height="300px"></iframe>
+    </div>
+
+    <script>
+
+      
+
+      // 任意时刻，同时下载的链接数量不可以超过 3 个。试写出一段代码实现这个需求，要求尽可能快速地将所有接口中的数据得到
+
+      var urls = [
+        'http://jsonplaceholder.typicode.com/posts/1',
+        'http://jsonplaceholder.typicode.com/posts/2',
+        'http://jsonplaceholder.typicode.com/posts/3',
+        'http://jsonplaceholder.typicode.com/posts/4',
+        'http://jsonplaceholder.typicode.com/posts/5',
+        'http://jsonplaceholder.typicode.com/posts/6',
+        'http://jsonplaceholder.typicode.com/posts/7',
+        'http://jsonplaceholder.typicode.com/posts/8',
+        'http://jsonplaceholder.typicode.com/posts/9',
+        'http://jsonplaceholder.typicode.com/posts/10'
+      ]
+      function loadDate(url) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.onload = function () {
+            resolve(xhr.responseText)
+          }
+          xhr.open('GET', url)
+          xhr.send()
+        })
+      }
+
+      function limitLoad(urls, handler, limit) {
+        // 对数组做一个拷贝
+        const sequence = [].concat(urls)
+        let promises = []
+
+        //并发请求到最大数
+        promises = sequence.splice(0, limit).map((url, index) => {
+          // 这里返回的 index 是任务在 promises 的脚标，用于在 Promise.race 之后找到完成的任务脚标
+          return handler(url).then(() => {
+            return index
+          })
+        })
+
+        // 利用数组的 reduce 方法来以队列的形式执行
+        return sequence
+          .reduce((last, url, currentIndex) => {
+            return last
+              .then(() => {
+                // 返回最快改变状态的 Promise
+                console.log(Promise.race(promises))
+                return Promise.race(promises)
+              })
+              .catch(err => {
+                // 这里的 catch 不仅用来捕获 前面 then 方法抛出的错误
+                // 更重要的是防止中断整个链式调用
+                console.error(err)
+              })
+              .then(res => {
+                // 用新的 Promise 替换掉最快改变状态的 Promise
+                promises[res] = handler(sequence[currentIndex]).then(() => {
+                  return res
+                })
+              })
+          }, Promise.resolve())
+          .then(() => {
+            return Promise.all(promises)
+          })
+      }
+      // limitLoad(urls, loadDate, 3)
+    </script>
+  </body>
+</html>

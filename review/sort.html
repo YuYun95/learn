@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      // setTimeout(() => {
+      //   const speech = new SpeechSynthesisUtterance() // SpeechSynthesisUtterance()
+      //   const speechSyn = window.speechSynthesis
+      //   speech.text = '(｀・ω・´)'
+      //   speechSyn.speak(speech)
+      // }, 100)
+
+      // 1. 冒泡排序: 元素一和元素二比较，元素二大于元素一，交换位置；元素二和元素三比....
+      function bubbleSort(arr) {
+        let len = arr.length
+        for (let i = len; i >= 2; i--) {
+          for (let j = 0; j < i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+              // console.log(([arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]))
+              ;[arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+            }
+            // console.log(arr[j], arr[j + 1], j, j + 1)
+            // console.log(arr)
+          }
+        }
+        return arr
+      }
+
+      // 2. 选择排序：遍历自身以后的元素，最小的元素跟自己换位置
+      function selectSort(arr) {
+        let len = arr.length
+        for (let i = 0; i < len - 1; i++) {
+          for (let j = i; j < len; j++) {
+            if (arr[j] < arr[i]) {
+              ;[arr[i], arr[j]] = [arr[j], arr[i]]
+            }
+            // console.log(arr[i], arr[j], i, j)
+          }
+        }
+        return arr
+      }
+
+      // 3. 插入排序：将元素插入已排序好的数组中
+      function insertSort(arr) {
+        for (let i = 1; i < arr.length; i++) {
+          // arr[0]默认为已排序的数组
+          for (let j = i; j > 0; j--) {
+            if (arr[j] < arr[j - 1]) {
+              ;[arr[j], arr[j - 1]] = [arr[j - 1], arr[j]]
+            } else {
+              break
+            }
+            // console.log(arr[j], arr[j - 1], j, j - 1, i)
+            // console.log(arr)
+          }
+        }
+      }
+      // [5, 6, 3, 4, 1, 2]
+      // 5,3,6,4,1,2
+      // 3,5,6,4,1,2
+      // 3,5,4,6,1,2
+      // 3,4,5,6,1,2
+
+      // 4. 希尔排序
+      function shellSort(arr) {
+        let len = arr.length
+        for (let gap = Math.floor(len / 2); gap > 0; gap = Math.floor(gap / 2)) {
+          console.log('gap', gap)
+          for (let i = gap; i < len; i++) {
+            let j = i // 3
+            let current = arr[i] // 7
+            console.log(j, gap, current, arr[j - gap])
+            //  4  3     3       6
+            //  3  3     7       5
+            while (j - gap >= 0 && current < arr[j - gap]) {
+              console.log('whild')
+              arr[j] = arr[j - gap]
+              j = j - gap
+            }
+
+            arr[j] = current
+            console.log(arr)
+          }
+        }
+        return arr
+      }
+
+      // 5. 归并排序
+      //    归并排序采用的是分治的思想，首先是‘分’，将一个数列反复二分为两个小数组，直到每个数组只有一个元素
+      //    其次是‘治’，从最小数组开始，两两按大小顺序合并，直到并为原始数组大小
+      //    创建临时数组
+      //    从两个数组的开始元素开始比较，A[0] B[0]比较，小的放到临时数组，A[1] B[0]比较...
+      //    将另一序列剩下的所有元素直接复制到合并序列尾
+      //    [6,1,8,2, 3] ... =>[6][1][8][2][3] => [1,6][2,8,3] => [1,2,3,6,8]
+      function mergeSort(array) {
+        let len = array.length
+        if (len <= 1) return array
+
+        let num = Math.floor(len / 2)
+        let left = mergeSort(array.slice(0, num))
+        let right = mergeSort(array.slice(num, len))
+
+        return merge(left, right)
+
+        function merge(left, right) {
+          console.log('merge')
+          let [l, r] = [0, 0]
+          let result = []
+          while (l < left.length && r < right.length) {
+            if (left[l] < right[r]) {
+              result.push(left[l])
+              l++
+            } else {
+              result.push(right[r])
+              r++
+            }
+          }
+          console.log(l, left)
+          // console.log(left.slice(l, left.length))
+          result = result.concat(left.slice(l, left.length))
+          
+          // console.log('left合并', result, left)
+          result = result.concat(right.slice(r, right.length))
+          // console.log('right合并', result, right)
+          return result
+        }
+      }
+
+      // 6. 快速排序：选择基准mid，循环原数组，小于基准值放左边数组，大于放右边数组，
+      //    然后concat组合，最后依靠递归完成排序 (把数组递归切割为一个元素的数组，然后concat组合)
+      function quickSort(arr) {
+        if (arr.length <= 1) return arr
+        let left = []
+        let right = []
+        let mid = arr.splice(0, 1)
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i] < mid) {
+            left.push(arr[i])
+          } else {
+            right.push(arr[i])
+          }
+        }
+        // console.log(left, mid, right)
+        return quickSort(left).concat(mid, quickSort(right))
+      }
+
+      console.log(mergeSort([5, 6, 1, 7, 3, 2, 8, 4]))
+      // console.log(window.performance)
+    </script>
+  </body>
+</html>

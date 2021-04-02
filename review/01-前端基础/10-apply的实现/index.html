@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      /**
+       * apply 的实现和call类似
+       */
+      // Function.prototype.apply1 = function (context, arr) {
+      //   var context = context || window
+      //   context.fn = this
+
+      //   var result
+      //   if (!arr) {
+      //     result = context.fn()
+      //   } else {
+      //     var args = []
+      //     for (var i = 0, len = arr.length; i < len; i++) {
+      //       args.push('arr[' + i + ']')
+      //     }
+      //     result = eval('context.fn(' + args + ')')
+      //   }
+
+      //   delete context.fn
+      //   return result
+      // }
+
+      Function.prototype.apply2 = function (context, arr) {
+        var context = context || window
+        context.fn = this
+
+        var result
+        if (!arr) {
+          result = context.fn()
+        } else {
+          result = context.fn(...arr)
+        }
+
+        delete context.fn
+        return result
+      }
+
+      var value = 2
+      var obj = {
+        value: 1
+      }
+
+      function bar(name, age) {
+        console.log(this.value)
+        return {
+          value: this.value,
+          name: name,
+          age: age
+        }
+      }
+      bar.apply2(null)
+      // console.log(bar.apply1(obj, ['kevin', 18]))
+    </script>
+  </body>
+</html>

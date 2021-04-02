@@ -157,6 +157,16 @@
       console.log(person4.name) // Kevin
       console.log(person4.habit) // Games
       console.log(person4.strength) // 60
+
+      function _new(Fn, ...arg) {
+        let obj = Object.create(Fn.prototype)
+
+        let result = Fn.call(obj, ...arg)
+        if ((result !== null && typeof result === 'object') || typeof result === 'function') {
+          return result
+        }
+        return obj
+      }
     </script>
   </body>
 </html>
