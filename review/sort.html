@@ -8,28 +8,31 @@
   </head>
   <body>
     <script>
-      // setTimeout(() => {
-      //   const speech = new SpeechSynthesisUtterance() // SpeechSynthesisUtterance()
-      //   const speechSyn = window.speechSynthesis
-      //   speech.text = '(｀・ω・´)'
-      //   speechSyn.speak(speech)
-      // }, 100)
+      // const { connectStart, connectEnd } = window.performance.timing
+      // console.log(connectStart - connectEnd)
+      // console.log(window.performance)
 
       // 1. 冒泡排序: 元素一和元素二比较，元素二大于元素一，交换位置；元素二和元素三比....
+      // 优化   1. 可能传入的数据已经是有序列表
+      //        2. 可能列表后面的已经是排序的（记录一次循环中最后一次交换的位置）
       function bubbleSort(arr) {
         let len = arr.length
-        for (let i = len; i >= 2; i--) {
-          for (let j = 0; j < i - 1; j++) {
-            if (arr[j] > arr[j + 1]) {
+        for (let end = len; end >= 2; end--) {
+          let sortedIndex = 1
+          for (let begin = 0; begin < end - 1; begin++) {
+            if (arr[begin] > arr[begin + 1]) {
               // console.log(([arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]))
-              ;[arr[j], arr[j + 1]] = [arr[j + 1], arr[j]]
+              ;[arr[begin], arr[begin + 1]] = [arr[begin + 1], arr[begin]]
+              sortedIndex = begin + 2
             }
             // console.log(arr[j], arr[j + 1], j, j + 1)
             // console.log(arr)
           }
+          end = sortedIndex + 1
         }
         return arr
       }
+      console.log(bubbleSort([2,1,8,3,7,6,4,9,10,11,12,13,1]))
 
       // 2. 选择排序：遍历自身以后的元素，最小的元素跟自己换位置
       function selectSort(arr) {
@@ -45,7 +48,7 @@
         return arr
       }
 
-      // 3. 插入排序：将元素插入已排序好的数组中
+      // 3. 插入排序：将元素插入已排序好的数组中(对未排序序列中从后向前扫描，找到对应位置并插入)
       function insertSort(arr) {
         for (let i = 1; i < arr.length; i++) {
           // arr[0]默认为已排序的数组
@@ -61,10 +64,10 @@
         }
       }
       // [5, 6, 3, 4, 1, 2]
-      // 5,3,6,4,1,2
-      // 3,5,6,4,1,2
-      // 3,5,4,6,1,2
-      // 3,4,5,6,1,2
+      // 5, 6, 3, 4, 1, 2 -> 5,3,6,4,1,2 -> 3,5,6,4,1,2
+      // 3,5,4,6,1,2 -> 3,4,5,6,1,2
+
+      // console.log(insertSort([5, 6, 1, 7, 3, 2, 8, 4]))
 
       // 4. 希尔排序
       function shellSort(arr) {
@@ -149,7 +152,10 @@
         return quickSort(left).concat(mid, quickSort(right))
       }
 
-      console.log(mergeSort([5, 6, 1, 7, 3, 2, 8, 4]))
+      // 7. 堆排序
+      
+
+      // console.log(mergeSort([5, 6, 1, 7, 3, 2, 8, 4]))
       // console.log(window.performance)
     </script>
   </body>

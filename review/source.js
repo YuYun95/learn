@@ -7,7 +7,7 @@
  */
 
 function _new(Func, ...args) {
-  let obj = Object.create(Func.protertype)
+  let obj = Object.create(Func.prototype)
 
   let result = Func.call(obj, ...args)
   if ((result !== null && typeof result === 'object') || typeof result === 'function') {
