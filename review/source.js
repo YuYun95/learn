@@ -580,3 +580,148 @@ function resolvePromise(promise, x, resolve, reject) {
     resolve(x)
   }
 }
+
+// 深度优先（递归版）
+function getName(data) {
+  if (!data || !data.length) return []
+  const result = []
+  data.forEach(item => {
+    const map = data => {
+      result.push(data.name)
+      data.children && data.children.forEach(child => map(child))
+    }
+    map(item)
+  })
+  return result
+}
+
+// 深度优先（非递归版）
+function getName1(data) {
+  const result = []
+  const stack = JSON.parse(JSON.stringify(data))
+  // 循环条件，栈不为空
+  while (stack.length !== 0) {
+    // 最上层节点出栈
+    const node = stack.shift()
+    result.push(node.name)
+    const len = node.children && node.children.length
+    for (let i = len - 1; i >= 0; i -= 1) {
+      stack.unshift(node.children[i]) // 把子级添加到最外层
+    }
+  }
+  return result
+}
+
+// 广度优先遍历
+function breadthFirstSearch(source) {
+  const result = []
+  const queue = JSON.parse(JSON.stringify(source))
+  while (queue.length > 0) {
+    // 第一个节点出队列
+    const node = queue.shift()
+    result.push(node.name)
+    // 当前节点有子节点则将子节点存入队列，继续下一次的循环
+    const len = node.children && node.children.length
+    for (let i = 0; i < len; i += 1) {
+      queue.push(node.children[i])
+    }
+  }
+  return result
+}
+
+/**
+ * 回溯算法
+ * 类似枚举的搜索尝试过程，在搜索尝试过程中寻找问题的解，如果不满足求解条件，就回溯返回，尝试别的路径
+ * 1. 跳出添加，满足条件将当前结果加入总结果
+ * 2. 已经拿过的数不再拿
+ * 3,。 向下遍历，结束后回溯到上一步
+ */
+function allArray(nums) {
+  var result = []
+  function dfs(path) {
+    if (nums.length === path.length) {
+      // 满足条件
+      result.push([...path])
+      return
+    }
+    for (let i = 0; i < nums.length; i++) {
+      if (path.includes(nums[i])) {
+        // 去掉已经拿过的数
+        continue // 不往后执行
+      }
+      path.push(nums[i]) // 做选择
+      dfs(path)
+      path.pop()
+    }
+  }
+  dfs([])
+  return result
+}
+
+// allArray([1,2,3]) // [ [1,2,3], [1,3,2], [2,1,3], [2,3,1], ... ]
+
+function sonArray(nums) {
+  const result = []
+  function dfs(path, start) {
+    result.push([...path])
+    for (let i = start; i < nums.length; i++) {
+      path.push(nums[i])
+      dfs(path, i + 1)
+      path.pop()
+    }
+  }
+  dfs([], 0)
+  return result
+}
+
+// console.log(sonArray([1,2,3])) // [[], [1], [1,2], [1,2,3], [1,3], [2], [2,3], ...]
+
+// 组合求和（组合的和是否等于目标）
+function targetArray(nums, target) {
+  let result = []
+  function sum(arr) {
+    if (arr.length === 0) return 0
+    return arr.reduce((a, b) => a + b)
+  }
+  function dfs(path, start) {
+    if (sum(path) === target) {
+      result.push([...path])
+      return
+    }
+    if (sum(path) > target) {
+      return
+    }
+    for (let i = start; i < nums.length; i++) {
+      path.push(nums[i])
+      dfs(path.slice(), i)
+      path.pop()
+    }
+  }
+  dfs([], 0)
+  return result
+}
+// console.log(targetArray([2,3,5],8)) // [[2,2,2,2],[2,3,3],[3,5]]
+
+function func(arr, str) {
+  var res = [];
+  var recur = function(arr, path) {
+      let string = path.join('-');
+      console.log(string)
+      if(string.indexOf(str) !== -1){
+          res.push(string);
+      }
+      if(arr === undefined || arr.length === 0)
+          return;
+      
+      for(let i=0; i<arr.length; i++){
+          path.push(arr[i].label);
+          recur(arr[i].children, path);
+          path.pop();
+      }
+  }
+  recur(arr, []);
+  return res;
+}
+
+// console.log(func([{label:'江苏省',children:[{label:'南京市',children:[{label:'xxx区',children:[]}]}]}],'南京'))
+//[ '江苏省-南京市', '江苏省-南京市-xxx区' ]

@@ -1,23 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <style>
-    .main {
-      width: 100px;
-      height: 100px;
-      background-color: skyblue;
-      position: fixed;
-      top: 0;
-    }
-  </style>
-</head>
-<body>
-  <div>
-    <div class="main"></div>
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .main {
+        width: 100px;
+        height: 100px;
+        background-color: skyblue;
+        position: fixed;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="main"></div>
+    </div>
+
+    <script>
+      function allArray(nums) {
+        var result = []
+        function dfs(path) {
+          console.log('执行', nums.length, path.length)
+          if (nums.length === path.length) {
+            // 满足条件
+            result.push([...path])
+            return
+          }
+          for (let i = 0; i < nums.length; i++) {
+            console.log('循环i', i)
+            if (path.includes(nums[i])) {
+              // 去掉已经拿过的数
+              continue
+            }
+            path.push(nums[i]) // 做选择
+            console.log('i', i, path)
+            dfs(path)
+            path.pop() // 删除数组最后一项
+            console.log('path', i, path)
+          }
+        }
+        dfs([])
+        return result
+      }
+
+      allArray([1, 2, 3])
+    </script>
+  </body>
 </html>

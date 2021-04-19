@@ -2079,6 +2079,73 @@
     
     ```
 
+21. type 和 interface 的区别
+    * 都可以描述一个对象或者函数
+      ```ts
+      interface User {
+        name: string
+        age: number
+      }
+      interface SetUser {
+        (name:string,age:number):void;
+      }
+      type User = {
+        name: string
+        age: number
+      }
+      type SetUser = (name:string, age:number) => void;
+      ```
+    * 都允许拓展(继承)
+      * interface 和 type 都可以拓展，并且两者并不是相互独立的，也就是说 interface可以extends type，type也可以extends interface，虽然效果差不多，但是两者语法不同
+      ```ts
+      interface extends interface
+
+      interface Name{ name: string }
+      interface User extends Name { age: number }
+
+      type extends type
+      type Name = { name: string }
+      type User = Name & { age: number }
+
+      interface extends type
+      type Name = { name: string }
+      interface User extends Name {
+        age: number
+      }
+
+      type extends interface
+      interface Name{ name: string }
+      type User = Name & { age: number }
+      ```
+    * type 可以声明基本类型别名、联合类型、元组等类型，而interface 不行
+      ```ts
+      type Name = string
+      interface Dog { wong() } // 基本类型别名
+      interface Cat { miao() }
+      type Pet = Dog | Cat // 联合类型
+      type PetList = [Dog, Cat] // 元组类型
+
+      // type 语句中还可以使用typeof 获取实例的类型进行赋值
+      let div = document.createElement('div')
+      type B = typeof div
+
+      // 其他操作
+      type StringOrNumber = string | number
+      type Foo = string | { text: string }
+      type NameLookUp = Dictionary<string, Person>
+      type Callback<T> = (data:<T>) => void
+      type Pair<T> = [T, T]
+      type Coordinates = Pair<number>
+      type Tree<T> = T | { left: Tree<T>, right: Tree<T> }
+      ```
+    * interface 能够声明合并，type 不行
+    ```ts
+    interface User { name: string; age: number }
+    interface User { sex: string }
+    // User 接口为 { name: string; age: number; sex: string }
+    ```
+
+
 ## Javascript性能优化
 ### 一、内存管理
 * 内存：由可读写单元组成，表示一片可操作空间
