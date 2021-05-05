@@ -206,7 +206,7 @@
    log('foo')
    log('bar')
    ```
-   解构嵌套的对象，解构嵌套的对象，解构的格式，要和被解构的一样
+   解构嵌套的对象，解构的格式，要和被解构的一样
    ```javascript
    const user = {
      id: 123,
@@ -215,7 +215,7 @@
        degree: 'Masters'
      }
    }
-   const {education: {degree}} = user // 可以理解为，外层的大括号对应user的大括号，education对应usere的ducation，degree对应user的degree
+   const {education: {degree}} = user // 可以理解为，外层的大括号对应user的大括号，education对应usere的education，degree对应user的degree
    console.log(degree) // Masters
    ```
 
