@@ -1215,7 +1215,7 @@
     }
     
     // Object.values 返回对象的所有值的数组
-    console.log(Object.values(obj)); // ['value1', ['value2']]
+    console.log(Object.values(obj)); // ['value1', 'value2']
     ```
 
 2. Object.entries
