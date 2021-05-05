@@ -80,7 +80,7 @@
    }
    elements[0].onclick()
    ```
-   有了块级作用域就不需要如此麻烦；其实内部也是闭包的机制，当onclick执行是寻找早已执行完毕，i 早已销毁，因为闭包的机制我们才能拿到i对应的值
+   有了块级作用域就不需要如此麻烦；其实内部也是闭包的机制，当onclick执行是循环早已执行完毕，i 早已销毁，因为闭包的机制我们才能拿到i对应的值
    ```javascript
    var elements = [{}, {}, {}]
    for(let i = 0; i < elements.length; i++){
