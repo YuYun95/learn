@@ -38,7 +38,8 @@ export default App
     const [count, setCount] = useState(0)
     const [person, setPerson] = useState({ name: '张三', age: 20 })
   ```
-2. 返回值为数组，数组中存储状态值和更改状态值的方法，方法名称约定以set开头，后面加上状态名称
+2. useState返回值是一个数组，第一个是保存的状态，第二个是设置状态的方法，
+   数组中存储状态值和更改状态值的方法，**方法名称约定以set开头，后面加上状态名称**
   ```js
     const [count, setCount] = useState(0)
   ```
@@ -113,23 +114,150 @@ export default App
 
 ##### 2.3 钩子函数useContext
 
-在跨组件层级获取数据时简化获取数据的代码
+在跨组件层级获取数据时简化获取数据的代码，实现共享
+
+useContext：解决的是组件之间值传递的问题
+
+redux：是应用中统一管理状态的问题
+
+```jsx
+import React, { createContext } from 'react'
+
+const countContext = createContext()
+
+function App(props) {
+  return <countContext.Provider value={100}>
+   <Foo />
+ </countContext.Provider>
+}
+
+function Foo() {
+  return <countContext.Consumer>
+    {
+      value => {
+        return <div>{ value }</div>
+      }
+    }
+  </countContext.Consumer>
+}
+
+export default App
+```
+
+使用useContext简化
+```jsx
+import React, { createContext, useContext } from 'react'
+
+const countContext = createContext()
+
+function App(props) {
+  return <countContext.Provider value={100}>
+   <Foo />
+ </countContext.Provider>
+}
+
+function Foo() {
+  const value = useContext(countContext)
+  return <div>{value}</div>
+}
+
+export default App
+```
+
+##### 2.4 钩子函数useEffect
+
+让函数型组件拥有处理副作用的能力，类似生命周期函数
+
+1. useEffect执行时机
+   可以把useEffect看做 componentDidMount、componentDidUpdate 和 componentWillUnmount这三个函数的组合
+
+   useEffect(() => {})                      =>    componentDidMount、componentDidUpdate
+   useEffect(() => {}, [allNumber])         =>    componentDidMount
+   useEffect(() => () => {}, [])            =>    componentWillUnMount
+
+   allNumber值发生变化后会再次执行，传递一个空数组（[]）作为第二个参数，这个 Effect 将永远不会重复执行，因此可以达到componentDidMount的效果
+
+```jsx
+import React, { useState, useEffect } from 'react'
+import ReactDOM from 'react-dom'
 
 
+function App(props) {
+  const [count, setCount] = useState(0)
+  // 组件挂载完成之后执行 组件数据更新完成之后执行
+  useEffect(() => {
+    console.log('123')
+  })
 
+  // 组件挂载完成之后执行
+  useEffect(() => {
+    console.log('456')
+  }, [])
 
+  // 组件被卸载之前执行
+  useEffect(() => {
+    return () => {
+      console.log('组件被卸载')
+    }
+  }, [])
 
+  return (
+    <div>
+      <span>{count}</span>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      <button onClick={() => ReactDOM.unmountComponentAtNode(document.getElementById('root'))}>卸载组件</button>
+    </div>
+  )
+}
 
+export default App
 
+```
 
+2. useEffect使用方法
 
+* 为window对象添加滚动事件
+* 设置定时器让count数值每隔一秒增加1
 
+```jsx
+import React, { useEffect, useState } from 'react'
+import ReactDOM from 'react-dom'
 
+function App(props) {
+  function onScroll() {
+    console.log('页面发生滚动了')
+  }
+  useEffect(() => {
+    window.addEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
 
+  const [count, setCount] = useState(0)
 
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setCount(count => {
+        document.title = count + 1
+        return count + 1
+      })
+    }, 1000)
+    return () => {
+      clearInterval(timerId)
+    }
+  }, [])
+  return <div>
+    <span>{count}</span>
+    <button onClick={() => ReactDOM.unmountComponentAtNode(document.getElementById('root'))}>卸载组件</button>
+  </div>
+}
 
+export default App
+```
 
-
+3. 相对于类组件优势
+  * 
 
 
 

@@ -156,7 +156,7 @@ function throttle2(func, wait = 300) {
 const instanceOf = (A, B) => {
   let p = A
   while (p) {
-    if (p === B.protertype) {
+    if (p === B.prototype) {
       return true
     }
     p = p.__proto__
