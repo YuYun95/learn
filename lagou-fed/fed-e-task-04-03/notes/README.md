@@ -607,10 +607,66 @@ export default function List() {
 }
 ```
 
+#### 5 useState钩子函数的实现原理
 
+useState使用方式
+* useState方法传递一个state初始值
+* useState方法返回一个数组，第一个元素是state，第二是元素是设置state的方法
+* useState方法可以被多次调用，存储多个状态
+* state值改变后重新渲染组件
 
+采用数组的方式存储state和设置state的方法，并且这两个数组使用索引值建立对应关系，当调用useState时先判断state数组对应的索引是否存在值，
+如果存在就用，不存在就是初始值；接着创建一个设置状态值的方法，需要使用闭包的方式把索引值保存，这样在点击按钮设置state的时候才能拿到对应的方法，
+设置方法后重新渲染组件，然后useState要让索引值加一，把state和设置state的方法返回
 
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
 
+let state = []
+let setters = []
+let stateIndex = 0
+
+function createSetter(index) {
+  return function(newState) {
+    state[index] = newState
+    render()
+  }
+}
+
+function useState(initialState) {
+  state[stateIndex] = state[stateIndex] ? state[stateIndex] : initialState
+  setters.push(createSetter(stateIndex))
+  let value = state[stateIndex]
+  let setter = setters[stateIndex]
+  stateIndex ++
+  return [value, setter]
+}
+
+// state改变重新渲染
+function render() {
+  stateIndex = 0 // 将索引值重新赋值为0，重新渲染时从0开始判断是否有
+  ReactDOM.render(<App />, document.getElementById('root'))
+}
+
+function App() {
+  const [count, setCount] = useState(0)
+  const [name, setName] = useState('张三')
+console.log(state)
+  return (
+    <div>
+    {count}
+    <button onClick={() => setCount(count + 1)}>setCount</button>
+    {name}
+    <button onClick={() => setName('李四')}>setCount</button>
+    </div>
+  )
+}
+
+export default App
+```
+
+#### 6 useEffect钩子函数的实现原理
 
 
 
