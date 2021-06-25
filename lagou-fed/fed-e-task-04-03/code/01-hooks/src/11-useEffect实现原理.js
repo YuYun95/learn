@@ -51,15 +51,6 @@ function useEffect(callback, depsAry) {
   }
 }
 
-function useReducer(reducer, initialState) {
-  const [state, setState] = useState(initialState)
-  function dispatch(action) {
-    const newState = reducer(state, action)
-    setState(newState)
-  }
-  return [state, dispatch]
-}
-
 // state改变重新渲染
 function render() {
   stateIndex = 0 // 将索引值重新赋值为0
@@ -68,23 +59,22 @@ function render() {
 }
 
 function App() {
-  function reducer(state, action) {
-    switch (action.type) {
-      case 'increment':
-        return state + 1
-      case 'decrement':
-        return state - 1
-      default:
-        return state
-    }
-  }
+  const [count, setCount] = useState(0)
+  const [name, setName] = useState('张三')
+  useEffect(() => {
+    console.log('hello')
+  }, [count])
 
-  const [count, dispatch] =useReducer(reducer, 0)
+  useEffect(() => {
+    console.log('world')
+  }, [name])
+  
   return (
     <div>
-     {count}
-     <button onClick={() => dispatch({ type: 'increment'})}>+1</button>
-     <button onClick={() => dispatch({ type: 'decrement'})}>-1</button>
+    {count}
+    <button onClick={() => setCount(count + 1)}>setCount</button>
+    {name}
+    <button onClick={() => setName('李四')}>setCount</button>
     </div>
   )
 }

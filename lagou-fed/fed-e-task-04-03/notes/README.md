@@ -668,6 +668,1207 @@ export default App
 
 #### 6 useEffect钩子函数的实现原理
 
+useEffect使用方式
+* 第一个参数是回调函数；第二参数可传可不传，第二个参数类型是数组
+* 当第二个参数不传递时，任何一个state改变都要执行useEffect
+* 当第二个参数传递时且不为空数组，依赖值改变时再执行useEffect
+* 当第二个参数传递时且为空数组，只在初始化执行，后面重新渲染组件将不再执行
+* useEffect可以被多次调用
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+
+let state = []
+let setters = []
+let stateIndex = 0
+
+function createSetter(index) {
+  return function(newState) {
+    state[index] = newState
+    render()
+  }
+}
+
+function useState(initialState) {
+  state[stateIndex] = state[stateIndex] ? state[stateIndex] : initialState
+  setters.push(createSetter(stateIndex))
+  let value = state[stateIndex]
+  let setter = setters[stateIndex]
+  stateIndex ++
+  return [value, setter]
+}
+
+// 上一次的依赖值
+let prevDepsAry = []
+let effectIndex = 0
+function useEffect(callback, depsAry) {
+  if (Object.prototype.toString.call(callback) !== '[object Function]') {
+    throw new Error('useEffect函数第一个参数必须是函数')
+  }
+  // 判断depsAry有没有传递
+  if (typeof depsAry === 'undefined') {
+    // 没有传递
+    callback()
+  } else {
+    // 判断depsAry是不是数组
+    if (Object.prototype.toString.call(depsAry) !== '[object Array]') throw Error('useEffect第二个参数必须是数组')
+    // 获取上一次的状态值
+    let prevDeps = prevDepsAry[effectIndex]
+    // 将当前的依赖值和上一次的依赖值作对比 如果有变化 调用callback
+    let hasChange = prevDeps ?  depsAry.every((dep,index) => dep === prevDeps[index]) === false : true
+    // 判断值是否有变化
+    if (hasChange) {
+      callback()
+    }
+    // 同步依赖值
+    prevDepsAry[effectIndex] = depsAry
+    effectIndex ++
+  }
+}
+
+// state改变重新渲染
+function render() {
+  stateIndex = 0 // 将索引值重新赋值为0
+  effectIndex = 0
+  ReactDOM.render(<App />, document.getElementById('root'))
+}
+
+function App() {
+  const [count, setCount] = useState(0)
+  const [name, setName] = useState('张三')
+  useEffect(() => {
+    console.log('hello')
+  }, [count])
+
+  useEffect(() => {
+    console.log('world')
+  }, [name])
+  
+  return (
+    <div>
+    {count}
+    <button onClick={() => setCount(count + 1)}>setCount</button>
+    {name}
+    <button onClick={() => setName('李四')}>setCount</button>
+    </div>
+  )
+}
+
+export default App
+```
+
+#### 7 useReducer钩子函数的实现原理
+
+useReducer使用方式
+* useReducer函数接收两个参数，第一个参数是reducer函数，在这个函数内容要匹配action的类型，做相应的处理逻辑；
+  第二个参数是state
+* useReduce函数返回值是一个数组，第一个值是state，第二个值是dispatch方法，通过调用dispatch方法可以触发action
+
+useReducer内部调用useState储存state；定义dispatch方法，dispatch方法接收一个action对象，dispatch方法内部调用reducer方法传递最新的state和action，返回最新的state，调用setState方法储存最新的state；useReducer方法返回一个数组，第一个值是state，第二个值是dispatch方法
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+
+let state = []
+let setters = []
+let stateIndex = 0
+
+function createSetter(index) {
+  return function(newState) {
+    state[index] = newState
+    render()
+  }
+}
+
+function useState(initialState) {
+  state[stateIndex] = state[stateIndex] ? state[stateIndex] : initialState
+  setters.push(createSetter(stateIndex))
+  let value = state[stateIndex]
+  let setter = setters[stateIndex]
+  stateIndex ++
+  return [value, setter]
+}
+
+// 上一次的依赖值
+let prevDepsAry = []
+let effectIndex = 0
+function useEffect(callback, depsAry) {
+  if (Object.prototype.toString.call(callback) !== '[object Function]') {
+    throw new Error('useEffect函数第一个参数必须是函数')
+  }
+  // 判断depsAry有没有传递
+  if (typeof depsAry === 'undefined') {
+    // 没有传递
+    callback()
+  } else {
+    // 判断depsAry是不是数组
+    if (Object.prototype.toString.call(depsAry) !== '[object Array]') throw Error('useEffect第二个参数必须是数组')
+    // 获取上一次的状态值
+    let prevDeps = prevDepsAry[effectIndex]
+    // 将当前的依赖值和上一次的依赖值作对比 如果有变化 调用callback
+    let hasChange = prevDeps ?  depsAry.every((dep,index) => dep === prevDeps[index]) === false : true
+    // 判断值是否有变化
+    if (hasChange) {
+      callback()
+    }
+    // 同步依赖值
+    prevDepsAry[effectIndex] = depsAry
+    effectIndex ++
+  }
+}
+
+function useReducer(reducer, initialState) {
+  const [state, setState] = useState(initialState)
+  function dispatch(action) {
+    const newState = reducer(state, action)
+    setState(newState)
+  }
+  return [state, dispatch]
+}
+
+// state改变重新渲染
+function render() {
+  stateIndex = 0 // 将索引值重新赋值为0
+  effectIndex = 0
+  ReactDOM.render(<App />, document.getElementById('root'))
+}
+
+function App() {
+  function reducer(state, action) {
+    switch (action.type) {
+      case 'increment':
+        return state + 1
+      case 'decrement':
+        return state - 1
+      default:
+        return state
+    }
+  }
+
+  const [count, dispatch] =useReducer(reducer, 0)
+  return (
+    <div>
+     {count}
+     <button onClick={() => dispatch({ type: 'increment'})}>+1</button>
+     <button onClick={() => dispatch({ type: 'decrement'})}>-1</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+### Formik
+#### 1. Formik介绍及基本使用
+##### 1.1 Formik介绍
+增强表单处理能力，简化表单处理流程
+
+
+##### 1.2 下载
+npm install formik
+
+#### 2. Formik增强表单
+##### 2.1 Formik基本使用
+使用formik进行表单数据绑定以及表单提交处理
+```jsx
+import React from 'react'
+import { useFormik } from 'formik'
+
+function App() {
+  const formik = useFormik({
+    initialValues: { username:'zhangsan', password: '123456'},
+    onSubmit: value => {
+      console.log(value)
+    }
+  })
+  return (
+    <form onSubmit={formik.handleSubmit}>
+      <input type="text" name="username" value={formik.values.username} onChange={formik.handleChange} />
+      <input type="password" name="password" value={formik.values.password} onChange={formik.handleChange} />
+      <input type="submit" />
+    </form>
+  )
+}
+
+export default App
+```
+
+#### 2. Formik表单验证
+##### 2.1 初始验证方式
+```jsx
+import React from 'react'
+import { useFormik } from 'formik'
+
+function App() {
+  const formik = useFormik({
+    initialValues: { username:'zhangsan', password: '123456'},
+    validate: values => {
+      const errors = {}
+      if (!values.username) {
+        errors.username ='请输入用户名'
+      } else if (values.username.length > 15) {
+        errors.username = '用户名的长度不能大于15'
+      }
+
+      if (values.password.length < 6) {
+        errors.password = '密码的长度不能小于6'
+      }
+      
+      return errors
+    },
+    onSubmit: value => {
+      console.log(value)
+    }
+  })
+  return (
+    <form onSubmit={formik.handleSubmit}>
+      <input type="text" name="username" value={formik.values.username} onChange={formik.handleChange} />
+      <p>{ formik.errors.username ? formik.errors.username : null}</p>
+      <input type="password" name="password" value={formik.values.password} onChange={formik.handleChange} />
+      <p>{ formik.errors.password ? formik.errors.password : null}</p>
+      <input type="submit" />
+    </form>
+  )
+}
+
+export default App
+```
+
+##### 2.2 完善错误信息提示时的用户体验
+开启离开焦点时触发验证；提示信息时检查表单元素的值是否被改动过
+
+给input添加onBlur={formik.handleBlur}；显示提示信息还需要判断表单元素是否被改动
+
+```jsx
+<form onSubmit={formik.handleSubmit}>
+  <input
+    type="text"
+    name="username"
+    value={formik.values.username}
+    onChange={formik.handleChange}
+    onBlur={formik.handleBlur}
+  />
+  <p>{ formik.touched.username && formik.errors.username ? formik.errors.username : null}</p>
+  <input
+    type="password"
+    name="password"
+    value={formik.values.password}
+    onChange={formik.handleChange}
+    onBlur={formik.handleBlur}
+  />
+  <p>{ formik.touched.password && formik.errors.password ? formik.errors.password : null}</p>
+  <input type="submit" />
+</form>
+```
+
+##### 2.3 使用yup验证
+* 下载yup：`npm install yup`
+* 引入 `import * as Yup from 'yup'`
+* 定义验证规则
+```jsx
+const formik = useFormik({
+  initialValues: { username:'', password: ''},
+  validationSchema: Yup.object({
+    username: Yup.string()
+              .max(15, '用户名的长度不能大于15')
+              .required('请输入用户名'),
+    password: Yup.string()
+              .min(6, '密码的长度不能小于6')
+              .required('请填写密码')
+  }),
+  onSubmit: value => {
+    console.log(value)
+  }
+})
+```
+
+#### 3 使用getFieldProps方法简化表单代码
+减少模板代码，getFieldProps会把value、onChange、onBlur属性返回
+```jsx
+<input
+  type="text"
+  name="username"
+  autoComplete="off"
+  { ...formik.getFieldProps('username')}
+/>
+```
+
+#### 4
+##### 4.1 使用组件的方式构建表单
+```jsx
+import React from 'react'
+import { Formik, Form, Field, ErrorMessage } from 'formik'
+import * as Yup from 'yup'
+
+function App() {
+  const initialValues = {
+    username: ''
+  }
+  const handleSubmit = (values) => {
+    console.log(values)
+  }
+  const schema = Yup.object({
+    username: Yup.string()
+              .max(15, '用户名的长度不能大于15')
+              .required('请输入用户名')
+  })
+
+  return (
+    <Formik
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      validationSchema={schema}
+    >
+      <Form>
+        <Field name="username" />
+        <ErrorMessage name="username" />
+        <input type="submit" />
+      </Form>
+    </Formik>
+  )
+}
+
+export default App
+```
+
+##### 4.2 Field组件的as属性
+默认情况下，Field组件渲染的是文本框，如要生成其他表单元素可以使用一下语法
+
+```jsx
+<Field name="content" as="textarea" />
+<Field name="subject" as="select">
+  <option value="前端">前端</option>
+  <option value="Java">Java</option>
+  <option value="Python">Python</option>
+</Field>
+```
+
+##### 4.3 构建自定义表单控件
+使用useField构建自定义表单控件
+
+```jsx
+import { useField } from 'formik'
+
+function MyInput({ label, ...props }) {
+  const [field, meta] = useField(props)
+  
+  return <div>
+    <label htmlFor={props.id}>{label}</label>
+    <input { ...field } { ...props } />
+    { meta.touched && meta.error ? <span>{meta.error}</span> : null }
+  </div>
+}
+
+<MyInput id="myPass" label="密码" name="password" type="password" placeholder="请输入密码" />
+```
+
+##### 4.4 构建自定义表单控件复选框
+```jsx
+function Checkbox({ label, ...props }) {
+  const [field, meta, helper] = useField(props)
+  const { value } = meta
+  const { setValue } = helper
+  const handleChange = () => {
+    const set = new Set(value)
+    if (set.has(props.value)) {
+      set.delete(props.value)
+    } else {
+      set.add(props.value)
+    }
+
+    setValue([...set])
+  }
+
+  return <div>
+    <label htmlFor="">
+      <input checked={value.includes(props.value)} type="checkbox" { ...props } onChange={handleChange} /> {label}
+    </label>
+  </div>
+}
+
+<Checkbox value="足球" label="足球" name="hobbies" />
+<Checkbox value="篮球" label="篮球" name="hobbies" />
+<Checkbox value="橄榄球" label="橄榄球" name="hobbies" />
+```
+
+### Component
+受控组件与非受控组件的选用标准
+
+非受控组件：表单数据交由DOM节点管理，特点是表单数据在需要时进行获取，代码实现相对简单
+```jsx
+function App() {
+  const userInput = useRef()
+  function handleSubmit () {
+    const username = userInput.current.value
+  }
+  return <form onSubmit={handleSubmit}>
+    <input type="text" ref={userInput}>
+    <input type="submit">
+  </form>
+}
+```
+
+受控组件：表单数据交由state对象管理，特点是可以实时得到表单数据，代码相对复杂
+```jsx
+class App extends Component {
+  state = { username: '' }
+
+  handleChange (event) { this.setState({ username: event.target.value })}
+
+  render() {
+    return <form>
+      <input type="text" value={this.state.username} onChange={this.handleChange.bind(this)}>
+      <span>{ this.state.username }</span>
+    </form>
+  }
+}
+```
+
+选用标准：受控组件和非受控组件都有其特点，应该根据需求场景进行选择，
+在大多数情况下，推荐使用受控组件处理表单数据，
+如果表单在数据交换方面比较简单，使用非受控表单，否则使用受控表单
+
+|  场景   | 非受控  | 受控 |
+|  ----  | ----  | ----  |
+| 表单提交时取值  | √ | √ |
+| 表单提交时验证  | √ | √ |
+| 表单项元素实时验证  | × | √ |
+| 根据条件禁用提交按钮  | × | √ |
+| 强制输入内容的格式  | × | √ |
+| 一个数据的多个输入  | × | √ |
+
+
+### CSS-IN-JS
+集成css代码在javascript代码中
+
+#### 1 为什么会有CSS-IN-JS
+CSS-IN-JS 是 WEB 项目中将css代码捆绑在javascript代码中的解决方案
+
+这种方案旨在解决css的局限性，例如缺乏动态功能，作用域和可移植性
+
+#### 2 CSS-IN-JS优缺点
+优点：
+* 让css代码拥有独立的作用域，阻止css代码泄露到组件外部，防止样式冲突
+* 让组件更具可移植性，实现开箱即用，轻松创建松耦合的应用程序
+* 让组件更具可重用性，只需缩写一次即可，可以在任何地方运行，不仅可以在同一应用程序中重用组件，而且可以在使用相同框架构建的其他应用程序中重用组件
+* 让样式具有动态功能，可以将复杂的逻辑应用于样式规则，如果要创建需要动态功能的复杂UI，它是理想的解决方案
+
+缺点：
+* 为项目增加了额外的复杂性
+* 自动生成的选择器大大降低了代码的可读性
+
+#### 3 Emotion 库
+##### 3.1 Emotion 介绍
+Emotion 是一个旨在使用javascript编写css样式的库
+
+npm install @emotion/core @emotion/styled @emotion/react
+
+##### 3.2 css属性支持
+1. JSX Pragma，通知babel，不需要将jsx语法转换为React.createElement方法，而是需要转换为jsx方法
+
+   |     | Input  | Output |
+   |  ----  | ----  | ----  |
+   | Before  | `<img src="avatar.png">` | React.createElement('img', { src: 'avatar.png' }) |
+   | After  | `<img src="avatar.png">` | jsx('img', { src: 'avatar.png' }) |
+
+    文件添加一下内容
+    ```js
+    /** @jsx jsx */
+    import { jsx } from '@emotion/core'
+    ```
+
+2. Babel Preset
+   
+   npm run eject
+
+   安装依赖 npm install @emotion/babel-preset-css-prop
+
+   在package.json文件中找到babel属性，加入如下内容
+   ```json
+   "presets": [
+     "react-app"
+     "@emotion/babel-preset-css-prop"
+   ]
+   ```
+##### 3.3 css方法的使用方式
+1. String Styles
+```jsx
+const style = css`
+  width: 100px;
+  height: 100px;
+  background: skyblue;
+`
+<div css={style}>App works ... </div>
+```
+
+2. Object Styles
+```jsx
+const style = css({
+  width: 200,
+  height: 200,
+  background: 'red'
+})
+
+function App() {
+  return <div css={style}>App work</div>
+}
+```
+
+##### 3.4 css属性优先级
+props对象中的css属性优先级高于组件内部的css属性
+
+在调用组件时可以在覆盖组件默认样式
+```jsx
+const styles = css`
+  width: 200px;
+  height: 200px;
+  background: skyblue;
+`
+function Css(props) {
+  return <div css={styles} {...props}>Css</div>
+}
+
+const style = css`
+  background: pink
+`
+function App() {
+  return (
+    <div >
+      <Css css={style} />
+    </div>
+  )
+}
+```
+##### 3.5 Style Components样式化组件
+样式化组件就是用来构建用户界面的，是emotion库提供的另一种为元素添加样式的方法
+
+###### 3.5.1创建样式化组件
+```jsx
+import styled from '@emotion/styled'
+```
+
+1. String Styles
+```jsx
+const Button = styled.button`
+  color: red
+`
+```
+2. Object Styles
+```jsx
+const Button = styled.button({
+  color: 'red'
+})
+```
+
+###### 3.5.2 根据props属性覆盖样式
+1. String Styles
+```jsx
+const Button = styled.button`
+  width: 100px;
+  height: 30px;
+  background: ${props => props.bgColor || 'skyblue'};
+`
+```
+2. Object Styles
+```jsx
+const Container = styled.div(props => ({
+  width: props.w || 1000,
+  background: 'pink',
+  margin: '0 auto'
+}))
+
+const Button = styled.button({
+  color: 'red'
+}, props => ({
+  color: props.color
+}))
+```
+
+###### 3.5.3 为任何组件添加样式
+1. String Styles
+```jsx
+const Demo = ({ className }) => <div className={className}>Demo</div>
+
+const Fancy = styled(Demo)`
+  color: red;
+`
+
+<Fancy />
+```
+2. Object Style
+```jsx
+const Demo = ({ className }) => <div className={className}>Demo</div>
+
+const Fancy = styled(Demo)({
+  color: 'green'
+})
+
+<Fancy />
+```
+###### 3.5.4 通过父组件设置子组件样式
+1. String Styles
+```jsx
+const Child = styled.div`
+  color: red;
+`
+const Parent = styled.div`
+  ${Child} {
+    color: green;
+  }
+`
+```
+2. Object Styles
+```jsx
+const Child = styled.div({
+  color: 'red'
+})
+const Parent = styled.div({
+  [Child]: {
+    color: 'green'
+  }
+})
+
+<Child>Child</Child>
+<Parent>
+  <Child>Child Parent</Child>
+</Parent>
+```
+###### 3.5.5 嵌套选择器 &
+& 表示组件本身
+```jsx
+const Container = styled.div`
+  color: red;
+  & > span {
+    color: pink;
+  }
+`
+
+<Container>
+  <span>span</span>
+</Container>
+```
+
+###### 3.5.6 as属性
+要使用组件中的样式，但是要改呈现的元素，可以使用as属性
+```jsx
+const Button = styled.button`
+  color: red
+`
+<Button as="a" href="#">button</Button>
+```
+
+##### 3.6 样式组合
+在样式组合中，后调用的样式优先级高于先调用的样式
+```jsx
+const base = css`
+  color: yellow;
+`
+const danger = css`
+  color: red;
+`
+<button css={[base, danger]}>button</button>
+```
+
+##### 3.7 全局样式
+```jsx
+import { css, Global } from '@emotion/react'
+
+const styles = css`
+  body { margin: 0; }
+`
+
+function App() {
+  return <div>
+    <Global styles={styles} />
+    App works ...
+  </div>
+}
+```
+
+##### 3.8 使用keyframes方法定义关键帧动画
+```jsx
+const move = keyframes`
+  0% { left: 0; top: 0; background: pink; }
+  100% { top: 300px; left: 600px; background: skyblue; }
+`
+const box = css`
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  animation: ${move} 2s ease infinite alternate;
+`
+
+function App() {
+  return <div css={box}>
+    App work ...
+  </div>
+}
+```
+
+##### 3.9 主题
+1. 下载主题模块
+  npm install @emotion-react
+
+2. 引入ThemeProvider组件
+  `import { ThemeProvider } from '@emotion-react'`
+
+3. 将ThemeProvider放置在视图最外层
+  ```jsx
+  function App() {
+    return <ThemeProvider></ThemeProvider>
+  }
+  ```
+
+4. 添加主题内容
+  ```jsx
+    const theme= {
+      colors: {
+        primary: 'hotpink'
+      }
+    }
+    <ThemeProvider theme={theme}></ThemeProvider>
+  ```
+
+5. 获取主题内容
+  ```jsx
+  // 方式一
+  const getPrimaryColor = props => css`
+    color: ${props.colors.primary}
+  `
+  <div css={getPrimaryColor}></div>
+
+  // 方式二
+  import { useTheme } from 'emotion-theming'
+  function Demo() {
+    const theme = useTheme()
+  }
+  ```
+
+### Chakra UI
+现代化React UI框架Chakra-UI
+
+#### 1. Chakra-UI介绍
+Chakra UI是一个简单的、模块化的、易于理解的UI组件库，提供了丰富的构建React应用所需的UI组件
+
+文档: https://next.chakra-ui.com/docs/getting-started
+
+1. Chakra UI 内置Emotion，是CSS-IN-JS 解决方案的集大成者
+2. 基于Styled-Systems https://styled-system.com/
+3. 支持开箱即用的主题功能
+4. 默认支持白天和黑夜两种模式
+5. 拥有大量功能丰富且非常有用的组件
+6. 使响应式设计变得轻而易举
+7. 文档清晰而全面，查找API更加容易
+8. 适用于构建用于展示的给用户的界面
+9. 框架正在变得越来越完善
+
+#### 2 Chakra-UI 快速开始
+##### 2.1 下载chakra-ui
+
+注意react17用的是@chakra-ui/react
+
+react16是@chakra-ui/core
+
+`npm install @chakra-ui/react @emotion/react @emotion/styled framer-motion`
+
+##### 2.2 克隆默认主题
+Chakra-UI提供的组件是建立在主题基础之上的，只有先引入了主题组件才能够使用其他组件
+
+`npm install @chakra-ui/theme`
+
+##### 2.3 引入主题
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+import theme from '@chakra-ui/theme'
+import { ChakraProvider, CSSReset } from '@chakra-ui/react'
+
+ReactDOM.render(
+  <ChakraProvider theme={theme}>
+    <CSSReset />
+    <App />
+  </ChakraProvider>,
+  document.getElementById('root')
+)
+```
+
+##### 2.4 依赖清单
+```json
+"dependencies": {
+  "@chakra-ui/react": "^1.0.4",
+  "@chakra-ui/theme": "^1.2.2",
+  "@emotion/react": "^11.1.3",
+  "@emotion/styled": "^11.0.0",
+  "@testing-library/jest-dom": "^5.11.4",
+  "@testing-library/react": "^11.1.0",
+  "@testing-library/user-event": "^12.1.10",
+  "framer-motion": "^4.1.17",
+  "react": "^17.0.2",
+  "react-dom": "^17.0.2",
+  "react-scripts": "4.0.3",
+  "web-vitals": "^1.0.1"
+}
+```
+
+##### 2.5 应用组件
+```jsx
+import { Button } from '@chakra-ui/react'
+
+function App() {
+  return (
+    <div >
+      <Button>按钮</Button>
+    </div>
+  )
+}
+
+export default App
+```
+
+#### 3. Style Props 样式属性
+https://chakra-ui.com/docs/features/style-props
+
+Style Props是用来更改组件样式的，通过为组件传递属性的方式实现，通过传递简化的样式属性以达到提升开发效率的目的
+
+注意react17用的是@chakra-ui/react
+
+react16是@chakra-ui/core
+
+```jsx
+import { Box } from '@chakra-ui/react'
+
+function App() {
+  return (
+    <div >
+      <Box w="200px" h="200px" bgColor="tomato"></Box>
+    </div>
+  )
+}
+export default App
+```
+
+| 样式属性 | css属性| 主题 |
+| ---- | ---- | ---- |
+| m，margin | margin | space |
+| mx | margin-left and margin-right | space |
+| p, padding | padding | space |
+| py | padding-top and padding-bottom | space |
+| bg | background | colors |
+| bgColor | background-color | colors |
+| color | color | colors |
+| border | border | borders |
+| textAlign | text-align | none |
+| w，width | width | sizes |
+| boxSize | width and height | sizes |
+| d，display | display | none |
+| pos，position | position | none |
+| left | left | space |
+| shadow，boxShadow | box-shadow | shadows |
+
+#### 4 主题
+##### 4.1 颜色模式（color mode）
+chakra-ui提供的组件都支持两种颜色模式，浅色模式（light）和暗色模式（dark），可以通过useColorMode进行颜色模式的更改。
+
+```jsx
+import { Box, Text, Button, useColorMode } from '@chakra-ui/react'
+
+function App() {
+  const {colorMode, toggleColorMode} = useColorMode() // 注意这里是对象解构，不是数组解构
+  return (
+    <Box w={256} h={200} bg='tomato'>
+      <Text>当前的颜色模式为 {colorMode}</Text>
+      <Button onClick={toggleColorMode}>切换颜色模式</Button>
+    </Box>
+  );
+}
+
+export default App
+```
+
+Chakra 将颜色模式存储在localStorage中，并使用类名策略来确保颜色模式是持久的
+
+##### 4.2 根据颜色模式设置样式
+chakra运行在为元素设置样式时根据颜色模式产生不同值，通过useColorModeValue钩子函数实现
+
+```jsx
+import { Box, useColorModeValue } from '@chakra-ui/react'
+
+const bgColor = useColorModeValue('tomato', 'skyblue')
+<Box w={256} h={200} bg={bgColor}></Box>
+```
+
+##### 4.3 强制组件颜色模式
+使组件不受颜色模式的影响，始终保持在某个颜色模式下的样式，使用LightMode组件包裹需要作用的组件只显示浅色模式，使用DarkMode组件包裹需要作用的组件只显示暗色模式
+
+当颜色模式为暗色模式时，被包裹的组件依然是浅色模式
+```jsx
+import { LightMode, DarkMode } from '@chakra-ui/react'
+
+<LightMode>
+  <Button onClick={toggleColorMode}>切换颜色模式</Button>
+</LightMode>
+```
+
+##### 4.4 颜色模式通用设置
+1. 设置默认颜色模式
+   通过theme.config.initialColorMode可以设置应用的默认主题
+2. 使用操作系统所使用的颜色模式
+   通过theme.config.useSystemColorMode可以设置将应用的颜色模式设置为操作系统所使用的颜色模式
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+import theme from '@chakra-ui/theme'
+import { ChakraProvider, CSSReset } from '@chakra-ui/react'
+
+// 1. 设置默认颜色模式
+// theme.config.initialColorMode = 'dark'
+
+// 2. 使用操作系统所使用的颜色模式
+theme.config.useSystemColorMode = true
+
+ReactDOM.render(
+  <ChakraProvider theme={theme}>
+    <CSSReset />
+    <App />
+  </ChakraProvider>,
+  document.getElementById('root')
+)
+
+```
+
+##### 4.5 主题对象
+1. Colors
+   在设置颜色时，可以但不限于取主题中提供的颜色值
+    ```jsx
+    function App() {
+      return <Box w={256} h={200} bg="gray.500"></Box>
+    }
+    ```
+2. Space
+   使用space可以自定义项目间距，这些间距值可以由padding，margin 和 top，left，right，bottom样式引用
+   ```jsx
+   // lg => 32rem
+   <Box mt={6} w="lg" h="2xl" bg="gray.500"></Box>
+   ```
+3. Breakpoints
+   配置响应数组值中使用的默认断点，这些值将用于生成移动优先（即最小宽度）的媒体查询
+   ```jsx
+   // theme.js
+   export default {
+     breakpoints: ['30em', '48em', '62em', '80em']
+   }
+   ```
+   ```jsx
+   // 数组中第一个值是默认值，后面的值和上面的theme值一一对应关系
+   <Box fontSize={['12px', '14px', '16px', '18px', '20px']}>
+   ```
+
+##### 4.6 创建标准的Chakra-UI组件
+1. 创建chakra-UI组件
+    ```jsx
+    import { chakra } from '@chakra-ui/react'
+
+    const LaGouButton = chakra("button", {
+      baseStyle: {
+        borderRadius: 'lg'
+      },
+      sizes: {
+        sm: {
+          px: '3', // padding-left/padding-right
+          py: '1', // padding-right/padding-bottom
+          fontSize: '12px'
+        },
+        md: {
+          px: '4',
+          py: '2',
+          fontSize: '14px'
+        }
+      },
+      variants: { // 风格化样式
+        primary: {
+          bgColor: 'blue.500',
+          color: 'white'
+        },
+        danger: {
+          bgColor: 'red.500',
+          color: 'white'
+        }
+      }
+    })
+
+    LaGouButton.defaultProps = {
+      size: 'sm',
+      variant: 'primary'
+    }
+
+    function App() {
+      return (
+        <div>
+          <LaGouButton> 按钮 </LaGouButton>
+        </div>
+      )
+    }
+
+    export default App
+    ```
+2. 全局化Chakra-UI组件样式
+    * 在src文件夹中创建LaGou文件夹用于放置自定义Chakra-UI组件
+    * 在LaGou文件夹中创建button.js文件并将组件样式放置于当前文件中并进行默认导出
+      ```jsx
+      const LaGouButton = {
+        baseStyle: {
+          borderRadius: 'lg'
+        },
+        sizes: {
+          sm: {
+            px: '3', // padding-left/padding-right
+            py: '1', // padding-right/padding-bottom
+            fontSize: '12px'
+          },
+          md: {
+            px: '4',
+            py: '2',
+            fontSize: '14px'
+          }
+        },
+        variants: { // 风格化样式
+          primary: {
+            bgColor: 'blue.500',
+            color: 'white'
+          },
+          danger: {
+            bgColor: 'red.500',
+            color: 'white'
+          }
+        },
+        defaultProps: {
+          size: 'sm',
+          variant: 'primary'
+        }
+      }
+
+      export default LaGouButton
+      ```
+
+    * 在LaGou文件夹中创建index.js文件用于导入所有自定义的Chakra-UI再导出所有的自定义组件
+      ```jsx
+      import LaGouButton from './Button'
+
+      export default {
+        LaGouButton
+      }
+      ```
+
+    * 在src文件夹中的index.js文件中导入自定义Chakra-UI组件并和theme.components属性进行合并
+      ```jsx
+      import React from 'react'
+      import ReactDOM from 'react-dom'
+      import App from './App'
+      import theme from '@chakra-ui/theme'
+      import { ChakraProvider, CSSReset } from '@chakra-ui/react'
+      import LaGouComponents from './LaGou'
+
+      const myThem = {
+        ...theme,
+        components: {
+          ...theme.components,
+          ...LaGouComponents
+        }
+      }
+
+      console.log(myThem)
+
+      ReactDOM.render(
+        <ChakraProvider theme={myThem}>
+          <App />
+        </ChakraProvider>,
+        document.getElementById('root')
+      )
+      ```
+
+    * 在组件中使用样式化组件
+      ```jsx
+      import { chakra } from '@chakra-ui/react'
+
+      const LaGouButton = chakra("button", {
+        themeKey: 'LaGouButton'
+      })
+
+      function App() {
+        return (
+          <div>
+            <LaGouButton size="md"> 按钮 </LaGouButton>
+          </div>
+        )
+      }
+
+      export default App
+      ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
