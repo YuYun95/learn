@@ -1,12 +1,12 @@
 ## React Hooks
 ### Hooks
-#### 1. React Hooks 介绍
-##### 1.1 React Hooks是用来做什么的
+#### 1、React Hooks 介绍
+##### 1.1、 React Hooks是用来做什么的
 对函数型组件进行增强，让函数型组件可以存储状态，可以拥有处理副作用的能力。
 
 让开发者在不使用类组件的情况下，实现相同的功能
 
-##### 1.2 类组件的不足（Hooks要解决的问题）
+##### 1.2、 类组件的不足（Hooks要解决的问题）
 * 缺少逻辑复用机制
   * 为了复用逻辑增加无实际渲染效果的组件，增加了组件层级 显示十分臃肿
   * 增加了调试的难度以及运行效率的降低
@@ -15,10 +15,10 @@
   * 在一个生命周期函数内 存在多个不相干的业务逻辑
 * 类成员方法不能保证this指向的正确性
 
-#### 2. React Hooks使用
+#### 2、 React Hooks使用
 Hooks意为钩子，React Hooks就是一堆钩子函数，React通过这些钩子函数对函数型组件进行增强，不同的钩子函数提供了不同的功能
 
-##### 2.1 useState()
+##### 2.1、 useState()
 用于为函数组件引入状态
 ```js
 import React, { useState } from 'react'
@@ -74,7 +74,7 @@ export default App
   <button onClick={handleCount}>+1</button>
   ```
 
-##### 2.2 useReducer
+##### 2.2、 useReducer
 useReducer是另一种让函数组件保存状态的方法，可以将dispatch传给子组件使用
 
 第一个参数是reducer函数；第二个参数是状态的初始值
@@ -112,7 +112,7 @@ export default App
 
 ```
 
-##### 2.3 钩子函数useContext
+##### 2.3、 钩子函数useContext
 
 在跨组件层级获取数据时简化获取数据的代码，实现共享
 
@@ -164,7 +164,7 @@ function Foo() {
 export default App
 ```
 
-##### 2.4 钩子函数useEffect
+##### 2.4、 钩子函数useEffect
 
 让函数型组件拥有处理副作用的能力，类似生命周期函数
 
@@ -312,7 +312,7 @@ export default App
   export default App
   ```
 
-##### 2.5 钩子函数useMemo
+##### 2.5、 钩子函数useMemo
 useMemo 的行为类似Vue中的计算属性，可以监测某个值的变化，根据变化值计算新值
 
 useMemo 会缓存计算结果，如果监测值没有发生变化，即使组件重新渲染，也不会重新计算，此行为可以有助于避免在每个渲染上进行昂贵的计算
@@ -350,7 +350,7 @@ function App(props) {
 export default App
 ```
 
-##### 2.6 使用memo方法提高组件性能
+##### 2.6、 使用memo方法提高组件性能
 性能优化，如果本组件中的数据没有发生变化，阻止组件更新，类似类组件中的PureComponent 和 shouldComponentUpdate
 
 会在组件发生重新渲染之前，判断组件当中的数据有没发生变化，如果没有变化阻止组件进行更新（重新渲染）
@@ -363,7 +363,7 @@ function Counter () {
 export default memo(Counter)
 ```
 
-##### 2.7 钩子函数useCallback
+##### 2.7、 钩子函数useCallback
 性能优化、缓存函数，使组件重新渲染时得到相同的函数实例
 ```jsx
 import React, { useState, useCallback } from 'react'
@@ -412,7 +412,7 @@ const Foo = memo(function Foo(props) {
 export default App
 ```
 
-##### 2.8 钩子函数useRef
+##### 2.8、 钩子函数useRef
 * 获取DOM元素对象
 
 ```jsx
@@ -471,7 +471,7 @@ function App(props) {
 export default App
 ```
 
-#### 3 自定义Hook
+#### 3、 自定义Hook
 * 自定义Hook是标准的封装和共享逻辑的方式
    * 在一个组件内部有哪些逻辑是共享的（其他组件也需要用到）就可以把这些逻辑写在自定义Hook中，谁使用谁调用自定义Hook
 
@@ -540,7 +540,7 @@ export default App
 
 ```
 
-#### 4 路由钩子函数
+#### 4、路由钩子函数
 * react-router-dom路由提供的钩子函数
   useHistory、useLocation、useRouteMatch、useParams
 
@@ -607,7 +607,7 @@ export default function List() {
 }
 ```
 
-#### 5 useState钩子函数的实现原理
+#### 5、 useState钩子函数的实现原理
 
 useState使用方式
 * useState方法传递一个state初始值
@@ -666,7 +666,7 @@ console.log(state)
 export default App
 ```
 
-#### 6 useEffect钩子函数的实现原理
+#### 6、useEffect钩子函数的实现原理
 
 useEffect使用方式
 * 第一个参数是回调函数；第二参数可传可不传，第二个参数类型是数组
@@ -758,7 +758,7 @@ function App() {
 export default App
 ```
 
-#### 7 useReducer钩子函数的实现原理
+#### 7、useReducer钩子函数的实现原理
 
 useReducer使用方式
 * useReducer函数接收两个参数，第一个参数是reducer函数，在这个函数内容要匹配action的类型，做相应的处理逻辑；
@@ -862,16 +862,16 @@ export default App
 ```
 
 ### Formik
-#### 1. Formik介绍及基本使用
-##### 1.1 Formik介绍
+#### 1、Formik介绍及基本使用
+##### 1.1、Formik介绍
 增强表单处理能力，简化表单处理流程
 
 
-##### 1.2 下载
+##### 1.2、下载
 npm install formik
 
-#### 2. Formik增强表单
-##### 2.1 Formik基本使用
+#### 2、Formik增强表单
+##### 2.1、Formik基本使用
 使用formik进行表单数据绑定以及表单提交处理
 ```jsx
 import React from 'react'
@@ -896,8 +896,8 @@ function App() {
 export default App
 ```
 
-#### 2. Formik表单验证
-##### 2.1 初始验证方式
+#### 2、Formik表单验证
+##### 2.1、初始验证方式
 ```jsx
 import React from 'react'
 import { useFormik } from 'formik'
@@ -937,7 +937,7 @@ function App() {
 export default App
 ```
 
-##### 2.2 完善错误信息提示时的用户体验
+##### 2.2、完善错误信息提示时的用户体验
 开启离开焦点时触发验证；提示信息时检查表单元素的值是否被改动过
 
 给input添加onBlur={formik.handleBlur}；显示提示信息还需要判断表单元素是否被改动
@@ -964,7 +964,7 @@ export default App
 </form>
 ```
 
-##### 2.3 使用yup验证
+##### 2.3、使用yup验证
 * 下载yup：`npm install yup`
 * 引入 `import * as Yup from 'yup'`
 * 定义验证规则
@@ -985,7 +985,7 @@ const formik = useFormik({
 })
 ```
 
-#### 3 使用getFieldProps方法简化表单代码
+#### 3、使用getFieldProps方法简化表单代码
 减少模板代码，getFieldProps会把value、onChange、onBlur属性返回
 ```jsx
 <input
@@ -997,7 +997,7 @@ const formik = useFormik({
 ```
 
 #### 4
-##### 4.1 使用组件的方式构建表单
+##### 4.1、使用组件的方式构建表单
 ```jsx
 import React from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
@@ -1034,7 +1034,7 @@ function App() {
 export default App
 ```
 
-##### 4.2 Field组件的as属性
+##### 4.2、Field组件的as属性
 默认情况下，Field组件渲染的是文本框，如要生成其他表单元素可以使用一下语法
 
 ```jsx
@@ -1046,7 +1046,7 @@ export default App
 </Field>
 ```
 
-##### 4.3 构建自定义表单控件
+##### 4.3、构建自定义表单控件
 使用useField构建自定义表单控件
 
 ```jsx
@@ -1065,7 +1065,7 @@ function MyInput({ label, ...props }) {
 <MyInput id="myPass" label="密码" name="password" type="password" placeholder="请输入密码" />
 ```
 
-##### 4.4 构建自定义表单控件复选框
+##### 4.4、构建自定义表单控件复选框
 ```jsx
 function Checkbox({ label, ...props }) {
   const [field, meta, helper] = useField(props)
@@ -1144,12 +1144,12 @@ class App extends Component {
 ### CSS-IN-JS
 集成css代码在javascript代码中
 
-#### 1 为什么会有CSS-IN-JS
+#### 1、为什么会有CSS-IN-JS
 CSS-IN-JS 是 WEB 项目中将css代码捆绑在javascript代码中的解决方案
 
 这种方案旨在解决css的局限性，例如缺乏动态功能，作用域和可移植性
 
-#### 2 CSS-IN-JS优缺点
+#### 2、CSS-IN-JS优缺点
 优点：
 * 让css代码拥有独立的作用域，阻止css代码泄露到组件外部，防止样式冲突
 * 让组件更具可移植性，实现开箱即用，轻松创建松耦合的应用程序
@@ -1161,12 +1161,12 @@ CSS-IN-JS 是 WEB 项目中将css代码捆绑在javascript代码中的解决方�
 * 自动生成的选择器大大降低了代码的可读性
 
 #### 3 Emotion 库
-##### 3.1 Emotion 介绍
+##### 3.1、Emotion 介绍
 Emotion 是一个旨在使用javascript编写css样式的库
 
 npm install @emotion/core @emotion/styled @emotion/react
 
-##### 3.2 css属性支持
+##### 3.2、css属性支持
 1. JSX Pragma，通知babel，不需要将jsx语法转换为React.createElement方法，而是需要转换为jsx方法
 
    |     | Input  | Output |
@@ -1193,7 +1193,7 @@ npm install @emotion/core @emotion/styled @emotion/react
      "@emotion/babel-preset-css-prop"
    ]
    ```
-##### 3.3 css方法的使用方式
+##### 3.3、css方法的使用方式
 1. String Styles
 ```jsx
 const style = css`
@@ -1217,7 +1217,7 @@ function App() {
 }
 ```
 
-##### 3.4 css属性优先级
+##### 3.4、css属性优先级
 props对象中的css属性优先级高于组件内部的css属性
 
 在调用组件时可以在覆盖组件默认样式
@@ -1242,10 +1242,10 @@ function App() {
   )
 }
 ```
-##### 3.5 Style Components样式化组件
+##### 3.5、Style Components样式化组件
 样式化组件就是用来构建用户界面的，是emotion库提供的另一种为元素添加样式的方法
 
-###### 3.5.1创建样式化组件
+###### 3.5.1、创建样式化组件
 ```jsx
 import styled from '@emotion/styled'
 ```
@@ -1263,7 +1263,7 @@ const Button = styled.button({
 })
 ```
 
-###### 3.5.2 根据props属性覆盖样式
+###### 3.5.2、根据props属性覆盖样式
 1. String Styles
 ```jsx
 const Button = styled.button`
@@ -1287,7 +1287,7 @@ const Button = styled.button({
 }))
 ```
 
-###### 3.5.3 为任何组件添加样式
+###### 3.5.3、为任何组件添加样式
 1. String Styles
 ```jsx
 const Demo = ({ className }) => <div className={className}>Demo</div>
@@ -1308,7 +1308,7 @@ const Fancy = styled(Demo)({
 
 <Fancy />
 ```
-###### 3.5.4 通过父组件设置子组件样式
+###### 3.5.4、通过父组件设置子组件样式
 1. String Styles
 ```jsx
 const Child = styled.div`
@@ -1336,7 +1336,7 @@ const Parent = styled.div({
   <Child>Child Parent</Child>
 </Parent>
 ```
-###### 3.5.5 嵌套选择器 &
+###### 3.5.5、嵌套选择器 &
 & 表示组件本身
 ```jsx
 const Container = styled.div`
@@ -1351,7 +1351,7 @@ const Container = styled.div`
 </Container>
 ```
 
-###### 3.5.6 as属性
+###### 3.5.6、as属性
 要使用组件中的样式，但是要改呈现的元素，可以使用as属性
 ```jsx
 const Button = styled.button`
@@ -1360,7 +1360,7 @@ const Button = styled.button`
 <Button as="a" href="#">button</Button>
 ```
 
-##### 3.6 样式组合
+##### 3.6、样式组合
 在样式组合中，后调用的样式优先级高于先调用的样式
 ```jsx
 const base = css`
@@ -1372,7 +1372,7 @@ const danger = css`
 <button css={[base, danger]}>button</button>
 ```
 
-##### 3.7 全局样式
+##### 3.7、全局样式
 ```jsx
 import { css, Global } from '@emotion/react'
 
@@ -1388,7 +1388,7 @@ function App() {
 }
 ```
 
-##### 3.8 使用keyframes方法定义关键帧动画
+##### 3.8、使用keyframes方法定义关键帧动画
 ```jsx
 const move = keyframes`
   0% { left: 0; top: 0; background: pink; }
@@ -1408,7 +1408,7 @@ function App() {
 }
 ```
 
-##### 3.9 主题
+##### 3.9、主题
 1. 下载主题模块
   npm install @emotion-react
 
@@ -1450,7 +1450,7 @@ function App() {
 ### Chakra UI
 现代化React UI框架Chakra-UI
 
-#### 1. Chakra-UI介绍
+#### 1、Chakra-UI介绍
 Chakra UI是一个简单的、模块化的、易于理解的UI组件库，提供了丰富的构建React应用所需的UI组件
 
 文档: https://next.chakra-ui.com/docs/getting-started
@@ -1465,8 +1465,8 @@ Chakra UI是一个简单的、模块化的、易于理解的UI组件库，提供
 8. 适用于构建用于展示的给用户的界面
 9. 框架正在变得越来越完善
 
-#### 2 Chakra-UI 快速开始
-##### 2.1 下载chakra-ui
+#### 2、Chakra-UI 快速开始
+##### 2.1、下载chakra-ui
 
 注意react17用的是@chakra-ui/react
 
@@ -1474,12 +1474,12 @@ react16是@chakra-ui/core
 
 `npm install @chakra-ui/react @emotion/react @emotion/styled framer-motion`
 
-##### 2.2 克隆默认主题
+##### 2.2、克隆默认主题
 Chakra-UI提供的组件是建立在主题基础之上的，只有先引入了主题组件才能够使用其他组件
 
 `npm install @chakra-ui/theme`
 
-##### 2.3 引入主题
+##### 2.3、引入主题
 ```jsx
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -1496,7 +1496,7 @@ ReactDOM.render(
 )
 ```
 
-##### 2.4 依赖清单
+##### 2.4、依赖清单
 ```json
 "dependencies": {
   "@chakra-ui/react": "^1.0.4",
@@ -1514,7 +1514,7 @@ ReactDOM.render(
 }
 ```
 
-##### 2.5 应用组件
+##### 2.5、应用组件
 ```jsx
 import { Button } from '@chakra-ui/react'
 
@@ -1529,7 +1529,7 @@ function App() {
 export default App
 ```
 
-#### 3. Style Props 样式属性
+#### 3、Style Props 样式属性
 https://chakra-ui.com/docs/features/style-props
 
 Style Props是用来更改组件样式的，通过为组件传递属性的方式实现，通过传递简化的样式属性以达到提升开发效率的目的
@@ -1569,8 +1569,8 @@ export default App
 | left | left | space |
 | shadow，boxShadow | box-shadow | shadows |
 
-#### 4 主题
-##### 4.1 颜色模式（color mode）
+#### 4、主题
+##### 4.1、颜色模式（color mode）
 chakra-ui提供的组件都支持两种颜色模式，浅色模式（light）和暗色模式（dark），可以通过useColorMode进行颜色模式的更改。
 
 ```jsx
@@ -1591,7 +1591,7 @@ export default App
 
 Chakra 将颜色模式存储在localStorage中，并使用类名策略来确保颜色模式是持久的
 
-##### 4.2 根据颜色模式设置样式
+##### 4.2、根据颜色模式设置样式
 chakra运行在为元素设置样式时根据颜色模式产生不同值，通过useColorModeValue钩子函数实现
 
 ```jsx
@@ -1601,7 +1601,7 @@ const bgColor = useColorModeValue('tomato', 'skyblue')
 <Box w={256} h={200} bg={bgColor}></Box>
 ```
 
-##### 4.3 强制组件颜色模式
+##### 4.3、强制组件颜色模式
 使组件不受颜色模式的影响，始终保持在某个颜色模式下的样式，使用LightMode组件包裹需要作用的组件只显示浅色模式，使用DarkMode组件包裹需要作用的组件只显示暗色模式
 
 当颜色模式为暗色模式时，被包裹的组件依然是浅色模式
@@ -1613,7 +1613,7 @@ import { LightMode, DarkMode } from '@chakra-ui/react'
 </LightMode>
 ```
 
-##### 4.4 颜色模式通用设置
+##### 4.4、颜色模式通用设置
 1. 设置默认颜色模式
    通过theme.config.initialColorMode可以设置应用的默认主题
 2. 使用操作系统所使用的颜色模式
@@ -1642,7 +1642,7 @@ ReactDOM.render(
 
 ```
 
-##### 4.5 主题对象
+##### 4.5、主题对象
 1. Colors
    在设置颜色时，可以但不限于取主题中提供的颜色值
     ```jsx
@@ -1669,7 +1669,7 @@ ReactDOM.render(
    <Box fontSize={['12px', '14px', '16px', '18px', '20px']}>
    ```
 
-##### 4.6 创建标准的Chakra-UI组件
+##### 4.6、创建标准的Chakra-UI组件
 1. 创建chakra-UI组件
     ```jsx
     import { chakra } from '@chakra-ui/react'
@@ -1811,114 +1811,617 @@ ReactDOM.render(
       export default App
       ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### React组件性能优化
+React 组件性能优化的核心是减少真实DOM节点的频率，减少Virtual DOM对比的频率
+
+#### 1、组件卸载前进行清理操作
+在组件中为window注册的全局事件，以及定时器，在组件卸载前要清理掉，防止组件卸载后继续执行影响应用性能。
+
+需求：开启定时器然后卸载组件，查看组件中的定时器是否还在运行
+```jsx
+function Test() {
+  useEffect(() =>{
+    let timer = setInterval(() => {
+      console.log('定时器在执行')
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+  return <div>Test</div>
+}
+```
+
+#### 2、通过纯组件提升组件性能（类组件）
+1. 什么是纯组件
+   * 纯组件会对组件输入数据进行浅层比较，如果当前输入数据和上次输入数据相同，组件不会重新渲染
+
+2. 什么是浅层比较
+   * 比较引用数据类型在内存中的引用地址是否相同，比较基本数据类型的值是否相同
+
+3. 如何实现纯组件
+   * 类组件继承 PureComponent 类，函数组件使用 memo 方法
+
+4. 为什么不直接进行diff操作，而是要先进行浅层比较，浅层比较难道没有性能消耗吗
+   * 和进行 diff 比较操作相比，浅层比较将消耗更少的性能。diff 操作会重新遍历整顿 virtualDOM 树，而浅层比较只操作当前组件的state和props
+
+需求：在状态对象中存储 name 值为张三，组件挂载完成后将 name 属性的值再次更改为张三，然后分别将 name 传递给纯组件和非纯组件，查看结果
+```jsx
+import { Component, PureComponent } from 'react'
+
+class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      name: '张三'
+    }
+  }
+
+  updateName() {
+    setInterval(() => {
+      this.setState({ name: '张三' })
+    }, 1000)
+  }
+
+  componentDidMount() {
+    this.updateName()
+  }
+
+  render() {
+    return <>
+      <ReguarComponent name={this.state.name} />
+      <PureComponentDemo name={this.state.name} />
+    </>
+  }
+}
+
+// 非纯组件
+class ReguarComponent extends Component {
+  render() {
+    console.log('ReguarComponent')
+    return <div>{ this.props.name }</div>
+  }
+}
+
+//纯组件
+class PureComponentDemo extends PureComponent {
+  render() {
+    console.log('PureComponentDemo')
+    return <div>{ this.props.name }</div>
+  }
+}
+
+export default App
+```
+
+#### 3、通过shouldComponentUpdate生命周期函数提升组件性能
+纯组件只能进行浅层比较，要进行深层比较，使用 shouldComponentUpdate，他用于编写自定义比较逻辑
+
+返回 true 重新渲染组件，返回 false 阻止重新渲染
+
+函数的第一个参数为nextProps，第二个参数为nextState
+
+需求：在页面中展示员工信息，员工信息包括，姓名，年龄，职位，但是在页面中只想展示姓名和年龄，也就是说只有姓名和年龄发生变化时才有必要重新渲染组件，如果员工的其他信息发生了变化没必要重新渲染组件
+
+```jsx
+import { Component } from 'react'
+
+class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      person: {
+        name: '张三',
+        age: 20,
+        job: 'waiter'
+      }
+    }
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({ person: {...this.state.person, job: 'chef'}})
+    }, 2000)
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextState.person.name !== this.state.person.name || nextState.person.age !== this.state.person.age) {
+      return true
+    }
+    return false
+  }
+
+  render() {
+    console.log('render') // 没调用shouldComponentUpdate做处理更改数据会执行多次
+    return (
+      <div>
+        { this.state.person.name } { this.state.person.age }
+      </div>
+    )
+  }
+}
+export default App
+```
+
+#### 4、通过纯组件提升组件性能（函数组件【React.memo】）
+1. memo 基本使用
+   
+   将函数组件变为纯组件，将当前props和上一次的props进行浅层比较，如果相同就阻止组件重新渲染。
+
+   需求：父组件维护两个状态，index 和 name，开启定时器让 index 不断发生变化，name 传递给子组件，查看父组件更新子组件是否也更新了
+   ```jsx
+    import { useEffect, useState, memo } from "react"
+
+    const ShowName = memo(function ({ name }) {
+      console.log('render.......');
+      return <div>{ name }</div>
+    })
+
+    function App() {
+      const [name] = useState('张三')
+      const [index, setIndex] = useState(0)
+      useEffect(() => {
+        setInterval(() => {
+          setIndex(prev => prev + 1)
+        }, 1000)
+      }, [])
+      return (
+        <div>
+          { index }
+          <ShowName name={name} />
+        </div>
+      )
+    }
+
+    // function ShowName ({ name }) {
+    //   console.log('render.......');
+    //   return <div>{ name }</div>
+    // }
+
+    export default App
+
+   ```
+2. 为memo传递比较逻辑
+   
+   使用memo方法自定义比较逻辑，用于执行深层比较
+
+   比较函数的第一个参数为上一次的props，比较函数的第二个参数为下一次的props，比较函数返回true，不进行渲染，比较函数返回false，组件重新渲染
+   ```jsx
+    import { useEffect, useState, memo } from "react"
+
+    function compare(prevProps, nextProps) {
+      if (prevProps.person.name !== nextProps.person.name || prevProps.person.age !== nextProps.person.age) {
+        return false
+      }
+      return true
+    }
+
+    const ShowName = memo(function ({ person }) {
+      console.log('render.......');
+      return <div>{ person.name } {person.age}</div>
+    }, compare)
+
+    function App() {
+      const [person, setPerson] = useState({ name: '张三', age: 20, job: 'waiter' })
+      
+      useEffect(() => {
+        setInterval(() => {
+          setPerson({ ...person, job: 'chef' })
+        }, 1000)
+      }, [])
+      
+      return (
+        <div>
+          <ShowName person={person} />
+        </div>
+      )
+    }
+
+    export default App
+   ```
+
+#### 5、通过组件懒加载提供应用性能
+1. 创建执行异步操作的Action创建函数
+   ```jsx
+   import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+   import axios from 'axios'
+
+   export const loadTodos = createAsyncThunk(
+     'todos/loadTodos',
+     (payload, thunkAPI) => {
+       axios.get(payload).then(response => thunkAPI.dispatch(setTodos(response.data)))
+     }
+   )
+   ```
+2. 创建接收异步操作结果的Reducer
+   ```jsx
+   const { reducer: TodosReducer, actions } = createSlice({
+     reducers: {
+       setTodos: (state, action) => {
+         action.payload.forEach(todo => state.push(todo))
+       }
+     }
+   })
+   ```
+#### 6、根据条件进行组件懒加载
+1. 创建执行异步操作的Action创建函数
+   ```jsx
+   import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+   import axios from 'axios'
+
+   export const loadTodos = createAsyncThunk('todos/loadTodos', playload => {
+     return axios.get(payload).then(response => response.data)
+   })
+   ```
+2. 创建接收异步操作结果的Reducer
+   ```jsx
+   createSlice({
+     extraReducers: {
+       [loadTodos.fulfilled]: (state, action) => {
+         action.playload.forEach(todo => state.push(todo))
+       }
+     }
+   })
+   ```
+#### 7、通过使用占位符标记提升React组件的渲染性能
+配置中间件`npm i redux-logger`
+
+```jsx
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit'
+import logger from 'redux-logger'
+
+export default configureStore({
+  middleware: [...getDefaultMiddleware(), logger]
+})
+```
+#### 8、不要使用内联函数定义
+在使用内联函数后，render 方法每次运行时都会创建该函数的新实例，
+导致 React 在进行 Virtual DOM对比时，新旧函数比对不相等，
+导致 React 总是为元素绑定新的函数实例，而旧的函数实例又要交给垃圾回收处理。
+```jsx
+import { Component } from 'react'
+
+export default class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      inputValue: ''
+    }
+  }
+
+  render() {
+    return (
+      <input
+        value={this.state.inputValue}
+        onChange={e => this.setState({ inputValue: e.target.value })}
+      />
+    )
+  }
+}
+```
+
+正确的做法是在组件中单独定义函数，将函数绑定给事件
+```jsx
+import { Component } from 'react'
+
+export default class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      inputValue: ''
+    }
+  }
+
+  setInputValue = e => {
+    this.setState({
+      inputValue: e.target.value
+    })
+  }
+
+  render() {
+    return (
+      <input
+        value={this.state.inputValue}
+        onChange={this.setInputValue}
+      />
+    )
+  }
+}
+```
+#### 9、在构造函数中进行函数this绑定
+在类组件中如果使用 fn(){} 这种方式定义函数，函数`this`默认指向`undefined`，也就是说函数内部的this指向需要被更正，
+可以在构造函数中对函数的`this`进行更正，也可以在行内进行更正，两者看起来没有太大区别，但是对性能的影响是不同的
+
+```jsx
+export default class App extends Component {
+  constructor() {
+    super()
+    // 方式一
+    // 构造函数只执行一次，所以函数this指向更正的代码也只执行一次
+    this.handleClick = this.handleClick.bind(this)
+  }
+
+  handleClick() {
+    console.log(this)
+  }
+
+  render() {
+    // 方式二
+    // 问题：render方法每次执行时都会调用bind方法生成新的函数实例
+    return <button onClick={this.handleClick.bind(this)}>按钮</button>
+  }
+}
+```
+
+结论：所以在构造函数中进行`this`指向的更正性能比较高，因为他只执行一次
+
+#### 10、类组件中的箭头函数
+在类组件中使用箭头函数不会存在`this`指向问题，因为箭头函数本身并不绑定`this`
+
+```jsx
+export default class App extends Component {
+  handleClick = () => console.log(this)
+
+  render() {
+    return <button onClick={this.handleClick}>按钮</button>
+  }
+} 
+```
+
+箭头函数在`this`指向问题上占优势，但是同时也有不利的一面。
+
+当使用箭头函数，该函数被添加为类的实例对象属性，而不是原型对象属性，如果组件被多次重用，每个组件实例对象中都将会有一个相同的函数实例，降低了函数实例的可重用性造成了资源浪费
+
+综上所诉，更正函数内部`this`指向的最佳做法仍是在构造函数中使用`bind`方法进行绑定
+
+#### 11、避免使用内联样式属性
+当使用内联`style`为元素添加样式时，内联`style`会被编译为`Javascript`代码，通过`Javascript`代码将样式规则映射到元素的身上，浏览器就会花费更多的时间执行脚本和渲染`UI`，从而增加了组件的渲染时间
+
+```jsx
+function App() {
+  return <div style={{ backgroundColor: 'skyblue' }}>App works</div>
+}
+```
+
+在上面的组件中，为元素附加了内联样式，添加的内联样式为`Javascript`对象，`backgroundColor`需要被转换为等效的`CSS`样式规则，然后将其应用到元素，这样涉及到脚本的执行。内联样式问题在于，它是在执行时为元素添加样式，而不是在编译时添加样式，所以的性能非常低
+
+更好的办法是将`CSS`文件导入样式组件，能通过`CSS`直接做的事情就不要通过`Javascript`去做，因为`Javascript`操作`DOM`非常慢
+
+#### 12、优化条件渲染
+频繁的挂载和卸载组件是一项耗性能的操作，组件的挂载和卸载就是进行`DOM`操作，为了确保应用程序的性能，应该减少组件挂载和卸载的次数。
+
+在`React`中我们经常会根据条件渲染不同的组件，条件渲染是一项必做的优化操作
+
+```jsx
+function App() {
+  if (true) {
+    return (
+      <>
+        <AdminHeader />
+        <Header />
+        <Content />
+      </>
+    )
+  } else {
+    return (
+      <>
+        <Header />
+        <Content />
+      </>
+    )
+  }
+}
+```
+
+在上面的代码中，当渲染条件发生变化时，React内部在做`Virtual DOM`对比时发现，刚刚第一个组件是`AdminHeader`，现在第一个组件是`Header`，刚刚第二个组件是`Header`，现在第二个组件是`Content`，组件发生了变化，`React`就会卸载`AdminHeader`、`Header`、`Content`，重新挂载`Header`和`Content`，这种挂载和卸载就是没有必要的。只需要根据需要判断是否渲染`AdminHeader`就可以了
+
+```jsx
+function App() {
+  return(
+    <>
+      {true && <AdminHeader />}
+      <Header />
+      <Content />
+    </>
+  )
+}
+```
+
+#### 13、避免重复无限渲染
+当应用程序状态发生更改时，`React`会调用`render`方法，如果`render`方法中继续更改应用程序状态，就会发生`render`方法递归调用导致应用报错
+
+```jsx
+export default class App extends Component{
+  constructor() {
+    super()
+    this.state = { name: '张三'}
+  }
+  render() {
+    this.setState({ name: '李四' })
+    return <div>{ this.state.name }</div>
+  }
+}
+```
+
+与其他生命周期函数不同，`render`方法应该被作为纯函数，这意味着在`render`方法中不要做以下事情，比如不要调用`setState`方法；不要使用其他手段查询更改原生`DOM`元素，以及其他更改应用程序的任何操作，`render`方法的执行要根据状态的改变，这样可以保持组件的行为和渲染方式一致。
+
+#### 14、为组件创建错误边界
+默认情况下，组件渲染错误会导致整个应用程序中断，创建错误边界可确保在特定组件发生错误时应用程序不会中断。
+
+错误边界是一个`React`组件，可以捕获子级组件在渲染时发生的错误，当错误发生时，可以将错误记录下来，可以显示备用`UI`界面
+
+错误边界涉及到两个生命周期函数，分别为`getDerivedStateFromError`和`componentDidCatch`
+
+`getDerivedStateFromError`为静态方法，方法中需要返回一个对象，该对象会和`state`对象进行合并，用于更改应用程序状态
+
+`componentDidCatch`方法用于记录应用程序错误信息，该方法的参数就是错误对象
+
+```jsx
+// ErrorBoundaries.js
+import { Component } from 'react'
+import App from './App'
+
+export default class ErrorBoundaries extends Component {
+  constructor() {
+    super()
+    this.state = {
+      hasError: false
+    }
+  }
+
+  componentDidCatch(error) {
+    console.log('componentDidCatch')
+  }
+
+  static getDerivedStateFromError() {
+    console.log('getDerivedStateFromError')
+    return {
+      hasError: true
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div>发生错了</div>
+    } 
+    return <App />
+  }
+}
+```
+
+```jsx
+// App.js
+import { Component } from 'react'
+
+export default class App extends Component {
+  render() {
+    // throw new Error('抛出的错误')
+    return <div>App work </div>
+  }
+}
+```
+
+```jsx
+// index.js
+import React from 'react'
+import ReactDOM from 'react-dom'
+import ErrorBoundaries from './ErrorBoundaries'
+
+ReactDOM.render(<ErrorBoundaries />, document.getElementById('root'))
+```
+
+注意：错误边界不能捕获异步错误，比如点击按钮时发生的错误
+
+#### 15、避免数据结构突变
+组件中`props`和`state`的数据结构应该保持一致，数据结构突变会导致输出不一致
+
+```jsx
+import React, { Component } from 'react'
+
+export default class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      employee: {
+        name: '张三',
+        age: 20
+      }
+    }
+  }
+
+  render() {
+    const { name, age } = this.state.employee
+
+    return (
+      <div>
+        { name } { age }
+        <button onClick={() => this.setState({
+          ...this.state,
+          employee: {
+            ...this.state.employee, // 正确做法，不能把name丢了
+            age: 30
+          }
+        })}>
+          change name
+        </button>
+      </div>
+    )
+  }
+}
+```
+
+#### 16、优化依赖项大小
+在应用程序中经常会依赖第三方包，当我们不想引用包中的所有代码，我们只想用到哪些代码就包含哪些代码，此时可以使用插件对依赖项进行优化
+
+当我们就使用`lodash`举例，应用基于`create-react-app`脚手架创建
+1. 下载依赖`yarn add react-app-rewired customize-cra lodash babel-plugin-lodash`
+
+   1. `react-app-rewired`：覆盖`create-react-app`的默认配置
+       ```jsx
+       module.exports = function(oldConfig) {
+         return newConfig
+       }
+       // 参数中的oldConfig就是默认的webpack config
+       ```
+
+   2. `customize-cra`：导出了一些辅助方法，可以让以上写法更加简洁
+      ```jsx
+      const { override, useBabelRc } = require('customize-cra')
+
+      module.exports = override(
+        (oldConfig) => newConfig,
+        (oldConfig) => newConfig
+      )
+      ```
+      override：可以接收多个参数，每个参数都是一个配置函数，函数接收`oldConfig`，返回`newConfig`
+      useBabelRc：允许使用`.babelrc`文件进行`babel`配置
+
+    3. `babel-plugin-lodash`：对应用中的`lodash`进行精简
+
+2. 在项目的根目录下新建 `config-overrides.js` 并加入配置代码
+   ```jsx
+   const { override, useBabelRc } = require('customize-cra')
+   module.exports = override(useBabelRc())
+   ```
+
+3. 修改 `package.json` 文件中的构建命令
+   ```jsx
+   "scripts": {
+     "start": "react-app-rewired start",
+     "build": "react-app-rewired build",
+     "test": "react-app-rewired test --env=jsdom",
+     "eject": "react-scripts eject"
+   }
+   ```
+
+4. 创建 `.babelrc` 文件并加入配置
+   ```jsx
+   {
+     "plugins": ["lodash"]
+   }
+   ```
+
+5. 生产环境下的三种JS文件
+   * `main.[hash].chunk.js`：这是你的应用程序代码，App.js等
+   * `1.[hash].chunk.js`：这是第三方库的代码，包含你在`node_modules`中导入的模块
+   * `runtime-main.[hash].js`：webpack运行时代码
+   
+6. App组件
+   ```jsx
+   import React from 'react'
+   import _ from 'lodash'
+
+   function App() {
+     console.log(_.chunk(['a','b','c','d'],2))
+     return <div>App work</div>
+   }
+
+   export default App
+   ```
+
+总结：
+1. 下载依赖`yarn add react-app-rewired customize-cra lodash babel-plugin-lodash`
+2. 在项目的根目录下新建 `config-overrides.js` 并加入配置代码
+3. 修改 `package.json` 文件中的构建命令
+4. 创建 `.babelrc` 文件并加入配置
+5. 项目中使用第三方包，打包对依赖项进行优化
 
 
