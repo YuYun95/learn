@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>canvas 签名</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0
+    }
+    .container {
+      width: 500px;
+      height: 500px;
+      margin-top: 50%;
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div style="text-align: center">
+      <canvas id="canvas" width="500px" height="500px" style="cursor: pointer; border: 1px solid #000; margin-top: 100px"></canvas>
+      <div class="text-center" style="margin-top: 0.73rem;">
+        <button style="width: 200px; margin-right: 40px" type="default" onclick="reset()">清空</button>
+        <button style="width: 200px"  onclick="download()">确定</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.querySelector('#canvas')
+    let ctx = canvas.getContext('2d')
+    let imgBase64 = ''
+    let isDown = false
+    let stageInfo = canvas.getBoundingClientRect()
+    init()
+
+    function init () {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.strokeStyle = '#f44336'
+      ctx.lineWidth = 4
+      ctx.lineCap = 'round'
+      canvas.addEventListener('touchstart', touchstart, false)
+      canvas.addEventListener('mousedown', mousedown, false)
+      canvas.addEventListener('touchmove', touchmove, false)
+      canvas.addEventListener('mousemove', mousemove, false)
+      canvas.addEventListener('touchend', touchend, false)
+      canvas.addEventListener('mouseup', mouseup, false)
+      stageInfo = canvas.getBoundingClientRect()
+    }
+
+    function touchstart (e) {
+      const x = e.targetTouches[0].clientX - stageInfo.left
+      const y = e.targetTouches[0].clientY - stageInfo.top
+      ctx.beginPath()
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+    }
+
+    function mousedown (e) {
+      console.log('mousedown')
+      isDown = true
+      const x = e.offsetX
+      const y = e.offsetY
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+    }
+
+    function touchmove (e) {
+      const x = e.targetTouches[0].clientX - this.stageInfo.left
+      const y = e.targetTouches[0].clientY - this.stageInfo.top
+      ctx.lineTo(x, y)
+      ctx.stroke()
+    }
+
+    function mousemove (e) {
+      if (isDown) {
+        const x = e.pageX - (e.target.offsetLeft || e.target.parentNode.offsetLeft)
+        const y = e.pageY - (e.target.offsetTop || e.target.parentNode.offsetTop)
+        ctx.lineTo(x, y)
+        ctx.stroke()
+      }
+    }
+
+    function touchend (e) {
+      ctx.closePath()
+      imgBase64 = canvas.toDataURL('image/png')
+    }
+
+    function mouseup (e) {
+      console.log('mouseup')
+      if (isDown) {
+        ctx.closePath()
+        imgBase64 = canvas.toDataURL('image/png')
+        isDown = false
+      }
+    }
+
+    function reset (e) {
+      imgBase64 = ''
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
+
+    function download () {
+      if (!imgBase64) {
+        alert('xxxx')
+        return
+      }
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = imgBase64
+      a.download = imgBase64
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
+  </script>
+</body>
+</html>
